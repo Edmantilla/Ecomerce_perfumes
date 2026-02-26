@@ -1,0 +1,174 @@
+.main-perfil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100vw;
+    margin: 100px 0;
+}
+
+.formulario {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 30vw;
+    gap: 42px;
+}
+
+.formulario-title {
+    padding-top: 37px;
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--color-primario);
+}
+
+.formulario-username {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: var(--estilos-textoSecundario);
+    font-weight: 500;
+    padding-bottom: 42px;
+    width: 30vw;
+
+}
+
+.formulario input {
+    border: none;
+    padding: 10px;
+    border-bottom: 1px solid var(--color-letras);
+    background-color: var(--color-secundario);
+}
+
+.formulario-contrasena {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: var(--estilos-textoSecundario);
+    font-weight: 500;
+    padding-bottom: 17px;
+    width: 30vw;
+}
+
+.formulario-recordar {
+    font-family: var(--estilos-textoSecundario);
+    font-weight: 800;
+    margin-bottom: 102px;
+    text-decoration: none;
+    color: var(--color-letras);
+}
+
+
+.formulario-button {
+    height: 39px;
+    width: 100%;
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--color-secundario);
+    background-color: var(--color-letras);
+    border: none;
+    margin-bottom: 45px;
+    transform: scale(1);
+    transition: transform .2s ease;
+}
+
+.formulario-button:hover {
+    transform: scale(1.05);
+}
+
+.formulario-registrarse {
+    display: flex;
+    justify-content: center;
+}
+
+.formulario-registrarse {
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    color: var(--color-letras);
+
+}
+
+/* Estilos para los checkboxes de términos y consentimiento */
+
+.formulario-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 30vw;
+    font-family: var(--estilos-textoSecundario);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-letras);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.formulario-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    margin-top: 2px;
+    accent-color: var(--color-primario);
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    padding: 0;
+    border-bottom: none;
+}
+
+.formulario-checkbox label {
+    cursor: pointer;
+}
+
+.formulario-link {
+    color: var(--color-primario);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.formulario-link:hover {
+    color: var(--color-letras);
+}
+
+/* Estilo para el input de fecha */
+
+input[type="date"] {
+    font-family: var(--estilos-textoSecundario);
+    color: var(--color-letras);
+    cursor: pointer;
+}
+
+/* Estilos para la página de recuperar contraseña */
+
+.formulario-descripcion {
+    font-family: var(--estilos-textoSecundario);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-letras);
+    text-align: center;
+    line-height: 1.7;
+    width: 30vw;
+    margin-bottom: 36px;
+    opacity: 0.8;
+}
+
+.formulario-icono-ok {
+    font-size: 48px;
+    color: var(--color-primario);
+    text-align: center;
+    margin-bottom: 24px;
+    font-weight: 700;
+    border: 3px solid var(--color-primario);
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px auto;
+}

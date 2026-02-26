@@ -1,0 +1,108 @@
+/* Estilos del Mega Menú desplegable */
+/* Controla la visibilidad y el diseño del menú extendido */
+
+.navbar__item {
+    position: static;
+}
+
+.navbar__list-megamenu {
+
+    /* Inicialmente oculto y posicionado absolutamente */
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    left: 0;
+    top: 58px;
+    width: 100vw;
+    background-color: var(--color-secundario);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    padding: 20px;
+    border-top: 2px solid var(--color-primario);
+    text-align: left;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+
+}
+
+.navbar__item:hover .navbar__list-megamenu {
+    opacity: 1;
+    visibility: visible;
+
+    /* Se elimina el delay de visibility */
+    transition: opacity 0.3s ease;
+}
+
+.navbar__list-megamenu h2 {
+    font-family: var(--estilos-textoPrincipal);
+    color: var(--color-letras);
+    font-size: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.navbar__list-megamenu__list {
+    display: flex;
+    gap: 47px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.navbar__list-megamenu__list img {
+    width: 200px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.navbar__list-megamenu__links--title {
+    grid-column: 1/4;
+    grid-row: 1/1;
+}
+
+.navbar__list-megamenu__links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 20px);
+    gap: 30px 0px;
+    width: 1114px;
+    padding-top: 27px;
+    padding-bottom: 21px;
+    border-right: 2px solid var(--color-primario);
+}
+
+.navbar__list-megamenu__links a {
+    text-decoration: none;
+    color: var(--color-letras);
+    font-family: var(--estilos-textoSecundario);
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.navbar__list-megamenu__links a:hover {
+    color: var(--color-primario);
+    font-weight: 600;
+}
+
+.navbar__list-megamenu__links--perfiles {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: auto;
+    width: 100%;
+    padding-top: 27px;
+    padding-bottom: 21px;
+}
+
+
+.navbar__list-megamenu__links--perfiles a {
+    padding: 20px;
+    text-decoration: none;
+    color: var(--color-letras);
+    font-family: var(--estilos-textoSecundario);
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.navbar__list-megamenu__links--perfiles a:hover {
+    background-color: var(--color-primario);
+    color: var(--color-secundario);
+    font-weight: 600;
+}

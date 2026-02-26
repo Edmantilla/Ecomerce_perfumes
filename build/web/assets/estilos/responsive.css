@@ -1,0 +1,309 @@
+/*Diseño responsivo*/
+.navbar__toggle,
+.navbar__hamburger {
+    display: none;
+}
+
+
+/* Tablet (max-width: 1024px) */
+/* Media Query para Tablets (max-width: 1024px) */
+@media screen and (max-width: 1024px) {
+    .navbar__list {
+        gap: 40px;
+        /* reduce el espacio entre items del menú */
+    }
+
+    .navbar {
+        justify-content: space-between;
+        padding: 10px 20px;
+    }
+
+    .main__section {
+        padding-left: 40px;
+        background-position: center;
+    }
+
+    .main__section__title {
+        font-size: 36px;
+    }
+
+    .main__section__subtitle {
+        font-size: 20px;
+    }
+
+    footer {
+        padding-left: 30px;
+        padding-right: 30px;
+        flex-wrap: wrap;
+        gap: 30px;
+        justify-content: center;
+    }
+
+    .footer__section--newsletter {
+        padding-right: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .footer__section--newsletter .footer__title {
+        width: 100%;
+        text-align: center;
+    }
+
+    .footer__form-wrapper form {
+        justify-content: center;
+    }
+
+}
+
+/* Mobile (max-width: 768px) */
+/* Media Query para Móviles (max-width: 768px) */
+@media screen and (max-width: 768px) {
+    body {
+        padding-top: 100px;
+        /* Reduced slightly */
+    }
+
+    .discount {
+        height: auto;
+        min-height: 30px;
+        padding: 5px 10px;
+    }
+
+    .discount__title {
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .navbar {
+        display: flex;
+        /* Corrección de 'fle' a 'flex' */
+        flex-direction: row;
+        /* alinear los items en una fila */
+        flex-wrap: wrap;
+        /* permitir que los items se ajusten a la pantalla */
+        align-items: center;
+        /* alinear los items verticalmente */
+        justify-content: space-between;
+        height: auto;
+        gap: 0;
+        /* dejar el espacio entre los items */
+        padding-bottom: 15px;
+    }
+
+    .navbar__list {
+        display: none;
+        /* se oculta por defecto */
+        width: 100%;
+        /* se fuerza a que se ajuste a la pantalla */
+        order: 4;
+        /* se coloca como el ultimo item */
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        gap: 20px;
+        margin-top: 20px;
+        /* espacio desde la barra superior */
+    }
+
+    /*“Cuando el checkbox #navbar-toggle está activado, aplica estos estilos a .navbar__list.”*/
+
+    /* Lógica del Checkbox Hack para mostrar/ocultar menú */
+    #navbar-toggle:checked~.navbar__list {
+        display: flex;
+        /* Mostrar menú en columna cuando el checkbox está activado */
+    }
+
+    .navbar__hamburger {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 30px;
+        height: 21px;
+        cursor: pointer;
+        order: 1;
+        /* First item */
+        margin: 0;
+    }
+
+    .navbar__hamburger .hamburger-line {
+        height: 3px;
+        width: 100%;
+        background-color: var(--color-letras);
+        /* Asegurar contraste */
+        border-radius: 3px;
+    }
+
+    .navbar__brand {
+        order: 2;
+        /* Center item */
+        margin-bottom: 0;
+        flex-grow: 1;
+        text-align: center;
+    }
+
+    .navbar__actions {
+        order: 3;
+        /* Right item */
+    }
+
+    .navbar__actions-list {
+        margin-top: 0;
+    }
+
+    /* Main Section */
+    .main__section {
+        padding-left: 20px;
+        padding-right: 20px;
+        align-items: center;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .main__section__title {
+        font-size: 28px;
+    }
+
+    .main__section__subtitle {
+        font-size: 16px;
+    }
+
+    /* Footer */
+    footer {
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+    }
+
+    .footer__section {
+        border-left: none;
+        border-top: 1px solid var(--color-primario);
+        padding-left: 0;
+        padding-top: 20px;
+        width: 100%;
+        align-items: center;
+    }
+
+    .footer__title {
+        text-align: center;
+    }
+
+    .footer__list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer__link {
+        text-align: center;
+        justify-content: center;
+    }
+
+    .footer__form-wrapper form {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .footer__form-wrapper form input {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    /* Megamenu para movil */
+    .navbar__list-megamenu {
+        position: static;
+        width: 100%;
+        opacity: 1;
+        visibility: visible;
+        display: none;
+        /* Hidden by default */
+        box-shadow: none;
+        border-top: none;
+        padding: 10px;
+        background-color: var(--color-secundario);
+    }
+
+    /* Make megamenu visible when parent is hovered/focused (basic support) */
+    .navbar__item:hover .navbar__list-megamenu,
+    .navbar__item:focus-within .navbar__list-megamenu {
+        display: block;
+    }
+
+    .navbar__list-megamenu__list {
+        flex-direction: column;
+        gap: 5px;
+        padding: 0;
+    }
+
+    .navbar__list-megamenu__links--buscador input {
+        background-color: var(--color-secundario);
+        height: 100%;
+        width: 100%;
+    }
+
+    .navbar__list-megamenu__links {
+        grid-template-columns: 1fr;
+        /* Single column */
+        gap: 10px;
+        width: 100%;
+        border-right: none;
+    }
+
+    .navbar__list-megamenu__list img {
+        display: none;
+    }
+
+    /* --- New Responsive Overrides for Perfumes/Content --- */
+
+    /* Product Grid (Perfumes Header) */
+    .section-losion__contenedor {
+        grid-template-columns: 1fr;
+        /* Stack vertically */
+    }
+
+    /* Single Product Layout (Split View) */
+    .section-losion__divicion {
+        grid-template-areas:
+            "img"
+            "description";
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .section-losion__divicion__img img {
+        height: 50vh;
+        /* Reduce height on mobile */
+    }
+
+    .section-losion__divicion__description {
+        position: static;
+        /* Remove sticky behavior */
+        padding: 0 10px;
+    }
+
+    /* Card Grids */
+    .cards-lociones {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        /* Ensure wrapping */
+        padding: 1rem;
+    }
+
+    /* Ensure images don't overflow */
+    img {
+        max-width: 100%;
+    }
+
+    /* Profile Form Overrides */
+    .formulario,
+    .formulario-username,
+    .formulario-contrasena,
+    .formulario-checkbox,
+    .formulario-descripcion {
+        width: 90vw;
+        /* Increase width on mobile */
+    }
+}

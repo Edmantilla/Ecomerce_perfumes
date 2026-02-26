@@ -1,0 +1,197 @@
+/* About Pages - Elegant & Minimalist */
+
+.about-main {
+    font-family: 'Inter', sans-serif;
+    /* Clean sans-serif for readability */
+    color: #444;
+    line-height: 1.8;
+    background-color: #fff;
+}
+
+/* Hero Section */
+.about-hero {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    /* Slightly shorter than boutique hero */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+}
+
+.about-hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Stronger overlay for text contrast */
+}
+
+.about-hero__content {
+    position: relative;
+    z-index: 2;
+    padding: 2rem;
+    max-width: 800px;
+}
+
+.about-hero__title {
+    font-family: 'Cinzel', serif;
+    font-size: 3.5rem;
+    font-weight: 400;
+    letter-spacing: 3px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.about-hero__subtitle {
+    font-size: 1.1rem;
+    font-weight: 300;
+    letter-spacing: 1px;
+    opacity: 0.9;
+}
+
+/* Content Container */
+.about-content {
+    max-width: 800px;
+    /* Optimal reading width */
+    margin: 0 auto;
+    padding: 5rem 2rem;
+}
+
+/* Sections */
+.about-section {
+    margin-bottom: 4rem;
+    text-align: left;
+    /* Comfortable reading alignment */
+}
+
+.about-section__title {
+    font-family: 'Cinzel', serif;
+    font-size: 2rem;
+    color: #222;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid #d4af37;
+    /* Elegant accent line */
+    padding-left: 1rem;
+}
+
+.about-section__text {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: #555;
+}
+
+.about-section__highlight {
+    font-size: 1.25rem;
+    font-style: italic;
+    color: #333;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 2rem;
+    margin: 3rem 0;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+}
+
+/* Image Inserts */
+.about-image {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    object-fit: cover;
+    margin: 2rem 0;
+    border-radius: 2px;
+}
+
+/* Timeline (Specific to History) */
+.timeline-item {
+    display: flex;
+    margin-bottom: 2rem;
+    align-items: flex-start;
+}
+
+.timeline-year {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #d4af37;
+    min-width: 100px;
+    padding-right: 1rem;
+}
+
+/* Principles Grid (Specific to Philosophy) */
+.principles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.principle-card {
+    background: #fdfdfd;
+    padding: 2rem;
+    border: 1px solid #eee;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.principle-card:hover {
+    transform: translateY(-5px);
+    border-color: #d4af37;
+}
+
+.principle-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #d4af37;
+}
+
+/* CTA Section */
+.about-cta {
+    background-color: #f9f9f9;
+    padding: 4rem 2rem;
+    text-align: center;
+    margin-top: 4rem;
+}
+
+.about-cta__text {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.about-cta__button {
+    display: inline-block;
+    padding: 1rem 3rem;
+    background-color: #222;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: background 0.3s;
+}
+
+.about-cta__button:hover {
+    background-color: #444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .about-hero__title {
+        font-size: 2.5rem;
+    }
+
+    .timeline-item {
+        flex-direction: column;
+    }
+
+    .about-content {
+        padding: 3rem 1.5rem;
+    }
+}

@@ -1,0 +1,151 @@
+.main-losion {
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.section-losion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 95%;
+    border-bottom: 1px solid var(--color-letras);
+
+}
+
+.section-losion__img {
+    width: 100%;
+    height: 312px;
+    object-fit:cover;
+}
+
+.section-losion__title {
+    padding: 20px;
+    font-size: 30px;
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 800;
+    color: var(--color-primario);
+}
+
+.section-losion__description {
+    gap: 40px;
+    padding: 20px;
+    display: flex;
+    align-items: baseline;
+    font-size: 16px;
+    font-family: var(--estilos-textoSecundario);
+    font-weight: 400;
+    color: var(--color-letras);
+}
+
+.section-losion__description__title {
+    text-align: center;
+    padding: 20px;
+    text-transform: uppercase;
+}
+
+.section-losion__description__paragraph {
+    text-align: left;
+}
+
+/*cartas*/
+
+.cards-lociones {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    width: 95%;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card__img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 1/1;
+}
+
+.card__content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+}
+
+.card__title {
+    font-family: var(--estilos-textoPrincipal);
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--color-primario);
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.card__subtitle {
+    font-family: var(--estilos-textoPrincipal);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-letras);
+    margin: 0;
+    /* letter-spacing: 1px; */
+}
+
+.card__description {
+    font-family: var(--estilos-textoSecundario);
+    font-size: 14px;
+    color: var(--color-letras);
+    line-height: 1.4;
+    margin: 5px 0;
+}
+
+.card__quantity {
+    font-family: var(--estilos-textoSecundario);
+    font-size: 14px;
+    color: var(--color-letras);
+    margin: 0;
+}
+
+.card__price {
+    font-family: var(--estilos-textoSecundario);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-primario);
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+@media (max-width: 1024px) {
+    .cards-lociones {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .cards-lociones {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .cards-lociones {
+        grid-template-columns: 1fr;
+    }
+}

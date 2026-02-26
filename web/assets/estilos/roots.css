@@ -1,0 +1,12 @@
+:root {
+    --color-primario: #cc9442;
+    /* Color dorado principal */
+    --color-secundario: #f0eeef;
+    /* Color de fondo claro */
+    --color-letras: black;
+    /* Color de texto general */
+    --color-main: ;
+    --color-efecto-hover: ;
+    --estilos-textoPrincipal: "Raleway", sans-serif;
+    --estilos-textoSecundario: "Lora", serif;
+}

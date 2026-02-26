@@ -1,0 +1,145 @@
+.section-losion-perfumes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 95%;
+}
+.section-losion__titulo2 {
+    font-size: 20px;
+    font-family: var(--estilos-textoSecundario);
+    font-weight: 200;
+    color: var(--color-letras);
+    text-decoration: none;
+}
+.section-losion__contenedor {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    text-align: center;
+}
+.section-losion__contenedor2 {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    width: 100%;
+}
+
+.section-losion__divicion {
+    display: grid;
+    grid-template-areas: "img description";
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100%;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.section-losion__divicion__img{
+    grid-area: img;
+    flex: 1;
+}
+
+.section-losion__divicion__img img{
+    width: 100%;
+    height: 90vh;
+    object-fit: cover;
+}
+
+.section-losion__divicion__description {
+    grid-area: description;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: start;
+    gap: 30px;
+    flex:1;
+    position: sticky;
+    top: 100px;
+    height: fit-content;
+}
+
+.section-losion__divicion__description__precios {
+    font-family: var(--estilos-textoSecundario);
+    font-size: 12px;
+    color: var(--color-letras);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+.section-losion__divicion__description__precios__mililitro{
+    font-weight: 600;
+}
+.section-losion__divicion__description__precios__precios{
+    font-weight: 100;
+}
+
+.section-losion__divicion__description__img {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+}
+
+.section-losion__divicion__description__img img {
+    width: 80px;
+    height: 80px;
+}
+
+.section-losion__divicion__description__button {
+    height: 39px;
+    width: 100%;
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--color-secundario);
+    background-color: var(--color-letras);
+    border: none;
+    transform: scale(1);
+    transition: transform .2s ease;
+}
+
+.section-losion__divicion__description__type{
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 20px;
+    font-size: 12px;
+    font-family: var(--estilos-textoSecundario);
+}
+
+.section-losion__divicion__description__type h2{
+    font-weight: 600;
+    color: var(--color-primario);
+}
+.section-losion__divicion__description__type p{
+    font-weight: 100;
+    font-size: 16px;
+    color: var(--color-letras);
+}
+
+.title-section{
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    width: 100%;
+    height: 100%;
+}
+
+.title-section h2{
+    font-size: 20px;
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 800;
+    color: var(--color-primario);
+    text-decoration: none;
+}
+
+.section-losion__divicion__description__button:hover {
+    transform: scale(1.02);
+}
+
+.section-losion__contenedor2 a:hover {
+    color: var(--color-primario);
+}

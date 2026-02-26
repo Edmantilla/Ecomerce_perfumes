@@ -1,0 +1,14 @@
+/* Archivo principal de estilos que importa todos los modulos CSS */
+@import url(roots.css);
+/* Variables Globales */
+@import url(Base.css);
+@import url(main-home.css);
+@import url(main-perfil.css);
+@import url(megamenu_lista.css);
+@import url(megamenu.css);
+@import url(megamenu-search.css);
+@import url(main-losion.css);
+@import url(perfumes.css);
+@import url(boutique.css);
+@import url(about.css);
+@import url(responsive.css);

@@ -1,0 +1,55 @@
+/* Estilos específicos para la sección principal del Home (Landing Page) */
+.main-home {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    width: 100vw;
+    height: 91vh;
+}
+
+/* Sección con imagen de fondo (Hero Section) */
+.main__section {
+    height: 100vh;
+    width: 100vw;
+    background-image: url('../imagenes/torino.jpg');
+    background-size: cover;
+    background-position: center;
+    padding-left: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 20px;
+    padding-bottom: 60px;
+}
+
+.main__section__title {
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 700;
+    font-size: 48px;
+    color: var(--color-secundario);
+}
+
+.main__section__subtitle {
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--color-secundario);
+}
+
+.main__section__button {
+    height: 50px;
+    width: 157px;
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--color-letras);
+    background-color: var(--color-primario);
+    border: none;
+}
+
+.main__section__button a {
+    text-decoration: none;
+    color: var(--color-letras);
+}

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <display-name>Andreylpz Perfumería</display-name>
+
+    <!-- ═══════════════════════════════════════
+         SESIÓN: tiempo máximo de inactividad (minutos)
+    ═══════════════════════════════════════ -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+
+    <!-- ═══════════════════════════════════════
+         PÁGINA DE INICIO
+    ═══════════════════════════════════════ -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Registro de usuario
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvRegistro</servlet-name>
+        <servlet-class>servlets.SvRegistro</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvRegistro</servlet-name>
+        <url-pattern>/SvRegistro</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Login
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvLogin</servlet-name>
+        <servlet-class>servlets.SvLogin</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvLogin</servlet-name>
+        <url-pattern>/SvLogin</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Logout
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvLogout</servlet-name>
+        <servlet-class>servlets.SvLogout</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvLogout</servlet-name>
+        <url-pattern>/SvLogout</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Productos (CRUD JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvProductos</servlet-name>
+        <servlet-class>servlets.SvProductos</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvProductos</servlet-name>
+        <url-pattern>/SvProductos</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Pedidos (JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvPedidos</servlet-name>
+        <servlet-class>servlets.SvPedidos</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvPedidos</servlet-name>
+        <url-pattern>/SvPedidos</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Usuarios (JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvUsuarios</servlet-name>
+        <servlet-class>servlets.SvUsuarios</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvUsuarios</servlet-name>
+        <url-pattern>/SvUsuarios</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Dashboard estadísticas (JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvDashboard</servlet-name>
+        <servlet-class>servlets.SvDashboard</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvDashboard</servlet-name>
+        <url-pattern>/SvDashboard</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Compra (carrito → pedido en BD)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvCompra</servlet-name>
+        <servlet-class>servlets.SvCompra</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvCompra</servlet-name>
+        <url-pattern>/SvCompra</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Detalles de Pedido (JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvDetallesPedido</servlet-name>
+        <servlet-class>servlets.SvDetallesPedido</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvDetallesPedido</servlet-name>
+        <url-pattern>/SvDetallesPedido</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Mis Pedidos (JSON para cliente)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvMisPedidos</servlet-name>
+        <servlet-class>servlets.SvMisPedidos</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvMisPedidos</servlet-name>
+        <url-pattern>/SvMisPedidos</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         PÁGINA DE ERROR
+    ═══════════════════════════════════════ -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.jsp</location>
+    </error-page>
+
+</web-app>

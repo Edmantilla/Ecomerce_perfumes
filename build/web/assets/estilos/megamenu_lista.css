@@ -1,0 +1,25 @@
+/* estilos del megamenu */
+
+/* Estilos auxiliares para listas específicas dentro del mega menú (ej: Perfiles) */
+.navbar__list-megamenu__links--perfiles2 {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: auto;
+    width: 100%;
+    padding-top: 27px;
+    padding-bottom: 21px;
+    gap: 30px;
+}
+
+.navbar__list-megamenu__links--perfiles2 a {
+    text-decoration: none;
+    color: var(--color-letras);
+    font-family: var(--estilos-textoSecundario);
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.navbar__list-megamenu__links--perfiles2 a:hover {
+    color: var(--color-primario);
+    font-weight: 600;
+}

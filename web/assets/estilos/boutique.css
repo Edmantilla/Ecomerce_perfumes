@@ -1,0 +1,172 @@
+/* Boutique Premium Designs */
+
+/* General Setup */
+.boutique-main {
+    font-family: 'Cinzel', serif;
+    /* Or the project's primary serif font */
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Hero Section */
+.boutique-hero {
+    position: relative;
+    width: 100%;
+    height: 80vh;
+    /* Large impactful banner */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+}
+
+.boutique-hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    /* Dark overlay for text readability */
+}
+
+.boutique-hero__content {
+    position: relative;
+    z-index: 2;
+    padding: 2rem;
+}
+
+.boutique-hero__title {
+    font-size: 4rem;
+    font-weight: 400;
+    letter-spacing: 5px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid #d4af37;
+    /* Gold accent */
+    display: inline-block;
+    padding-bottom: 0.5rem;
+}
+
+.boutique-hero__subtitle {
+    font-size: 1.2rem;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Info Section (Columns) */
+.boutique-info {
+    padding: 5rem 2rem;
+    background-color: #f9f9f9;
+}
+
+.boutique-info__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.boutique-info__column {
+    text-align: center;
+    padding: 1rem;
+}
+
+.boutique-info__heading {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.boutique-info__text {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.boutique-info__list {
+    list-style: none;
+    padding: 0;
+}
+
+.boutique-info__list li {
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+/* Gallery Section */
+.boutique-gallery {
+    padding: 2rem 0;
+    background-color: #fff;
+}
+
+.boutique-gallery__grid {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.boutique-gallery__item {
+    flex: 1 1 300px;
+    max-width: 400px;
+    height: 500px;
+    overflow: hidden;
+}
+
+.boutique-gallery__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.boutique-gallery__item:hover .boutique-gallery__img {
+    transform: scale(1.05);
+    /* Subtle zoom effect */
+}
+
+/* CTA Section */
+.boutique-cta {
+    padding: 4rem 2rem;
+    text-align: center;
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+.boutique-cta__button {
+    display: inline-block;
+    padding: 1rem 3rem;
+    background-color: transparent;
+    border: 1px solid #d4af37;
+    color: #d4af37;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.boutique-cta__button:hover {
+    background-color: #d4af37;
+    color: #1a1a1a;
+}
+
+/* Response */
+@media (max-width: 768px) {
+    .boutique-hero__title {
+        font-size: 2.5rem;
+    }
+}

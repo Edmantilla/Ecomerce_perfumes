@@ -1,0 +1,27 @@
+/* estilos del megamenu */
+
+.navbar__list-megamenu__links--buscador {
+   
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding-top: 27px;
+    padding-bottom: 21px;
+    gap: 30px;
+
+}
+.navbar__list-megamenu__links--buscador input{
+    border: none;
+    padding: 10px;
+    border-bottom: 1px solid var(--color-letras);
+    background-color: var(--color-secundario);
+    width: 50vh;
+    text-align: center;
+}
+
+.navbar__list-megamenu__links--buscador h2{
+    font-family: var(--estilos-textoPrincipal);
+    font-weight: 600;
+    font-size: 24px;
+}
