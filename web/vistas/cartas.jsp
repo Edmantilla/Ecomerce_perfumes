@@ -169,42 +169,6 @@
         <section class="cards-lociones" id="xerjoff-cards">
             <!-- Cards estáticas (productos originales Xerjoff) -->
             <article class="card">
-                <a href="Hombres/Xerjoff/Losion.jsp">
-                    <img class="card__img" src="../assets/imagenes/RICHWOOD.webp" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">RICHWOOD</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia exquisita con notas amaderadas y un toque de elegancia.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.000.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Hombres/Xerjoff/Naxos.jsp">
-                    <img class="card__img" src="../assets/imagenes/NAXOS.webp" alt="Naxos Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">NAXOS</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex de la familia cítrica gourmand que celebra la riqueza y la luz del Mediterráneo.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.120.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Hombres/Xerjoff/Erba_Pura.jsp">
-                    <img class="card__img" src="../assets/imagenes/erba pura.webp" alt="Erba Pura Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ERBA PURA</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex vibrante y frutal con apertura cítrica de naranja, limón y bergamota.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.500.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
                 <a href="Hombres/Xerjoff/Alexandria_II.jsp">
                     <img class="card__img" src="../assets/imagenes/ALEXANDRIA 2.webp" alt="Alexandria II Perfume">
                 </a>
@@ -216,61 +180,13 @@
                     <p class="card__price">1.100.000 COP</p>
                 </div>
             </article>
-            <article class="card">
-                <a href="Hombres/Xerjoff/Torino_XXI.jsp">
-                    <img class="card__img" src="../assets/imagenes/TORINO 21.webp" alt="Torino XXI Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">TORINO XXI</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex fresca y verde aromática inspirada en la energía vibrante de Turín.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.300.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Hombres/Xerjoff/Erba_Gold.jsp">
-                    <img class="card__img" src="../assets/imagenes/ERBA GOLD.webp" alt="Erba Gold Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ERBA GOLD</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex fresca y luminosa que mezcla cítricos vibrantes y frutas dulces sobre una base cálida.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.600.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Hombres/Xerjoff/Lira.jsp">
-                    <img class="card__img" src="../assets/imagenes/LIRA.webp" alt="Lira Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">LIRA</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex amaderada y afrutada que combina cítricos brillantes con notas florales suaves.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.000.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Hombres/Xerjoff/Homme.jsp">
-                    <img class="card__img" src="../assets/imagenes/HOMME.webp" alt="Homme Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">HOMME</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia masculina aromática y fresca con notas cítricas y especiadas sobre maderas y flores suaves.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.720.000 COP</p>
-                </div>
-            </article>
             <!-- Las cards de productos nuevos agregados desde el admin se insertan aquí dinámicamente -->
         </section>
     </main>
 
     <script>
     (function() {
-        var STATIC_NAMES = ['RICHWOOD','NAXOS','ERBA PURA','ALEXANDRIA II','TORINO XXI','ERBA GOLD','LIRA','HOMME'];
+        var STATIC_NAMES = ['ALEXANDRIA II'];
         var ctx = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
 
         function fmt(n) {
@@ -307,7 +223,7 @@
                     var article = document.createElement('article');
                     article.className = 'card';
                     article.innerHTML =
-                        '<a href="#" onclick="return false;" style="cursor:default">' +
+                        '<a href="detalle.jsp?nombre=' + encodeURIComponent(p.nombre) + '">' +
                             '<img class="card__img" src="' + imgSrc + '" alt="' + p.nombre + '" ' +
                                 'onerror="this.src=\'' + ctx + '/assets/imagenes/Imagen de la losion.webp\'">' +
                         '</a>' +

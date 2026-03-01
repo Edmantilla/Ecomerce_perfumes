@@ -3,12 +3,17 @@ package servlets;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import logica.Telefonocliente;
+import logica.Correocliente;
 import logica.Usuario;
+import persistencias.JpaProvider;
 import persistencias.UsuarioJpaController;
 
 @WebServlet(name = "SvUsuarios", urlPatterns = {"/SvUsuarios"})
@@ -21,9 +26,11 @@ public class SvUsuarios extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        EntityManager em = null;
         try {
             UsuarioJpaController ctrl = new UsuarioJpaController();
             List<Usuario> usuarios = ctrl.findUsuarioEntities();
+            em = JpaProvider.getEntityManagerFactory().createEntityManager();
 
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < usuarios.size(); i++) {
@@ -37,7 +44,47 @@ public class SvUsuarios extends HttpServlet {
                 sb.append("\"nombre\":\"").append(
                     u.getCliente() != null ? escapeJson(u.getCliente().getNombreCompleto()) : "Admin"
                 ).append("\",");
-                sb.append("\"registro\":\"").append(u.getCreatedAt() != null ? u.getCreatedAt().toString() : "").append("\"");
+                sb.append("\"registro\":\"").append(u.getCreatedAt() != null ? u.getCreatedAt().toString() : "").append("\",");
+
+                if (u.getCliente() != null) {
+                    int idC = u.getCliente().getIdCliente();
+                    // Dirección
+                    String dir = u.getCliente().getDireccion();
+                    sb.append("\"direccion\":\"").append(escapeJson(dir != null ? dir : "")).append("\",");
+
+                    // Teléfonos activos
+                    List<Telefonocliente> tels = em.createQuery(
+                        "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true ORDER BY t.idTelefono",
+                        Telefonocliente.class).setParameter("id", idC).getResultList();
+                    sb.append("\"telefonos\":[");
+                    for (int j = 0; j < tels.size(); j++) {
+                        if (j > 0) sb.append(",");
+                        sb.append("{\"numero\":\"").append(escapeJson(tels.get(j).getTelefono())).append("\",");
+                        sb.append("\"tipo\":\"").append(tels.get(j).getTipoTelefono() != null ? tels.get(j).getTipoTelefono().name() : "").append("\"}");
+                    }
+                    sb.append("],");
+
+                    // Correos adicionales activos
+                    List<Correocliente> correos = em.createQuery(
+                        "SELECT c FROM Correocliente c WHERE c.cliente.idCliente = :id AND c.activo = true ORDER BY c.idCorreo",
+                        Correocliente.class).setParameter("id", idC).getResultList();
+                    sb.append("\"correosAdicionales\":[");
+                    for (int j = 0; j < correos.size(); j++) {
+                        if (j > 0) sb.append(",");
+                        sb.append("{\"correo\":\"").append(escapeJson(correos.get(j).getCorreo())).append("\",");
+                        sb.append("\"principal\":").append(correos.get(j).isPrincipal()).append("}");
+                    }
+                    sb.append("],");
+
+                    // Conteo de pedidos
+                    Long numPedidos = em.createQuery(
+                        "SELECT COUNT(p) FROM Pedido p WHERE p.cliente.idCliente = :id", Long.class)
+                        .setParameter("id", idC).getSingleResult();
+                    sb.append("\"numPedidos\":").append(numPedidos);
+                } else {
+                    sb.append("\"direccion\":\"\",\"telefonos\":[],\"correosAdicionales\":[],\"numPedidos\":0");
+                }
+
                 sb.append("}");
             }
             sb.append("]");
@@ -46,6 +93,8 @@ public class SvUsuarios extends HttpServlet {
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             out.print("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+        } finally {
+            if (em != null && em.isOpen()) em.close();
         }
     }
 

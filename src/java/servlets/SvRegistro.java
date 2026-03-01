@@ -31,13 +31,9 @@ public class SvRegistro extends HttpServlet {
         String confirmar   = request.getParameter("confirmar_contrasena");
         String direccion   = request.getParameter("direccion");
 
-        if (direccion == null || direccion.isBlank()) {
-            direccion = "Sin especificar";
-        }
-
-        if (nombre == null || correo == null || contrasena == null ||
-                nombre.isBlank() || correo.isBlank() || contrasena.isBlank()) {
-            request.setAttribute("error", "Todos los campos son obligatorios.");
+        if (nombre == null || correo == null || contrasena == null || direccion == null ||
+                nombre.isBlank() || correo.isBlank() || contrasena.isBlank() || direccion.isBlank()) {
+            request.setAttribute("error", "Todos los campos son obligatorios, incluyendo la dirección.");
             request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
             return;
         }

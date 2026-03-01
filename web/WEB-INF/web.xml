@@ -142,6 +142,78 @@
     </servlet-mapping>
 
     <!-- ═══════════════════════════════════════
+         SERVLET: Permisos (RF07/RF08)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvPermisos</servlet-name>
+        <servlet-class>servlets.SvPermisos</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvPermisos</servlet-name>
+        <url-pattern>/SvPermisos</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Contacto Cliente (RF02/RF03)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvContactoCliente</servlet-name>
+        <servlet-class>servlets.SvContactoCliente</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvContactoCliente</servlet-name>
+        <url-pattern>/SvContactoCliente</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Pagos (RF020-RF022)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvPagos</servlet-name>
+        <servlet-class>servlets.SvPagos</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvPagos</servlet-name>
+        <url-pattern>/SvPagos</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Envíos (RF023-RF025)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvEnvios</servlet-name>
+        <servlet-class>servlets.SvEnvios</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvEnvios</servlet-name>
+        <url-pattern>/SvEnvios</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Categorías (CRUD JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvCategorias</servlet-name>
+        <servlet-class>servlets.SvCategorias</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvCategorias</servlet-name>
+        <url-pattern>/SvCategorias</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
+         SERVLET: Marcas (CRUD JSON para admin)
+    ═══════════════════════════════════════ -->
+    <servlet>
+        <servlet-name>SvMarcas</servlet-name>
+        <servlet-class>servlets.SvMarcas</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SvMarcas</servlet-name>
+        <url-pattern>/SvMarcas</url-pattern>
+    </servlet-mapping>
+
+    <!-- ═══════════════════════════════════════
          PÁGINA DE ERROR
     ═══════════════════════════════════════ -->
     <error-page>

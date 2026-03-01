@@ -6,12 +6,14 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import logica.Pedido;
+import logica.Telefonocliente;
 import logica.Usuario;
 import persistencias.JpaProvider;
 import persistencias.PedidoJpaController;
@@ -26,9 +28,11 @@ public class SvPedidos extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        EntityManager emGet = null;
         try {
             PedidoJpaController ctrl = new PedidoJpaController();
             List<Pedido> pedidos = ctrl.findPedidoEntities();
+            emGet = JpaProvider.getEntityManagerFactory().createEntityManager();
 
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < pedidos.size(); i++) {
@@ -41,7 +45,23 @@ public class SvPedidos extends HttpServlet {
                 sb.append("\"total\":").append(p.getTotal() != null ? p.getTotal() : 0).append(",");
                 sb.append("\"cliente\":\"").append(
                     p.getCliente() != null ? esc(p.getCliente().getNombreCompleto()) : ""
-                ).append("\"");
+                ).append("\",");
+                if (p.getCliente() != null) {
+                    int idC = p.getCliente().getIdCliente();
+                    String dir = p.getCliente().getDireccion();
+                    sb.append("\"direccionCliente\":\"").append(esc(dir != null ? dir : "")).append("\",");
+                    List<Telefonocliente> tels = emGet.createQuery(
+                        "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true ORDER BY t.idTelefono",
+                        Telefonocliente.class).setParameter("id", idC).getResultList();
+                    sb.append("\"telefonosCliente\":[");
+                    for (int j = 0; j < tels.size(); j++) {
+                        if (j > 0) sb.append(",");
+                        sb.append("\"").append(esc(tels.get(j).getTelefono())).append("\"");
+                    }
+                    sb.append("]");
+                } else {
+                    sb.append("\"direccionCliente\":\"\",\"telefonosCliente\":[]");
+                }
                 sb.append("}");
             }
             sb.append("]");
@@ -50,6 +70,8 @@ public class SvPedidos extends HttpServlet {
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             out.print("{\"error\":\"" + esc(e.getMessage()) + "\"}");
+        } finally {
+            if (emGet != null && emGet.isOpen()) emGet.close();
         }
     }
 

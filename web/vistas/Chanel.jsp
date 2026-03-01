@@ -168,85 +168,6 @@
         </section>
 
         <section class="cards-lociones">
-            <!-- Card 1 -->
-            <article class="card">
-                <a href="Mujeres/Chanel/N5.jsp">
-                    <img class="card__img" src="../assets/imagenes/CHANEL.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">N°5</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una de las fragancias más icónicas y reconocidas del mundo, lanzada en
-                        1921 por la casa de moda francesa Chanel
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">360.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 2 -->
-            <article class="card">
-                <a href="Mujeres/Chanel/Coco_Mademoiselle.jsp">
-                    <img class="card__img" src="../assets/imagenes/COCO CHANEL.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">COCO MADEMOISELLE</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina lanzada por Chanel en 2001 que representa la
-                        elegancia moderna, fresca y audaz de la mujer contemporánea
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">410.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 3 -->
-            <article class="card">
-                <a href="Mujeres/Chanel/Chance_Eau_Splendide.jsp">
-                    <img class="card__img" src="../assets/imagenes/CHANEL EAU SPLENDIDE.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">CHANCE EAU SPLENDIDE</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina de la línea Chance de Chanel que evoca frescura,
-                        alegría y un espíritu vibrante
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">480.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 4 -->
-            <article class="card">
-                <a href="Mujeres/Chanel/Chance_Eau_Tendre.jsp">
-                    <img class="card__img" src="../assets/imagenes/CHANCE EAU TENDRE.avif" alt="Richwood Perfume">
-                </a>
-
-                <div class="card__content">
-                    <h2 class="card__title">CHANCE EAU TENDRE</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina de Chanel que destaca por su aroma delicado,
-                        fresco y romántico
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">460.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 5 -->
-            <article class="card">
-                <a href="Mujeres/Chanel/Chance_Eau_Fraiche.jsp">
-                    <img class="card__img" src="../assets/imagenes/CHANCE EAU FRAICHE.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">CHANCE EAU FRAÎCHE</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina lanzada en 2007 que se distingue por su carácter
-                        vibrante, fresco y energizante
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">490.000 COP</p>
-                </div>
-            </article>
-
             <!-- Card 6 -->
             <article class="card">
                 <a href="Mujeres/Chanel/Chance.jsp">
@@ -260,22 +181,6 @@
                     </p>
                     <p class="card__quantity">50 ml - 100 ml</p>
                     <p class="card__price">460.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 7 -->
-            <article class="card">
-                <a href="Mujeres/Chanel/Gabrielle_Chanel.jsp">
-                    <img class="card__img" src="../assets/imagenes/GABRIELLE CHANEL.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">GABRIELLE CHANEL</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina lanzada en 2017 que rinde homenaje a la
-                        fundadora de la casa, Gabrielle “Coco” Chanel. Su aroma es luminoso, floral y sofisticado,
-                        compuesto por una armoniosa mezcla de jazmín, ylang-ylang, flor de azahar y nardo</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">510.000 COP</p>
                 </div>
             </article>
 
@@ -319,6 +224,42 @@
     </footer>
 
     <script src="../assets/scripts/cart.js"></script>
+    <script>
+    (function() {
+        var MARCA = 'Chanel';
+        var p = window.location.pathname.split('/');
+        var ctx = '/' + p[1];
+        fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(productos) {
+                if (!Array.isArray(productos)) return;
+                var filtrados = productos.filter(function(p) {
+                    return p.marca && p.marca.toLowerCase() === MARCA.toLowerCase() && p.activo;
+                });
+                if (filtrados.length === 0) return;
+                var section = document.querySelector('.cards-lociones');
+                if (!section) return;
+                filtrados.forEach(function(p) {
+                    var precio = parseFloat(p.precio) || 0;
+                    var precioStr = precio.toLocaleString('es-CO') + ' COP';
+                    var img = p.imagenUrl ? p.imagenUrl : '../assets/imagenes/CHANEL.avif';
+                    var art = document.createElement('article');
+                    art.className = 'card';
+                    art.innerHTML =
+                        '<a href="detalle.jsp?nombre=' + encodeURIComponent(p.nombre) + '">' +
+                        '<img class="card__img" src="' + img + '" alt="' + p.nombre + '"></a>' +
+                        '<div class="card__content">' +
+                        '<h2 class="card__title">' + p.nombre.toUpperCase() + '</h2>' +
+                        '<h3 class="card__subtitle">Perfume</h3>' +
+                        '<p class="card__description">' + (p.descripcion || '') + '</p>' +
+                        '<p class="card__price">' + precioStr + '</p>' +
+                        '</div>';
+                    section.appendChild(art);
+                });
+            })
+            .catch(function(e) { console.error('Error cargando productos dinámicos:', e); });
+    })();
+    </script>
 </body>
 
 </html>

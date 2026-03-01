@@ -165,6 +165,7 @@
     function hookAddToCartButtons() {
         const btn = document.querySelector('.section-losion__divicion__description__button');
         if (!btn) return;
+        if (btn.dataset.cartManaged) return;
 
         // Gather product data from the page
         const nameEl = document.querySelector('.section-losion__title');

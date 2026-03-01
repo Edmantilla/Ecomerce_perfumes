@@ -61,6 +61,10 @@ public class SvDashboard extends HttpServlet {
                     p.getCliente() != null ? escapeJson(p.getCliente().getNombreCompleto()) : ""
                 ).append("\",");
                 sb.append("\"total\":").append(p.getTotal() != null ? p.getTotal() : 0).append(",");
+                sb.append("\"fecha\":\"").append(
+                    p.getFechaPedido() != null ? p.getFechaPedido().toString() :
+                    (p.getCreatedAt() != null ? p.getCreatedAt().toString() : "")
+                ).append("\",");
                 sb.append("\"estado\":\"").append(p.getEstado() != null ? p.getEstado().name() : "").append("\"");
                 sb.append("}");
             }

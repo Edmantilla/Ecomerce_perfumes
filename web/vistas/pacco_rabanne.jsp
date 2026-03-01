@@ -167,169 +167,6 @@
         </section>
 
         <section class="cards-lociones">
-            <!-- Card 1 -->
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/Invictus_Victory_Absolu.jsp">
-                    <img class="card__img" src="../assets/imagenes/PACCO RABANNE INVICTUS.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">INVICTUS VICTORY ABSOLU</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina intensa y vibrante que combina notas especiadas
-                        y dulces con una base poderosa y amaderada
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">500.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 2 -->
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/Phantom_Elixir.jsp">
-                    <img class="card__img" src="../assets/imagenes/PHAMTON ELIXIR.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">PHANTOM ELIXIR</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina intensa y adictiva que mezcla notas aromáticas
-                        frescas con matices dulces y amaderados para un aroma moderno, sofisticado y memorable.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">620.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 3 -->
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/Million_Gold.jsp">
-                    <img class="card__img" src="../assets/imagenes/MILLION GOLD.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">MILLION GOLD</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina vibrante y lujosa con notas cítricas
-                        energéticas, corazón especiado y una base cálida y amaderada, ofreciendo un aroma elegante y
-                        lleno de carácter.
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">510.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 4 -->
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/One_Million_Lucky.jsp">
-                    <img class="card__img" src="../assets/imagenes/ONE MILLON LUCKY.avif" alt="Richwood Perfume">
-                </a>
-
-                <div class="card__content">
-                    <h2 class="card__title">ONE Million Lucky</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina dulce y amaderada que combina notas de avellana
-                        y ciruela con un corazón de jazmín y pachulí, creando un aroma moderno, seductor y lleno de
-                        energía.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">830.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 5 -->
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/Phantom_Intense.jsp">
-                    <img class="card__img" src="../assets/imagenes/PHAMTON INTENSE.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">PHANTOM INTENSE</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Phantom Intense es una fragancia masculina audaz y moderna que
-                        intensifica el perfil aromático con notas dulces, amaderadas y especiadas para un aroma más
-                        profundo, sensual y duradero.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">600.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 6 -->
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/Invictus_Parfum.jsp">
-                    <img class="card__img" src="../assets/imagenes/INVICTUS PARFUM.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">INVICTUS PARFUM</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina potente y sofisticada que combina notas frescas
-                        y cítricas con un corazón especiado y una base cálida de maderas, creando un aroma elegante,
-                        enérgico y duradero.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">635.000 COP</p>
-                </div>
-            </article>
-
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/One_Million.jsp">
-                    <img class="card__img" src="../assets/imagenes/ONE MILLON.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ONE Million</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina atrevida y distintiva que mezcla notas cítricas
-                        y especiadas con un corazón floral y una base cálida de cuero y maderas, ofreciendo un aroma
-                        lujoso, seductor y moderno.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">500.000 COP</p>
-                </div>
-            </article>
-
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/One_Million_Royal.jsp">
-                    <img class="card__img" src="../assets/imagenes/ONE MILLON ROYALE.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ONE MILLION ROYAL</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina intensa y elegante que combina notas especiadas
-                        y amaderadas con un corazón dulce y oriental, creando un aroma sofisticado, lujoso y seductor.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">720.000 COP</p>
-                </div>
-            </article>
-
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/One_Million_Elixir.jsp">
-                    <img class="card__img" src="../assets/imagenes/ONE MILLON ELIXIR.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ONE Million Elixir</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina rica y poderosa que mezcla notas dulces de
-                        frutos rojos y canela con un corazón especiado y una base profunda de cuero y maderas,
-                        ofreciendo un aroma seductor, elegante y duradero.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">620.000 COP</p>
-                </div>
-            </article>
-
-            <article class="card">
-                <a href="Hombres/Pacco_rabanne/One_Million_Parfum.jsp">
-                    <img class="card__img" src="../assets/imagenes/ONE MILLON PARFUM.avif" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ONE Million Parfum</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia masculina elegante y moderna que combina notas cítricas y
-                        especiadas con un corazón cálido de cuero y maderas, creando un aroma sofisticado, audaz y
-                        duradero.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">620.000 COP</p>
-                </div>
-            </article>
-
             <article class="card">
                 <a href="Hombres/Pacco_rabanne/Invictus.jsp">
                     <img class="card__img" src="../assets/imagenes/INVICTUS.avif" alt="Richwood Perfume">
@@ -386,6 +223,42 @@
     </footer>
 
     <script src="../assets/scripts/cart.js"></script>
+    <script>
+    (function() {
+        var MARCA = 'Paco Rabanne';
+        var p = window.location.pathname.split('/');
+        var ctx = '/' + p[1];
+        fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(productos) {
+                if (!Array.isArray(productos)) return;
+                var filtrados = productos.filter(function(p) {
+                    return p.marca && p.marca.toLowerCase() === MARCA.toLowerCase() && p.activo;
+                });
+                if (filtrados.length === 0) return;
+                var section = document.querySelector('.cards-lociones');
+                if (!section) return;
+                filtrados.forEach(function(p) {
+                    var precio = parseFloat(p.precio) || 0;
+                    var precioStr = precio.toLocaleString('es-CO') + ' COP';
+                    var img = p.imagenUrl ? p.imagenUrl : '../assets/imagenes/PACCO RABANNE.jpg';
+                    var art = document.createElement('article');
+                    art.className = 'card';
+                    art.innerHTML =
+                        '<a href="detalle.jsp?nombre=' + encodeURIComponent(p.nombre) + '">' +
+                        '<img class="card__img" src="' + img + '" alt="' + p.nombre + '"></a>' +
+                        '<div class="card__content">' +
+                        '<h2 class="card__title">' + p.nombre.toUpperCase() + '</h2>' +
+                        '<h3 class="card__subtitle">Perfume</h3>' +
+                        '<p class="card__description">' + (p.descripcion || '') + '</p>' +
+                        '<p class="card__price">' + precioStr + '</p>' +
+                        '</div>';
+                    section.appendChild(art);
+                });
+            })
+            .catch(function(e) { console.error('Error cargando productos dinámicos:', e); });
+    })();
+    </script>
 </body>
 
 </html>

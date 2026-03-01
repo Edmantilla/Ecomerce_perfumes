@@ -85,8 +85,8 @@ public class Telefonocliente {
         if (telefono == null || telefono.isBlank())
             throw new ValidacionException("El telefono no puede estar vacio.");
         String limpio = telefono.replaceAll("[\\s\\-\\(\\)\\+]", "");
-        if (limpio.matches("\\d{7,15}"))
-            throw  new ValidacionException("Formato de telefono invalido: "+ telefono);
+        if (!limpio.matches("\\d{7,15}"))
+            throw new ValidacionException("Formato de telefono invalido: " + telefono);
         this.telefono = telefono;
     }
 

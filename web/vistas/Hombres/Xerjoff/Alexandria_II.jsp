@@ -171,57 +171,6 @@
                 </div>
             </div>
 
-            <div class="title-section">
-                <h2>Puede Que Te Guste Tambien</h2>
-            </div>
-        </section>
-
-        <section class="cards-lociones">
-            <article class="card">
-                <a href="Losion.jsp"><img class="card__img" src="../../../assets/imagenes/RICHWOOD.webp"
-                        alt="Richwood"></a>
-                <div class="card__content">
-                    <h2 class="card__title">RICHWOOD</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia exquisita con notas amaderadas y un toque de elegancia.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.000.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Naxos.jsp"><img class="card__img" src="../../../assets/imagenes/NAXOS.webp" alt="Naxos"></a>
-                <div class="card__content">
-                    <h2 class="card__title">NAXOS</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex de la familia cítrica gourmand.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.120.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Erba_Pura.jsp"><img class="card__img" src="../../../assets/imagenes/erba pura.webp"
-                        alt="Erba Pura"></a>
-                <div class="card__content">
-                    <h2 class="card__title">ERBA PURA</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex vibrante y frutal con apertura cítrica.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.500.000 COP</p>
-                </div>
-            </article>
-            <article class="card">
-                <a href="Torino_XXI.jsp"><img class="card__img" src="../../../assets/imagenes/TORINO 21.webp"
-                        alt="Torino XXI"></a>
-                <div class="card__content">
-                    <h2 class="card__title">TORINO XXI</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex fresca y verde aromática inspirada en la energía
-                        vibrante de Turín.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.300.000 COP</p>
-                </div>
-            </article>
         </section>
     </main>
 

@@ -168,23 +168,6 @@
         </section>
 
         <section class="cards-lociones">
-            <!-- Card 1 -->
-            <article class="card">
-                <a href="Mujeres/Cristhian_dior/Miss_Dior_Essence.jsp">
-                    <img class="card__img" src="../assets/imagenes/MISS DIOR.jpg" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">Miss Dior Essence</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia floral-chipre intensa con apertura jugosa de mora y
-                        saúco, corazón de jazmín sambac y base amaderada de roble que envuelve con una feminidad
-                        sensual, libre y audaz.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">450.000 COP</p>
-                </div>
-            </article>
-
             <!-- Card 2 -->
             <article class="card">
                 <a href="Mujeres/Cristhian_dior/Dior_Addict_Rosy_Glow.jsp">
@@ -202,88 +185,6 @@
                 </div>
             </article>
 
-            <!-- Card 3 -->
-            <article class="card">
-                <a href="Mujeres/Cristhian_dior/Jadore.jsp">
-                    <img class="card__img" src="../assets/imagenes/J'adore Eau de Parfum.jpg" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">J'adore Eau de Parfum</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina de Christian Dior que despliega un bouquet
-                        perfectamente equilibrado de ylang-ylang solar, rosa damascena y jazmín, evocando la sensación
-                        de una flor soñada, sensual, fresca y elegante en cada uso
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">450.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 4 -->
-            <article class="card">
-                <a href="Mujeres/Cristhian_dior/Poison_Girl.jsp">
-                    <img class="card__img" src="../assets/imagenes/poison girl.jpg" alt="Richwood Perfume">
-                </a>
-
-                <div class="card__content">
-                    <h2 class="card__title">Poison Girl</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">uuna fragancia femenina oriental-vainilla audaz y adictiva que mezcla
-                        notas cítricas de naranja y limón con un corazón floral de rosa y una base cálida de vainilla,
-                        haba tonka y almendra
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">460.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 5 -->
-            <article class="card">
-                <a href="Mujeres/Cristhian_dior/Pure_Poison.jsp">
-                    <img class="card__img" src="../assets/imagenes/Pure Poison.jpg" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">Pure Poison</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina floral-amaderada luminosa y moderna que combina
-                        notas blancas de jazmín, bergamota y maderas suaves para crear un aroma puro, elegante y
-                        seductor que evoca un espíritu libre, sofisticado y radiante en cada uso.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">500.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 6 -->
-            <article class="card">
-                <a href="Mujeres/Cristhian_dior/Poison.jsp">
-                    <img class="card__img" src="../assets/imagenes/poison.jpg" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">Poison</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina icónica, intensa y misteriosa que combina notas
-                        frutales de ciruela y especias, un corazón floral profundo y una base cálida de maderas y ámbar,
-                        evocando sensualidad audaz, confianza y un carácter enigmático inolvidable.
-                    </p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">460.000 COP</p>
-                </div>
-            </article>
-
-            <!-- Card 7 -->
-            <article class="card">
-                <a href="Mujeres/Cristhian_dior/Dune.jsp">
-                    <img class="card__img" src="../assets/imagenes/dune.webp" alt="Richwood Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">Dune</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">una fragancia femenina de estilo aromático-amaderado que evoca la
-                        serenidad y el misterio de los paisajes naturales, con notas frescas y acuáticas combinadas con
-                        acordes cálidos de maderas y especias, creando un aroma elegante, relajado y sofisticado.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">520.000 COP</p>
-                </div>
-            </article>
 
         </section>
     </main>
@@ -325,6 +226,42 @@
     </footer>
 
     <script src="../assets/scripts/cart.js"></script>
+    <script>
+    (function() {
+        var MARCA = 'Dior';
+        var p = window.location.pathname.split('/');
+        var ctx = '/' + p[1];
+        fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(productos) {
+                if (!Array.isArray(productos)) return;
+                var filtrados = productos.filter(function(p) {
+                    return p.marca && p.marca.toLowerCase() === MARCA.toLowerCase() && p.activo;
+                });
+                if (filtrados.length === 0) return;
+                var section = document.querySelector('.cards-lociones');
+                if (!section) return;
+                filtrados.forEach(function(p) {
+                    var precio = parseFloat(p.precio) || 0;
+                    var precioStr = precio.toLocaleString('es-CO') + ' COP';
+                    var img = p.imagenUrl ? p.imagenUrl : '../assets/imagenes/christian-dior-logo-pattern-kzgcxoozpsciriye.jpg';
+                    var art = document.createElement('article');
+                    art.className = 'card';
+                    art.innerHTML =
+                        '<a href="detalle.jsp?nombre=' + encodeURIComponent(p.nombre) + '">' +
+                        '<img class="card__img" src="' + img + '" alt="' + p.nombre + '"></a>' +
+                        '<div class="card__content">' +
+                        '<h2 class="card__title">' + p.nombre.toUpperCase() + '</h2>' +
+                        '<h3 class="card__subtitle">Perfume</h3>' +
+                        '<p class="card__description">' + (p.descripcion || '') + '</p>' +
+                        '<p class="card__price">' + precioStr + '</p>' +
+                        '</div>';
+                    section.appendChild(art);
+                });
+            })
+            .catch(function(e) { console.error('Error cargando productos dinámicos:', e); });
+    })();
+    </script>
 </body>
 
 </html>

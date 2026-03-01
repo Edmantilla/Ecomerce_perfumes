@@ -179,12 +179,22 @@
             <span style="color:#666;font-size:14px">Correo</span>
             <span style="font-weight:500;font-size:14px"><%= u.getCorreoUsuario() %></span>
           </div>
-          <% if (u.getCliente() != null && u.getCliente().getDireccion() != null && !"Sin especificar".equals(u.getCliente().getDireccion())) { %>
-          <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#f8f8f8;border-radius:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f8f8f8;border-radius:6px">
             <span style="color:#666;font-size:14px">Dirección</span>
-            <span style="font-weight:500;font-size:14px"><%= u.getCliente().getDireccion() %></span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span id="dir-texto" style="font-weight:500;font-size:14px"><%= (u.getCliente() != null && u.getCliente().getDireccion() != null && !"Sin especificar".equals(u.getCliente().getDireccion())) ? u.getCliente().getDireccion() : "Sin especificar" %></span>
+              <button onclick="abrirEditarDir()" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;color:#1a1a1a;letter-spacing:.5px;font-weight:600">EDITAR</button>
+            </div>
           </div>
-          <% } %>
+          <div id="dir-form" style="display:none;padding:12px 16px;background:#f0f0f0;border-radius:6px">
+            <label style="font-size:12px;color:#666;font-weight:600;display:block;margin-bottom:6px">Nueva dirección</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="dir-input" type="text" placeholder="Calle, carrera, barrio, ciudad" style="flex:1;min-width:180px;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+              <button onclick="guardarDireccion()" style="padding:9px 18px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">GUARDAR</button>
+              <button onclick="cerrarEditarDir()" style="padding:9px 14px;background:#fff;color:#666;border:1px solid #ccc;border-radius:6px;font-size:13px;cursor:pointer">CANCELAR</button>
+            </div>
+            <div id="dir-msg" style="font-size:13px;margin-top:6px;min-height:16px"></div>
+          </div>
           <% String colorEstado = u.isActivo() ? "#2e7d32" : "#c62828"; %>
           <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#f8f8f8;border-radius:6px">
             <span style="color:#666;font-size:14px">Estado</span>
@@ -211,6 +221,42 @@
       <div id="mis-pedidos-container">
         <p style="color:#999;font-size:14px;text-align:center;padding:24px 0">Cargando pedidos...</p>
       </div>
+    </section>
+
+    <!-- ── Mis Teléfonos (RF02) ── -->
+    <section style="max-width:720px;width:100%;margin:0 auto 40px">
+      <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">MIS TEL&Eacute;FONOS</h2>
+      <div id="tel-lista" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px">
+          <label style="font-size:12px;color:#666;font-weight:600">N&uacute;mero</label>
+          <input id="tel-nuevo-numero" type="tel" placeholder="Ej: 3001234567" style="padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#666;font-weight:600">Tipo</label>
+          <select id="tel-nuevo-tipo" style="padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+            <option value="CELULAR">Celular</option>
+            <option value="FIJO">Fijo</option>
+            <option value="TRABAJO">Trabajo</option>
+          </select>
+        </div>
+        <button onclick="agregarTelefono()" style="padding:9px 18px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:1px">+ AGREGAR</button>
+      </div>
+      <div id="tel-msg" style="font-size:13px;margin-top:8px;min-height:18px"></div>
+    </section>
+
+    <!-- ── Mis Correos Adicionales (RF03) ── -->
+    <section style="max-width:720px;width:100%;margin:0 auto 60px">
+      <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">CORREOS ADICIONALES</h2>
+      <div id="correo-lista" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">
+          <label style="font-size:12px;color:#666;font-weight:600">Nuevo correo</label>
+          <input id="correo-nuevo" type="email" placeholder="Ej: otro@correo.com" style="padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+        </div>
+        <button onclick="agregarCorreo()" style="padding:9px 18px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:1px">+ AGREGAR</button>
+      </div>
+      <div id="correo-msg" style="font-size:13px;margin-top:8px;min-height:18px"></div>
     </section>
 
     <script>
@@ -368,6 +414,146 @@
 
       cargarPedidos(false);
       setInterval(function() { cargarPedidos(true); }, 15000);
+
+      // ── Teléfonos y Correos (RF02/RF03) ─────────────────────────────────
+      var TIPO_LABEL = { CELULAR: 'Celular', FIJO: 'Fijo', TRABAJO: 'Trabajo' };
+
+      function renderTelefonos(lista) {
+        var el = document.getElementById('tel-lista');
+        if (!el) return;
+        if (!lista || lista.length === 0) {
+          el.innerHTML = '<p style="color:#999;font-size:13px">Sin teléfonos adicionales registrados.</p>';
+          return;
+        }
+        el.innerHTML = lista.map(function(t) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8f8f8;border-radius:6px;margin-bottom:6px;font-size:14px">' +
+            '<span>' + t.numero + ' <span style="color:#999;font-size:12px">(' + (TIPO_LABEL[t.tipo] || t.tipo) + ')</span></span>' +
+            '<button onclick="eliminarTelefono(' + t.id + ')" style="background:none;border:none;color:#c62828;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px" title="Eliminar">&#10005;</button>' +
+            '</div>';
+        }).join('');
+      }
+
+      function renderCorreos(lista) {
+        var el = document.getElementById('correo-lista');
+        if (!el) return;
+        if (!lista || lista.length === 0) {
+          el.innerHTML = '<p style="color:#999;font-size:13px">Sin correos adicionales registrados.</p>';
+          return;
+        }
+        el.innerHTML = lista.map(function(c) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8f8f8;border-radius:6px;margin-bottom:6px;font-size:14px">' +
+            '<span>' + c.correo + (c.principal ? ' <span style="color:#2e7d32;font-size:11px;font-weight:600">(PRINCIPAL)</span>' : '') + '</span>' +
+            (!c.principal ? '<button onclick="eliminarCorreo(' + c.id + ')" style="background:none;border:none;color:#c62828;cursor:pointer;font-size:18px;line-height:1;padding:2px 6px" title="Eliminar">&#10005;</button>' : '') +
+            '</div>';
+        }).join('');
+      }
+
+      function cargarContactos() {
+        fetch(ctx + '/SvContactoCliente', { credentials: 'same-origin' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.error) return;
+            renderTelefonos(d.telefonos);
+            renderCorreos(d.correos);
+          }).catch(function() {});
+      }
+
+      function showToast(msg, ok) {
+        var t = document.createElement('div');
+        var color = ok ? '#2e7d32' : '#c62828';
+        var bg    = ok ? '#e8f5e9' : '#ffebee';
+        t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:14px 22px;border-radius:8px;border-left:4px solid ' + color + ';background:' + bg + ';color:' + color + ';font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.12);animation:slideIn .3s ease;max-width:320px';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function() { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(function(){ t.remove(); }, 400); }, 3500);
+      }
+
+      window.abrirEditarDir = function() {
+        var f = document.getElementById('dir-form');
+        var input = document.getElementById('dir-input');
+        input.value = document.getElementById('dir-texto').textContent.trim();
+        f.style.display = 'block';
+        input.focus();
+      };
+      window.cerrarEditarDir = function() {
+        document.getElementById('dir-form').style.display = 'none';
+        document.getElementById('dir-msg').textContent = '';
+      };
+      window.guardarDireccion = function() {
+        var val = (document.getElementById('dir-input').value || '').trim();
+        var msg = document.getElementById('dir-msg');
+        if (!val) { msg.textContent = 'La dirección no puede estar vacía.'; msg.style.color = '#c62828'; return; }
+        var body = new URLSearchParams({ tipo: 'direccion', direccion: val });
+        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.error) { msg.textContent = d.error; msg.style.color = '#c62828'; }
+            else {
+              document.getElementById('dir-texto').textContent = val;
+              cerrarEditarDir();
+              showToast('✓ Dirección actualizada correctamente', true);
+            }
+          }).catch(function() { msg.textContent = 'Error al guardar.'; msg.style.color = '#c62828'; });
+      };
+
+      window.agregarTelefono = function() {
+        var num  = (document.getElementById('tel-nuevo-numero').value || '').trim();
+        var tipo = document.getElementById('tel-nuevo-tipo').value;
+        var msg  = document.getElementById('tel-msg');
+        if (!num) { msg.textContent = 'Ingresa un número.'; msg.style.color = '#c62828'; return; }
+        msg.textContent = 'Guardando...'; msg.style.color = '#888';
+        var body = new URLSearchParams({ tipo: 'telefono', numero: num, tipoTel: tipo });
+        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.error) { msg.textContent = d.error; msg.style.color = '#c62828'; }
+            else {
+              msg.textContent = '';
+              document.getElementById('tel-nuevo-numero').value = '';
+              cargarContactos();
+              showToast('✓ Teléfono guardado exitosamente', true);
+            }
+          }).catch(function(e) { msg.textContent = 'Error al guardar.'; msg.style.color = '#c62828'; });
+      }
+
+      window.eliminarTelefono = function(id) {
+        if (!confirm('¿Eliminar este teléfono?')) return;
+        var body = new URLSearchParams({ tipo: 'telefono', accion: 'eliminar', id: id });
+        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { if (!d.error) { cargarContactos(); showToast('Teléfono eliminado', true); } else showToast(d.error, false); })
+          .catch(function() {});
+      }
+
+      window.agregarCorreo = function() {
+        var correo = (document.getElementById('correo-nuevo').value || '').trim();
+        var msg    = document.getElementById('correo-msg');
+        if (!correo) { msg.textContent = 'Ingresa un correo.'; msg.style.color = '#c62828'; return; }
+        msg.textContent = 'Guardando...'; msg.style.color = '#888';
+        var body = new URLSearchParams({ tipo: 'correo', correo: correo });
+        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.error) { msg.textContent = d.error; msg.style.color = '#c62828'; }
+            else {
+              msg.textContent = '';
+              document.getElementById('correo-nuevo').value = '';
+              cargarContactos();
+              showToast('✓ Correo guardado exitosamente', true);
+            }
+          }).catch(function(e) { msg.textContent = 'Error al guardar.'; msg.style.color = '#c62828'; });
+      }
+
+      window.eliminarCorreo = function(id) {
+        if (!confirm('¿Eliminar este correo?')) return;
+        var body = new URLSearchParams({ tipo: 'correo', accion: 'eliminar', id: id });
+        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { if (!d.error) { cargarContactos(); showToast('Correo eliminado', true); } else showToast(d.error, false); })
+          .catch(function() {});
+      }
+
+      cargarContactos();
     })();
     </script>
 

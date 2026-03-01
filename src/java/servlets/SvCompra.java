@@ -1,6 +1,7 @@
 package servlets;
 
 import enums.EstadoPedido;
+import exceptions.StockInsuficienteException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -103,6 +104,10 @@ public class SvCompra extends HttpServlet {
                 Producto producto = buscarOCrearProducto(em, nombre, request.getParameter("item_brand_" + i), price);
                 if (producto == null) continue;
 
+                // Descontar stock (lanza StockInsuficienteException si no hay suficiente)
+                producto.reducirStock(qty);
+                em.merge(producto);
+
                 Detallepedido det = new Detallepedido();
                 det.setPedido(pedido);
                 det.setProducto(producto);
@@ -120,6 +125,9 @@ public class SvCompra extends HttpServlet {
 
             out.print("{\"ok\":true,\"idPedido\":" + pedido.getIdPedido() + ",\"total\":" + total + "}");
 
+        } catch (StockInsuficienteException e) {
+            if (em != null && em.getTransaction().isActive()) em.getTransaction().rollback();
+            out.print("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
         } catch (Exception e) {
             if (em != null && em.getTransaction().isActive()) em.getTransaction().rollback();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -187,7 +195,16 @@ public class SvCompra extends HttpServlet {
 
     private String escapeJson(String s) {
         if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"")
-                .replace("\n", "\\n").replace("\r", "\\r");
+        StringBuilder sb = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            if      (c == '"')  sb.append("\\\"");
+            else if (c == '\\') sb.append("\\\\");
+            else if (c == '\n') sb.append("\\n");
+            else if (c == '\r') sb.append("\\r");
+            else if (c == '\t') sb.append("\\t");
+            else if (c < 0x20)  sb.append(String.format("\\u%04x", (int) c));
+            else                sb.append(c);
+        }
+        return sb.toString();
     }
 }

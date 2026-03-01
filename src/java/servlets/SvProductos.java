@@ -80,8 +80,8 @@ public class SvProductos extends HttpServlet {
             String descripcion   = request.getParameter("descripcion");
             String precioStr     = request.getParameter("precio");
             String stockStr      = request.getParameter("stock");
-            String nombreCat     = request.getParameter("idCategoria");
-            String nombreMarca   = request.getParameter("idMarca");
+            String idCatStr      = request.getParameter("idCategoria");
+            String idMarcaStr    = request.getParameter("idMarca");
             String idStr         = request.getParameter("id");
             String imagenUrl     = request.getParameter("imagenUrl");
 
@@ -92,8 +92,22 @@ public class SvProductos extends HttpServlet {
             MarcaJpaController marcaCtrl     = new MarcaJpaController();
             ProductoJpaController prodCtrl   = new ProductoJpaController();
 
-            Categoria cat = buscarOCrearCategoria(catCtrl, nombreCat != null && !nombreCat.isBlank() ? nombreCat : "General");
-            Marca marca   = buscarOCrearMarca(marcaCtrl, nombreMarca != null && !nombreMarca.isBlank() ? nombreMarca : "Sin Marca");
+            Categoria cat;
+            Marca marca;
+            try {
+                int idCat = Integer.parseInt(idCatStr);
+                cat = catCtrl.findCategoria(idCat);
+                if (cat == null) throw new Exception("Categoría con ID " + idCat + " no encontrada.");
+            } catch (NumberFormatException e) {
+                cat = buscarOCrearCategoria(catCtrl, idCatStr != null && !idCatStr.isBlank() ? idCatStr : "General");
+            }
+            try {
+                int idMarca = Integer.parseInt(idMarcaStr);
+                marca = marcaCtrl.findMarca(idMarca);
+                if (marca == null) throw new Exception("Marca con ID " + idMarca + " no encontrada.");
+            } catch (NumberFormatException e) {
+                marca = buscarOCrearMarca(marcaCtrl, idMarcaStr != null && !idMarcaStr.isBlank() ? idMarcaStr : "Sin Marca");
+            }
 
             if ("editar".equals(accion) && idStr != null) {
                 Producto p = prodCtrl.findProducto(Integer.parseInt(idStr));

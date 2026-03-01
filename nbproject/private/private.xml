@@ -7,7 +7,6 @@
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Categoria.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Controladora.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/ControladoraPersistencia.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvUsuarios.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Usuario.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Cliente.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/itemCarrito.java</file>
@@ -16,6 +15,7 @@
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvLogout.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvPedidos.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvProductos.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/conf/persistence.xml</file>
         </group>
     </open-files>
 </project-private>

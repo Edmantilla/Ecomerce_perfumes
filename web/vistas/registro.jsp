@@ -192,6 +192,11 @@
                         min="1900-01-01">
                 </div>
 
+                <div class="formulario-username">
+                    <label for="direccion">Dirección</label>
+                    <input type="text" id="direccion" name="direccion" placeholder="Calle, carrera, barrio, ciudad" required>
+                </div>
+
                 <div class="formulario-checkbox">
                     <input type="checkbox" id="terminos" name="terminos" required>
                     <label for="terminos">He leído y acepto los

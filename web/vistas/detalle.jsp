@@ -1,0 +1,354 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../assets/estilos/style.css">
+    <link rel="stylesheet" href="../assets/estilos/cart.css">
+    <title id="page-title">Detalle de Producto - ANDREYLPZ</title>
+</head>
+<body>
+
+    <div class="discount">
+        <h2 class="discount__title">RECIBA UN KIT DE MUESTRA LITRO POR LA COMPRA DE UNA LOSION</h2>
+    </div>
+
+    <header>
+        <div class="navbar">
+            <input type="checkbox" id="navbar-toggle" class="navbar__toggle">
+            <label for="navbar-toggle" class="navbar__hamburger">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </label>
+            <ul class="navbar__list">
+                <li class="navbar__item">
+                    <a class="navbar__link" href="#">HOMBRES</a>
+                    <div class="navbar__list-megamenu">
+                        <div class="navbar__list-megamenu__list">
+                            <img src="../assets/imagenes/yves saint laurent.webp" alt="">
+                            <div class="navbar__list-megamenu__links">
+                                <div class="navbar__list-megamenu__links--title"><h2>PERFUMES</h2></div>
+                                <a href="cartas.jsp">Xerjoff</a>
+                                <a href="pacco_rabanne.jsp">Paco Rabanne</a>
+                            </div>
+                            <div class="navbar__list-megamenu__list">
+                                <div class="navbar__list-megamenu__links--perfiles">
+                                    <h2>PERFILES DE FRAGANCIA</h2>
+                                    <a href="#">Oriental</a><a href="#">Floral</a><a href="#">Fresco</a><a href="#">Amaderado</a><a href="#">Gourmet</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="navbar__item">
+                    <a class="navbar__link" href="#">MUJERES</a>
+                    <div class="navbar__list-megamenu">
+                        <div class="navbar__list-megamenu__list">
+                            <img src="../assets/imagenes/1759572947949-bottombanner-fr-mobile_3200x3000.jpg" alt="">
+                            <div class="navbar__list-megamenu__links">
+                                <div class="navbar__list-megamenu__links--title"><h2>PERFUMES</h2></div>
+                                <a href="Chanel.jsp">Chanel</a>
+                                <a href="Cristian_dior.jsp">Cristian Dior</a>
+                            </div>
+                            <div class="navbar__list-megamenu__list">
+                                <div class="navbar__list-megamenu__links--perfiles">
+                                    <h2>PERFILES DE FRAGANCIA</h2>
+                                    <a href="#">Oriental</a><a href="#">Floral</a><a href="#">Fresco</a><a href="#">Amaderado</a><a href="#">Gourmet</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="navbar__item">
+                    <a class="navbar__link" href="#">BOUTIQUE</a>
+                    <div class="navbar__list-megamenu">
+                        <div class="navbar__list-megamenu__list">
+                            <div class="navbar__list-megamenu__list">
+                                <div class="navbar__list-megamenu__links--perfiles2">
+                                    <h2>LATINOAMERICA</h2>
+                                    <a href="Colombia.jsp">Colombia</a>
+                                    <a href="Venezuela.jsp">Venezuela</a>
+                                </div>
+                                <img src="../assets/imagenes/boutique.jpg" alt="">
+                                <img src="../assets/imagenes/boutique 2 .jpg" alt="">
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <div class="navbar__brand">
+                <a class="navbar__logo" href="../index.jsp">ANDREYLPZ</a>
+            </div>
+            <ul class="navbar__list">
+                <li><a class="navbar__link" href="#">BLOG</a></li>
+                <li class="navbar__item">
+                    <a class="navbar__link" href="#">NOSOTROS</a>
+                    <div class="navbar__list-megamenu">
+                        <div class="navbar__list-megamenu__list">
+                            <img src="../assets/imagenes/yves saint laurent.webp" alt="">
+                            <div class="navbar__list-megamenu__list">
+                                <div class="navbar__list-megamenu__links--perfiles2">
+                                    <h2>PERFILES DE FRAGANCIA</h2>
+                                    <a href="historia.jsp">Historia</a>
+                                    <a href="filosofia.jsp">Filosofia</a>
+                                    <a href="quienes_somos.jsp">Quienes Somos</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <div class="navbar__actions">
+                <nav>
+                    <ul class="navbar__actions-list">
+                        <li><a href="perfil.jsp"><img src="../assets/iconos/user.png" alt=""></a></li>
+                        <li><a href="#compras"><img src="../assets/iconos/shopping.png" alt=""></a></li>
+                        <li class="navbar__item">
+                            <a href="#buscar"><img src="../assets/iconos/search.png" alt=""></a>
+                            <div class="navbar__list-megamenu">
+                                <div class="navbar__list-megamenu__list">
+                                    <div class="navbar__list-megamenu__links--buscador">
+                                        <h2>BUSCAR</h2><input type="text">
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-losion">
+        <section class="section-losion-perfumes" id="detalle-section">
+            <div id="detalle-loading" style="text-align:center;padding:60px;color:#888;font-size:1.1rem;">
+                Cargando producto...
+            </div>
+            <div id="detalle-error" style="display:none;text-align:center;padding:60px;color:#c62828;font-size:1.1rem;">
+                Producto no encontrado.
+            </div>
+            <div id="detalle-contenido" style="display:none;">
+                <div class="section-losion__contenedor">
+                    <div class="section-losion__contenedor2">
+                        <h2><a class="section-losion__titulo2" id="detalle-marca-link" href="#">–</a></h2>
+                    </div>
+                    <h2 class="section-losion__title" id="detalle-nombre">–</h2>
+                </div>
+                <div class="section-losion__divicion">
+                    <div class="section-losion__divicion__img">
+                        <img id="detalle-img" src="" alt="" style="max-width:100%;object-fit:contain">
+                    </div>
+                    <div class="section-losion__divicion__description">
+                        <div class="section-losion__divicion__description__img"></div>
+                        <div class="section-losion__divicion__description__precios">
+                            <h2 class="section-losion__divicion__description__precios__mililitro">50 ML - 100 ML</h2>
+                            <h2 class="section-losion__divicion__description__precios__precios" id="detalle-precio">–</h2>
+                        </div>
+                        <button class="section-losion__divicion__description__button" id="detalle-btn-carrito" data-cart-managed="true">AGREGAR AL CARRITO</button>
+                        <p id="detalle-descripcion"></p>
+                        <div class="section-losion__divicion__description__type">
+                            <h2>TIPO</h2><p id="detalle-categoria">–</p>
+                        </div>
+                        <div class="section-losion__divicion__description__type">
+                            <h2>MARCA</h2><p id="detalle-marca">–</p>
+                        </div>
+                        <div class="section-losion__divicion__description__type">
+                            <h2>STOCK</h2><p id="detalle-stock">–</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer__section--newsletter">
+            <h2 class="footer__title">Reciba un 10% de descuento en su proximo pedido superior a 300 cop al suscribirse al boletin informativo de andreylpz.</h2>
+            <div class="footer__form-wrapper">
+                <form action=""><input type="text" name="correo_electronico" placeholder="DIRECCION DE CORREO ELECTRONICO"><button>INSCRIBIRSE</button></form>
+            </div>
+        </div>
+        <div class="footer__section">
+            <h2 class="footer__title">SERVICIO AL CLIENTE</h2>
+            <ul class="footer__list">
+                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
+                <li class="footer__item"><a class="footer__link" href="#">Preguntas Frecuentes</a></li>
+            </ul>
+        </div>
+        <div class="footer__section">
+            <h2 class="footer__title">LEGAL</h2>
+            <ul class="footer__list">
+                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
+                <li class="footer__item"><a class="footer__link" href="#">Politica de cookies</a></li>
+            </ul>
+        </div>
+        <div class="footer__section">
+            <h2 class="footer__title">ELECCION DE PAIS</h2>
+            <ul class="footer__list">
+                <li class="footer__item"><a class="footer__link" href="Colombia.jsp">Colombia</a></li>
+                <li class="footer__item"><a class="footer__link" href="#">Estados unidos</a></li>
+                <li class="footer__item"><a class="footer__link" href="#">Ecuador</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script src="../assets/scripts/cart.js"></script>
+    <script>
+    (function () {
+        var ctx = (function () {
+            var p = window.location.pathname.split('/');
+            return '/' + p[1];
+        })();
+
+        function getParam(name) {
+            return new URLSearchParams(window.location.search).get(name);
+        }
+
+        var nombreParam = getParam('nombre');
+
+        if (!nombreParam) {
+            document.getElementById('detalle-loading').style.display = 'none';
+            document.getElementById('detalle-error').style.display = 'block';
+            return;
+        }
+
+        var MARCA_URLS = {
+            'Chanel':       'Chanel.jsp',
+            'Dior':         'Cristian_dior.jsp',
+            'Paco Rabanne': 'pacco_rabanne.jsp',
+            'Xerjoff':      'cartas.jsp'
+        };
+
+        function parsePrice(str) {
+            return parseInt(String(str).replace(/\./g, '').replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (productos) {
+                var prod = null;
+                if (Array.isArray(productos)) {
+                    prod = productos.find(function (p) {
+                        return p.nombre && p.nombre.toLowerCase() === nombreParam.toLowerCase() && p.activo;
+                    });
+                }
+
+                document.getElementById('detalle-loading').style.display = 'none';
+
+                if (!prod) {
+                    document.getElementById('detalle-error').style.display = 'block';
+                    return;
+                }
+
+                document.title = prod.nombre + ' - ANDREYLPZ';
+
+                document.getElementById('detalle-nombre').textContent = prod.nombre;
+
+                var marcaUrl = MARCA_URLS[prod.marca] || '#';
+                var marcaLink = document.getElementById('detalle-marca-link');
+                marcaLink.textContent = (prod.marca || '').toUpperCase();
+                marcaLink.href = marcaUrl;
+
+                var imgDefault = ctx + '/assets/imagenes/Imagen de la losion.webp';
+                var imgSrc = (prod.imagenUrl && prod.imagenUrl.trim() !== '') ? prod.imagenUrl : imgDefault;
+                var imgEl = document.getElementById('detalle-img');
+                imgEl.src = imgSrc;
+                imgEl.alt = prod.nombre;
+                imgEl.onerror = function () { this.src = imgDefault; };
+
+                var precio = parseFloat(prod.precio) || 0;
+                document.getElementById('detalle-precio').textContent = precio.toLocaleString('es-CO') + ' COP';
+
+                document.getElementById('detalle-descripcion').textContent = prod.descripcion || '';
+                document.getElementById('detalle-categoria').textContent = prod.categoria || '–';
+                document.getElementById('detalle-marca').textContent = prod.marca || '–';
+                document.getElementById('detalle-stock').textContent = prod.stock > 0 ? prod.stock + ' unidades disponibles' : 'Sin stock';
+
+                document.getElementById('detalle-contenido').style.display = 'block';
+
+                var btn = document.getElementById('detalle-btn-carrito');
+                if (prod.stock <= 0) {
+                    btn.disabled = true;
+                    btn.textContent = 'SIN STOCK';
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    return;
+                }
+
+                // Conectar botón directamente usando la API de cart.js (addProduct)
+                var name  = prod.nombre;
+                var brand = prod.marca || '';
+                var price = precio;
+                var image = imgSrc;
+                var id    = (brand + '_' + name).toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+                btn.addEventListener('click', function () {
+                    var STORAGE_KEY = 'andreylpz_cart';
+                    var cart = [];
+                    try { cart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) {}
+                    var existing = cart.find(function(item) { return item.id === id; });
+                    if (existing) {
+                        existing.qty += 1;
+                    } else {
+                        cart.push({ id: id, name: name, brand: brand, price: price, image: image, qty: 1 });
+                    }
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+
+                    // Actualizar badge y panel del cart.js
+                    document.querySelectorAll('.cart-badge__count').forEach(function(el) {
+                        var total = cart.reduce(function(s, i) { return s + i.qty; }, 0);
+                        el.textContent = total;
+                        el.classList.toggle('visible', total > 0);
+                    });
+
+                    btn.classList.add('added');
+                    btn.textContent = '\u2713 A\u00d1ADIDO';
+                    setTimeout(function () {
+                        btn.textContent = 'AGREGAR AL CARRITO';
+                        btn.classList.remove('added');
+                    }, 2000);
+
+                    // Abrir panel del carrito
+                    var panel = document.getElementById('cartPanel');
+                    var overlay = document.getElementById('cartOverlay');
+                    if (panel) panel.classList.add('open');
+                    if (overlay) overlay.classList.add('open');
+                    document.body.style.overflow = 'hidden';
+
+                    // Forzar re-render del panel
+                    var cartBody = document.getElementById('cartBody');
+                    var subtotalEl = document.getElementById('cartSubtotal');
+                    if (cartBody) {
+                        var subtotal = 0;
+                        cartBody.innerHTML = cart.map(function(item, index) {
+                            var lineTotal = item.price * item.qty;
+                            subtotal += lineTotal;
+                            return '<div class="cart-item" data-index="' + index + '">' +
+                                '<img class="cart-item__img" src="' + item.image + '" alt="' + item.name + '" onerror="this.style.display=\'none\'">' +
+                                '<div class="cart-item__info">' +
+                                '<p class="cart-item__brand">' + item.brand + '</p>' +
+                                '<p class="cart-item__name">' + item.name + '</p>' +
+                                '<p class="cart-item__price">' + lineTotal.toLocaleString('es-CO') + ' COP</p>' +
+                                '<div class="cart-item__qty-controls">' +
+                                '<button class="cart-item__qty-btn" data-action="decrease" data-index="' + index + '">\u2212</button>' +
+                                '<span class="cart-item__qty">' + item.qty + '</span>' +
+                                '<button class="cart-item__qty-btn" data-action="increase" data-index="' + index + '">+</button>' +
+                                '</div></div>' +
+                                '<button class="cart-item__remove" data-action="remove" data-index="' + index + '">\u2715</button>' +
+                                '</div>';
+                        }).join('');
+                        if (subtotalEl) subtotalEl.textContent = subtotal.toLocaleString('es-CO') + ' COP';
+                    }
+                });
+            })
+            .catch(function (e) {
+                document.getElementById('detalle-loading').style.display = 'none';
+                document.getElementById('detalle-error').style.display = 'block';
+                console.error('Error cargando producto:', e);
+            });
+    })();
+    </script>
+</body>
+</html>
