@@ -13,141 +13,7 @@
 
 <body>
 
-    <div class="discount">
-        <h2 class="discount__title">RECIBA UN KIT DE MUESTRA LITRO POR LA COMPRA DE UNA LOSION</h2>
-    </div>
-    <!-- Encabezado y Barra de Navegación -->
-    <header>
-        <div class="navbar">
-            <!-- Checkbox para el menú hamburguesa (Versión Móvil) -->
-            <input type="checkbox" id="navbar-toggle" class="navbar__toggle">
-            <label for="navbar-toggle" class="navbar__hamburger">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </label>
-            <ul class="navbar__list">
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">HOMBRES</a>
-                    <div class="navbar__list-megamenu">
-
-                        <div class="navbar__list-megamenu__list">
-                            <img src="../assets/imagenes/yves saint laurent.webp" alt="">
-                            <div class="navbar__list-megamenu__links">
-                                <div class="navbar__list-megamenu__links--title">
-                                    <h2>PERFUMES</h2>
-                                </div>
-                                <a href="cartas.jsp">Xerjoff</a>
-                                <a href="pacco_rabanne.jsp">Paco Rabanne</a>
-                            </div>
-
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles">
-                                    <h2>PERFILES DE FRAGANCIA</h2>
-                                    <a href="#">Oriental</a>
-                                    <a href="#">Floral</a>
-                                    <a href="#">Fresco</a>
-                                    <a href="#">Amaderado</a>
-                                    <a href="#">Gourmet</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">MUJERES</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <img src="../assets/imagenes/1759572947949-bottombanner-fr-mobile_3200x3000.jpg" alt="">
-                            <div class="navbar__list-megamenu__links">
-                                <div class="navbar__list-megamenu__links--title">
-                                    <h2>PERFUMES</h2>
-                                </div>
-                                <a href="Chanel.jsp">Chanel</a>
-                                <a href="Cristian_dior.jsp">Cristian Dior</a>
-                            </div>
-
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles">
-                                    <h2>PERFILES DE FRAGANCIA</h2>
-                                    <a href="#">Oriental</a>
-                                    <a href="#">Floral</a>
-                                    <a href="#">Fresco</a>
-                                    <a href="#">Amaderado</a>
-                                    <a href="#">Gourmet</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </li>
-
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">BOUTIQUE</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles2">
-                                    <h2>LATINOAMERICA</h2>
-                                    <a href="Colombia.jsp">Colombia</a>
-                                    
-                                    <a href="Venezuela.jsp">Venezuela</a>
-                                    
-                                    
-                                    
-                                </div>
-                                <img src="../assets/imagenes/boutique.jpg" alt="">
-                                <img src="../assets/imagenes/boutique 2 .jpg" alt="">
-                            </div>
-                        </div>
-                    </div>
-
-                </li>
-            </ul>
-            <div class="navbar__brand">
-                <a class="navbar__logo" href="../index.jsp">ANDREYLPZ</a>
-            </div>
-            <ul class="navbar__list">
-                <li><a class="navbar__link" href="#">BLOG</a></li>
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">NOSOTROS</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <img src="../assets/imagenes/yves saint laurent.webp" alt="">
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles2">
-                                    <h2>PERFILES DE FRAGANCIA</h2>
-                                    <a href="historia.jsp">Historia</a>
-                                    <a href="filosofia.jsp">Filosofia</a>
-                                    <a href="quienes_somos.jsp">Quienes Somos</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-            </ul>
-
-            <div class="navbar__actions">
-                <nav>
-                    <ul class="navbar__actions-list">
-                        <li><a href="perfil.jsp"><img src="../assets/iconos/user.png" alt=""></a></li>
-                        <li><a href="#compras"><img src="../assets/iconos/shopping.png" alt=""></a></li>
-                        <li class="navbar__item">
-                            <a href="#buscar"><img src="../assets/iconos/search.png" alt=""></a>
-                            <div class="navbar__list-megamenu">
-                                <div class="navbar__list-megamenu__list">
-                                    <div class="navbar__list-megamenu__links--buscador">
-                                        <h2>BUSCAR</h2>
-                                        <input type="text">
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </header>
+    <%@ include file="_navbar.jsp" %>
 
     <!-- Contenido Principal: Catálogo de Lociones -->
     <main class="main-losion">
@@ -166,86 +32,47 @@
             </div>
         </section>
 
-        <section class="cards-lociones" id="xerjoff-cards">
-            <!-- Cards estáticas (productos originales Xerjoff) -->
-            <article class="card">
-                <a href="Hombres/Xerjoff/Alexandria_II.jsp">
-                    <img class="card__img" src="../assets/imagenes/ALEXANDRIA 2.webp" alt="Alexandria II Perfume">
-                </a>
-                <div class="card__content">
-                    <h2 class="card__title">ALEXANDRIA II</h2>
-                    <h3 class="card__subtitle">Perfume</h3>
-                    <p class="card__description">Una fragancia unisex de la familia amaderada y ámbar oriental que combina notas de palisandro, lavanda, canela y manzana.</p>
-                    <p class="card__quantity">50 ml - 100 ml</p>
-                    <p class="card__price">1.100.000 COP</p>
-                </div>
-            </article>
-            <!-- Las cards de productos nuevos agregados desde el admin se insertan aquí dinámicamente -->
+        <section class="cards-lociones" id="marca-cards">
         </section>
     </main>
 
     <script>
     (function() {
-        var STATIC_NAMES = ['ALEXANDRIA II'];
+        var MARCA = 'Xerjoff';
+        var IMG_DEFAULT = '../assets/imagenes/Imagen de la losion.webp';
         var ctx = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
-
-        function fmt(n) {
-            return parseFloat(n).toLocaleString('es-CO') + ' COP';
-        }
-
         fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(productos) {
-                if (!Array.isArray(productos)) {
-                    console.warn('[Xerjoff] SvProductos no devolvió un array:', productos);
+                if (!Array.isArray(productos)) return;
+                var filtrados = productos.filter(function(p) {
+                    return p.activo && p.marca && p.marca.toLowerCase() === MARCA.toLowerCase();
+                });
+                var section = document.getElementById('marca-cards');
+                if (!section) return;
+                if (filtrados.length === 0) {
+                    section.innerHTML = '<p style="text-align:center;color:#888;padding:40px">No hay productos disponibles.</p>';
                     return;
                 }
-                console.log('[Xerjoff] Total productos en BD:', productos.length);
-                productos.forEach(function(p) {
-                    console.log('[Xerjoff] Producto:', p.nombre, '| Marca:', JSON.stringify(p.marca), '| Activo:', p.activo);
-                });
-
-                var xerjoff = productos.filter(function(p) {
-                    return p.activo &&
-                           p.marca && p.marca.toUpperCase() === 'XERJOFF' &&
-                           STATIC_NAMES.indexOf(p.nombre.toUpperCase()) === -1;
-                });
-
-                console.log('[Xerjoff] Productos nuevos Xerjoff encontrados:', xerjoff.length);
-                if (xerjoff.length === 0) return;
-
-                var section = document.getElementById('xerjoff-cards');
-                xerjoff.forEach(function(p) {
-                    var imgSrc = p.imagenUrl && p.imagenUrl.trim() !== ''
-                        ? p.imagenUrl
-                        : ctx + '/assets/imagenes/Imagen de la losion.webp';
-
-                    var article = document.createElement('article');
-                    article.className = 'card';
-                    article.innerHTML =
+                filtrados.forEach(function(p) {
+                    var precio = parseFloat(p.precio) || 0;
+                    var precioStr = precio.toLocaleString('es-CO') + ' COP';
+                    var img = (p.imagenUrl && p.imagenUrl.trim() !== '') ? p.imagenUrl : IMG_DEFAULT;
+                    var art = document.createElement('article');
+                    art.className = 'card';
+                    art.innerHTML =
                         '<a href="detalle.jsp?nombre=' + encodeURIComponent(p.nombre) + '">' +
-                            '<img class="card__img" src="' + imgSrc + '" alt="' + p.nombre + '" ' +
-                                'onerror="this.src=\'' + ctx + '/assets/imagenes/Imagen de la losion.webp\'">' +
-                        '</a>' +
+                        '<img class="card__img" src="' + img + '" alt="' + p.nombre + '" onerror="this.src=\''+IMG_DEFAULT+'\'"></a>' +
                         '<div class="card__content">' +
-                            '<h2 class="card__title">' + p.nombre.toUpperCase() + '</h2>' +
-                            '<h3 class="card__subtitle">Perfume</h3>' +
-                            '<p class="card__description">' + (p.descripcion || 'Fragancia exclusiva Xerjoff.') + '</p>' +
-                            '<p class="card__quantity">50 ml - 100 ml</p>' +
-                            '<p class="card__price">' + fmt(p.precio) + '</p>' +
+                        '<h2 class="card__title">' + p.nombre.toUpperCase() + '</h2>' +
+                        '<h3 class="card__subtitle">Perfume</h3>' +
+                        '<p class="card__description">' + (p.descripcion || '') + '</p>' +
+                        '<p class="card__price">' + precioStr + '</p>' +
                         '</div>';
-
-                    article.querySelector('img').setAttribute(
-                        'data-cart-name', p.nombre);
-                    article.querySelector('img').setAttribute(
-                        'data-cart-price', p.precio);
-                    article.querySelector('img').setAttribute(
-                        'data-cart-brand', 'Xerjoff');
-
-                    section.appendChild(article);
+                    section.appendChild(art);
                 });
             })
-            .catch(function() {});
+            .catch(function(e) { console.error('Error cargando productos Xerjoff:', e); });
     })();
     </script>
 

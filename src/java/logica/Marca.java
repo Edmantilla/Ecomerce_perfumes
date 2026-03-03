@@ -30,6 +30,12 @@ public class Marca {
     @Column(name = "descripcion", length = 255)
     private String descripcion;
 
+    @Column(name = "genero", nullable = false, length = 6)
+    private String genero;
+
+    @Column(name = "pagina_url", length = 150)
+    private String paginaUrl;
+
     @Column(name = "activo", nullable = false)
     private boolean activo;
 
@@ -73,6 +79,22 @@ public class Marca {
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public String getGenero() {
+        return genero != null ? genero : "HOMBRE";
+    }
+
+    public void setGenero(String genero) {
+        this.genero = (genero != null && genero.equalsIgnoreCase("MUJER")) ? "MUJER" : "HOMBRE";
+    }
+
+    public String getPaginaUrl() {
+        return paginaUrl;
+    }
+
+    public void setPaginaUrl(String paginaUrl) {
+        this.paginaUrl = paginaUrl;
     }
 
     public boolean isActivo() {

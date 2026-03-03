@@ -598,6 +598,13 @@
                 <label class="form-label">Descripci&#243;n</label>
                 <input class="form-input" id="marca-descripcion" type="text" placeholder="Descripci&#243;n opcional">
             </div>
+            <div class="form-group" id="marca-genero-group">
+                <label class="form-label">G&#233;nero *</label>
+                <select class="form-input" id="marca-genero">
+                    <option value="HOMBRE">Hombre</option>
+                    <option value="MUJER">Mujer</option>
+                </select>
+            </div>
             <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:12px">
                 <button class="btn btn-secondary" onclick="document.getElementById('modal-marca').classList.remove('open')">Cancelar</button>
                 <button class="btn btn-primary" id="save-marca-btn">Guardar</button>

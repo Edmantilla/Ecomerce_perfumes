@@ -136,9 +136,10 @@ public class SvPagos extends HttpServlet {
 
             // Validar que monto no exceda el pendiente (RF022)
             TypedQuery<BigDecimal> qSum = em.createQuery(
-                "SELECT COALESCE(SUM(p.montoPagado),0) FROM Pago p WHERE p.pedido.idPedido = :id AND p.estadoPago = 'APROBADO'",
+                "SELECT COALESCE(SUM(p.montoPagado),0) FROM Pago p WHERE p.pedido.idPedido = :id AND p.estadoPago = :estado",
                 BigDecimal.class);
             qSum.setParameter("id", idPedido);
+            qSum.setParameter("estado", EstadoPago.APROBADO);
             BigDecimal sumaPagada = qSum.getSingleResult();
             BigDecimal totalPedido = pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO;
             BigDecimal pendiente = totalPedido.subtract(sumaPagada);

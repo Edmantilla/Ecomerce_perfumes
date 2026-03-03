@@ -160,6 +160,7 @@ public class SvCompra extends HttpServlet {
         } else {
             marca = new Marca();
             marca.setNombreMarca(marcaNombre);
+            marca.setGenero("HOMBRE");
             marca.setActivo(true);
             em.persist(marca);
             em.flush();

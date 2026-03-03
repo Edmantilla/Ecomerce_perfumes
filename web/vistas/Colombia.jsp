@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,115 +13,7 @@
 
 <body class="boutique-main">
 
-    <div class="discount">
-        <h2 class="discount__title">RECIBA UN KIT DE MUESTRA LITRO POR LA COMPRA DE UNA LOSION</h2>
-    </div>
-
-    <!-- Header / Navbar (Reused from existing template) -->
-    <header>
-        <div class="navbar">
-            <input type="checkbox" id="navbar-toggle" class="navbar__toggle">
-            <label for="navbar-toggle" class="navbar__hamburger"><span class="hamburger-line"></span><span
-                    class="hamburger-line"></span><span class="hamburger-line"></span></label>
-            <ul class="navbar__list">
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">HOMBRES</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <img src="../assets/imagenes/yves saint laurent.webp" alt="">
-                            <div class="navbar__list-megamenu__links">
-                                <div class="navbar__list-megamenu__links--title">
-                                    <h2>PERFUMES</h2>
-                                </div>
-                                <a href="cartas.jsp">Xerjoff</a>
-                                <a href="pacco_rabanne.jsp">Paco Rabanne</a>
-                            </div>
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles">
-                                    <h2>PERFILES DE FRAGANCIA</h2>
-                                    <a href="#">Oriental</a><a href="#">Floral</a><a href="#">Fresco</a><a
-                                        href="#">Amaderado</a><a href="#">Gourmet</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">MUJERES</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <img src="../assets/imagenes/1759572947949-bottombanner-fr-mobile_3200x3000.jpg" alt="">
-                            <div class="navbar__list-megamenu__links">
-                                <div class="navbar__list-megamenu__links--title">
-                                    <h2>PERFUMES</h2>
-                                </div>
-                                <a href="Chanel.jsp">Chanel</a>
-                                <a href="Cristian_dior.jsp">Cristian Dior</a>
-                            </div>
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles">
-                                    <h2>PERFILES DE FRAGANCIA</h2>
-                                    <a href="#">Oriental</a><a href="#">Floral</a><a href="#">Fresco</a><a
-                                        href="#">Amaderado</a><a href="#">Gourmet</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">BOUTIQUE</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles2">
-                                    <h2>LATINOAMERICA</h2>
-                                    <a href="Colombia.jsp">Colombia</a><a
-                                        href="Venezuela.jsp">Venezuela</a>
-                                </div>
-                                <img src="../assets/imagenes/boutique.jpg" alt=""><img
-                                    src="../assets/imagenes/boutique 2 .jpg" alt="">
-                            </div>
-                        </div>
-                    </div>
-                </li>
-            </ul>
-            <div class="navbar__brand"><a class="navbar__logo" href="../index.jsp">ANDREYLPZ</a></div>
-            <ul class="navbar__list">
-                <li><a class="navbar__link" href="#">BLOG</a></li>
-                <li class="navbar__item">
-                    <a class="navbar__link" href="#">NOSOTROS</a>
-                    <div class="navbar__list-megamenu">
-                        <div class="navbar__list-megamenu__list">
-                            <img src="../assets/imagenes/yves saint laurent.webp" alt="">
-                            <div class="navbar__list-megamenu__list">
-                                <div class="navbar__list-megamenu__links--perfiles2">
-                                    <h2>PERFILES DE FRAGANCIA</h2>
-                                    <a href="historia.jsp">Historia</a><a href="filosofia.jsp">Filosofia</a><a href="quienes_somos.jsp">Quienes Somos</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-            </ul>
-            <div class="navbar__actions">
-                <nav>
-                    <ul class="navbar__actions-list">
-                        <li><a href="perfil.jsp"><img src="../assets/iconos/user.png" alt=""></a></li>
-                        <li><a href="#compras"><img src="../assets/iconos/shopping.png" alt=""></a></li>
-                        <li class="navbar__item">
-                            <a href="#buscar"><img src="../assets/iconos/search.png" alt=""></a>
-                            <div class="navbar__list-megamenu">
-                                <div class="navbar__list-megamenu__list">
-                                    <div class="navbar__list-megamenu__links--buscador">
-                                        <h2>BUSCAR</h2><input type="text">
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </header>
+    <%@ include file="_navbar.jsp" %>
 
     <main>
         <!-- 1 & 2: Hero Section -->

@@ -6,16 +6,25 @@
             <file>file:/C:/Users/eduar/Documents/Proyecto/web/index.jsp</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Categoria.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Controladora.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/ControladoraPersistencia.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Usuario.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Cliente.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/itemCarrito.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvDashboard.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvLogin.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvLogout.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvPedidos.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvProductos.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/conf/persistence.xml</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/config/AppInitializer.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/enums/EstadoEntrega.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/enums/EstadoPago.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/enums/EstadoPedido.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/enums/TipoTelefono.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/BaseException.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/EntidadNoEncontradaException.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/StockInsuficienteException.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/ValidacionException.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/RolpermisoId.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Telefonocliente.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Usuario.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/itemCarrito.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/CategoriaJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvCategorias.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvCompra.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvUsuarios.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvRegistro.java</file>
         </group>
     </open-files>
 </project-private>

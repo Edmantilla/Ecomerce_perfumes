@@ -31,6 +31,12 @@ public class SvProductos extends HttpServlet {
             ProductoJpaController ctrl = new ProductoJpaController();
             List<Producto> productos = ctrl.findProductoEntities();
 
+            // Si no es llamada del admin, filtrar solo productos activos
+            boolean esAdmin = "true".equals(request.getParameter("admin"));
+            if (!esAdmin) {
+                productos = productos.stream().filter(Producto::isActivo).collect(java.util.stream.Collectors.toList());
+            }
+
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < productos.size(); i++) {
                 Producto p = productos.get(i);
@@ -164,6 +170,7 @@ public class SvProductos extends HttpServlet {
         }
         Marca nueva = new Marca();
         nueva.setNombreMarca(nombre);
+        nueva.setGenero("HOMBRE");
         nueva.setActivo(true);
         ctrl.create(nueva);
         for (Marca m : ctrl.findMarcaEntities()) {

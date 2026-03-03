@@ -100,7 +100,7 @@
         }).catch(e => console.error('Dashboard fetch error:', e));
 
         // Stock bajo: cargamos productos para detectarlos
-        get('SvProductos').then(products => {
+        get('SvProductos?admin=true').then(products => {
             if (!Array.isArray(products)) return;
             _products = products;
             const lowStock = products.filter(p => p.stock <= 5 && p.activo);
@@ -119,7 +119,7 @@
 
     // ─── Products ────────────────────────────────────────────────────────────
     function loadProducts() {
-        get('SvProductos').then(products => {
+        get('SvProductos?admin=true').then(products => {
             if (!Array.isArray(products)) { console.error('Productos error:', products); return; }
             _products = products;
             renderProducts(products);
@@ -627,6 +627,8 @@
         document.getElementById('marca-id').value = '';
         document.getElementById('marca-nombre').value = '';
         document.getElementById('marca-descripcion').value = '';
+        document.getElementById('marca-genero').value = 'HOMBRE';
+        const generoGroup = document.getElementById('marca-genero-group');
         if (id) {
             const m = _marcas.find(x => x.id === id);
             if (m) {
@@ -634,9 +636,11 @@
                 document.getElementById('marca-id').value = m.id;
                 document.getElementById('marca-nombre').value = m.nombre;
                 document.getElementById('marca-descripcion').value = m.descripcion || '';
+                generoGroup.style.display = 'none';
             }
         } else {
             title.textContent = 'Nueva Marca';
+            generoGroup.style.display = '';
         }
         document.getElementById('modal-marca').classList.add('open');
     }
@@ -646,8 +650,10 @@
         const nombre = document.getElementById('marca-nombre').value.trim();
         const desc   = document.getElementById('marca-descripcion').value.trim();
         if (!nombre) { alert('El nombre es obligatorio'); return; }
+        const genero = document.getElementById('marca-genero').value;
         const params = { nombre, descripcion: desc };
         if (id) { params.accion = 'editar'; params.id = id; }
+        else { params.genero = genero; }
         post('SvMarcas', params).then(r => {
             if (r.error) { alert(r.error); return; }
             document.getElementById('modal-marca').classList.remove('open');
