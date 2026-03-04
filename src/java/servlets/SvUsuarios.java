@@ -28,6 +28,12 @@ public class SvUsuarios extends HttpServlet {
 
         EntityManager em = null;
         try {
+            if (!AuthHelper.tienePermiso(request, "VER_USUARIOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: VER_USUARIOS\"}");
+                return;
+            }
+
             UsuarioJpaController ctrl = new UsuarioJpaController();
             List<Usuario> usuarios = ctrl.findUsuarioEntities();
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
@@ -41,6 +47,7 @@ public class SvUsuarios extends HttpServlet {
                 sb.append("\"correo\":\"").append(escapeJson(u.getCorreoUsuario())).append("\",");
                 sb.append("\"activo\":").append(u.isActivo()).append(",");
                 sb.append("\"rol\":\"").append(u.getRol() != null ? escapeJson(u.getRol().getNombreRol()) : "").append("\",");
+                sb.append("\"idRol\":").append(u.getRol() != null ? u.getRol().getIdRol() : 0).append(",");
                 sb.append("\"nombre\":\"").append(
                     u.getCliente() != null ? escapeJson(u.getCliente().getNombreCompleto()) : "Admin"
                 ).append("\",");
@@ -107,6 +114,12 @@ public class SvUsuarios extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
+            if (!AuthHelper.tienePermiso(request, "EDITAR_USUARIOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: EDITAR_USUARIOS\"}");
+                return;
+            }
+
             String accion = request.getParameter("accion");
             if ("desactivar".equals(accion)) {
                 int id = Integer.parseInt(request.getParameter("id"));
@@ -117,6 +130,24 @@ public class SvUsuarios extends HttpServlet {
                     ctrl.edit(u);
                 }
                 out.print("{\"ok\":true}");
+            } else if ("cambiarRol".equals(accion)) {
+                int idUsuario = Integer.parseInt(request.getParameter("id"));
+                int idRol     = Integer.parseInt(request.getParameter("idRol"));
+                EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager();
+                try {
+                    em.getTransaction().begin();
+                    Usuario u = em.find(Usuario.class, idUsuario);
+                    if (u == null) { out.print("{\"error\":\"Usuario no encontrado\"}"); return; }
+                    logica.Rol nuevoRol = em.find(logica.Rol.class, idRol);
+                    if (nuevoRol == null) { out.print("{\"error\":\"Rol no encontrado\"}"); return; }
+                    u.setRol(nuevoRol);
+                    u.setUpdatedAt(java.time.LocalDateTime.now());
+                    em.merge(u);
+                    em.getTransaction().commit();
+                    out.print("{\"ok\":true,\"rol\":\"" + escapeJson(nuevoRol.getNombreRol()) + "\"}");
+                } finally {
+                    if (em.isOpen()) em.close();
+                }
             } else {
                 out.print("{\"error\":\"Acción desconocida\"}");
             }

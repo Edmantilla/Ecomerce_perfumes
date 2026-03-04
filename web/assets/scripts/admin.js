@@ -434,8 +434,8 @@
         document.getElementById('modal-user-title').textContent = u.nombre || 'Usuario #' + u.id;
 
         const row = (label, value) =>
-            '<div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:6px">' +
-            '<span style="color:var(--admin-muted);font-weight:600">' + label + '</span>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:6px">' +
+            '<span style="color:var(--admin-muted);font-weight:600;flex-shrink:0">' + label + '</span>' +
             '<span style="color:var(--admin-text);font-weight:500;text-align:right;max-width:280px">' + (value || '—') + '</span></div>';
 
         const telsHtml = (u.telefonos && u.telefonos.length > 0)
@@ -445,11 +445,25 @@
             ? u.correosAdicionales.map(c => c.correo + (c.principal ? ' <span style="color:#2e7d32;font-size:11px">(principal)</span>' : '')).join('<br>')
             : '—';
 
+        // Construir select de roles
+        const rolesDisponibles = _roles.length > 0 ? _roles : [];
+        const rolSelectHtml = '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">' +
+            '<select id="user-rol-select" style="padding:6px 10px;border:1px solid var(--admin-border);border-radius:6px;font-size:13px;background:var(--admin-card);color:var(--admin-text)">' +
+            rolesDisponibles.filter(r => r.activo).map(r =>
+                '<option value="' + r.id + '"' + (r.id === u.idRol ? ' selected' : '') + '>' + esc(r.nombre) + '</option>'
+            ).join('') +
+            '</select>' +
+            '<button class="btn btn-primary btn-sm" onclick="adminApp.cambiarRolUsuario(' + u.id + ')" style="white-space:nowrap">Guardar</button>' +
+            '</div>';
+
         document.getElementById('modal-user-body').innerHTML =
             row('ID', '#' + u.id) +
             row('Nombre', u.nombre || 'Admin') +
             row('Correo', u.correo) +
-            row('Rol', u.rol) +
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:6px">' +
+            '<span style="color:var(--admin-muted);font-weight:600;flex-shrink:0">Rol</span>' +
+            (rolesDisponibles.length > 0 ? rolSelectHtml : '<span style="color:var(--admin-text);font-weight:500">' + esc(u.rol) + '</span>') +
+            '</div>' +
             row('Direcci&oacute;n', u.direccion || 'Sin especificar') +
             row('Tel&eacute;fonos', telsHtml) +
             row('Correos adicionales', correosHtml) +
@@ -457,7 +471,36 @@
             row('Registro', u.registro ? u.registro.substring(0, 10) : '—') +
             row('Estado', u.activo ? '<span style="color:#2e7d32">Activo</span>' : '<span style="color:#c62828">Inactivo</span>');
 
+        // Si aún no se cargaron roles, cargarlos y refrescar el modal
+        if (rolesDisponibles.length === 0) {
+            get('SvPermisos').then(data => {
+                if (Array.isArray(data)) { _roles = data; verUsuario(idUsuario); }
+            }).catch(() => {});
+        }
+
         modal.classList.add('open');
+    }
+
+    function cambiarRolUsuario(idUsuario) {
+        const sel = document.getElementById('user-rol-select');
+        if (!sel) return;
+        const idRol = parseInt(sel.value);
+        if (!idRol) return;
+        post('SvUsuarios', { accion: 'cambiarRol', id: idUsuario, idRol: idRol })
+            .then(r => {
+                if (r.error) { alert('Error: ' + r.error); return; }
+                showToast('Rol actualizado a: ' + r.rol);
+                // Actualizar caché local
+                const u = _users.find(x => x.id === idUsuario);
+                if (u) {
+                    const rolObj = _roles.find(x => x.id === idRol);
+                    u.idRol = idRol;
+                    u.rol = rolObj ? rolObj.nombre : r.rol;
+                }
+                closeUserDetail();
+                loadUsers();
+            })
+            .catch(e => alert('Error de conexi\u00f3n: ' + e.message));
     }
 
     function closeUserDetail() {
@@ -1071,7 +1114,7 @@
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────
-    window.adminApp = { editProduct, deleteProduct, cambiarEstado, verDetalle, closeOrderDetail, verUsuario, closeUserDetail, editCategoria, toggleCategoria, deleteCategoria, editMarca, toggleMarca, deleteMarca, abrirPago, closePagoModal, abrirEnvio, closeEnvioModal, permisosTab, editRol, toggleRol, editPermiso, togglePermiso, abrirAsignar, revocarPermiso };
+    window.adminApp = { editProduct, deleteProduct, cambiarEstado, verDetalle, closeOrderDetail, verUsuario, closeUserDetail, cambiarRolUsuario, editCategoria, toggleCategoria, deleteCategoria, editMarca, toggleMarca, deleteMarca, abrirPago, closePagoModal, abrirEnvio, closeEnvioModal, permisosTab, editRol, toggleRol, editPermiso, togglePermiso, abrirAsignar, revocarPermiso };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

@@ -28,6 +28,12 @@ public class SvPedidos extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        if (!AuthHelper.tienePermiso(request, "VER_PEDIDOS")) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            out.print("{\"error\":\"Sin permiso: VER_PEDIDOS\"}");
+            return;
+        }
+
         EntityManager emGet = null;
         try {
             PedidoJpaController ctrl = new PedidoJpaController();
@@ -84,11 +90,9 @@ public class SvPedidos extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
-            // Verificar que es admin
-            javax.servlet.http.HttpSession sess = request.getSession(false);
-            Usuario usuario = (sess != null) ? (Usuario) sess.getAttribute("usuario") : null;
-            if (usuario == null || !Boolean.TRUE.equals(sess.getAttribute("esAdmin"))) {
-                out.print("{\"error\":\"No autorizado\"}");
+            if (!AuthHelper.tienePermiso(request, "GESTIONAR_PEDIDOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: GESTIONAR_PEDIDOS\"}");
                 return;
             }
 

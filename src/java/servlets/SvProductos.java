@@ -32,8 +32,13 @@ public class SvProductos extends HttpServlet {
             List<Producto> productos = ctrl.findProductoEntities();
 
             // Si no es llamada del admin, filtrar solo productos activos
-            boolean esAdmin = "true".equals(request.getParameter("admin"));
-            if (!esAdmin) {
+            boolean esAdminCall = "true".equals(request.getParameter("admin"));
+            if (esAdminCall && !AuthHelper.tienePermiso(request, "VER_PRODUCTOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: VER_PRODUCTOS\"}");
+                return;
+            }
+            if (!esAdminCall) {
                 productos = productos.stream().filter(Producto::isActivo).collect(java.util.stream.Collectors.toList());
             }
 
@@ -75,7 +80,18 @@ public class SvProductos extends HttpServlet {
         try {
             String accion = request.getParameter("accion");
 
+            if (!AuthHelper.tienePermiso(request, "EDITAR_PRODUCTOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: EDITAR_PRODUCTOS\"}");
+                return;
+            }
+
             if ("eliminar".equals(accion)) {
+                if (!AuthHelper.tienePermiso(request, "ELIMINAR_PRODUCTOS")) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    out.print("{\"error\":\"Sin permiso: ELIMINAR_PRODUCTOS\"}");
+                    return;
+                }
                 int id = Integer.parseInt(request.getParameter("id"));
                 new ProductoJpaController().destroy(id);
                 out.print("{\"ok\":true}");

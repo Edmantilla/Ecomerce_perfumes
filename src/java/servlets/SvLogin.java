@@ -66,8 +66,26 @@ public class SvLogin extends HttpServlet {
                 usuario.getCliente().getNombreCompleto();
                 usuario.getCliente().getDireccion();
             }
+
+            // Cargar permisos del rol eager y construir lista de nombres
+            java.util.List<String> nombresPermisos = new java.util.ArrayList<>();
+            boolean puedeVerAdmin = usuario.esAdmin();
             if (usuario.getRol() != null) {
                 usuario.getRol().getNombreRol();
+                // Cargar rol_permiso con permisos desde BD
+                javax.persistence.TypedQuery<logica.Rolpermiso> qrp = em.createQuery(
+                    "SELECT rp FROM Rolpermiso rp JOIN FETCH rp.permiso WHERE rp.rol.idRol = :id",
+                    logica.Rolpermiso.class);
+                qrp.setParameter("id", usuario.getRol().getIdRol());
+                java.util.List<logica.Rolpermiso> rolPermisos = qrp.getResultList();
+                for (logica.Rolpermiso rp : rolPermisos) {
+                    if (rp.getPermiso() != null && rp.getPermiso().isActivo()) {
+                        nombresPermisos.add(rp.getPermiso().getNombrePermiso());
+                        if ("VER_DASHBOARD".equalsIgnoreCase(rp.getPermiso().getNombrePermiso())) {
+                            puedeVerAdmin = true;
+                        }
+                    }
+                }
             }
 
             HttpSession session = request.getSession(true);
@@ -75,8 +93,9 @@ public class SvLogin extends HttpServlet {
             session.setAttribute("idUsuario", usuario.getIdUsuario());
             session.setAttribute("correoUsuario", usuario.getCorreoUsuario());
             session.setAttribute("esAdmin", usuario.esAdmin());
+            session.setAttribute(AuthHelper.SESS_PERMISOS, nombresPermisos);
 
-            if (usuario.esAdmin()) {
+            if (puedeVerAdmin) {
                 response.sendRedirect(request.getContextPath() + "/vistas/admin.jsp");
             } else {
                 response.sendRedirect(request.getContextPath() + "/vistas/perfil.jsp");

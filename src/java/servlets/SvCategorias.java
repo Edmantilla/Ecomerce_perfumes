@@ -55,6 +55,12 @@ public class SvCategorias extends HttpServlet {
 
         EntityManager em = null;
         try {
+            if (!AuthHelper.tienePermiso(request, "GESTIONAR_CATEGORIAS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: GESTIONAR_CATEGORIAS\"}");
+                return;
+            }
+
             String accion = request.getParameter("accion");
             CategoriaJpaController ctrl = new CategoriaJpaController();
 

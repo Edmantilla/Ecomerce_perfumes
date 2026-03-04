@@ -33,9 +33,9 @@ public class SvPermisos extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
-        if (!esAdmin(request)) {
+        if (!AuthHelper.tienePermiso(request, "GESTIONAR_ROLES")) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            out.print("{\"error\":\"Acceso denegado\"}");
+            out.print("{\"error\":\"Sin permiso: GESTIONAR_ROLES\"}");
             return;
         }
 
@@ -127,9 +127,9 @@ public class SvPermisos extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
-        if (!esAdmin(request)) {
+        if (!AuthHelper.tienePermiso(request, "GESTIONAR_ROLES")) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            out.print("{\"error\":\"Acceso denegado\"}");
+            out.print("{\"error\":\"Sin permiso: GESTIONAR_ROLES\"}");
             return;
         }
 
@@ -287,11 +287,6 @@ public class SvPermisos extends HttpServlet {
         } finally {
             if (em != null && em.isOpen()) em.close();
         }
-    }
-
-    private boolean esAdmin(HttpServletRequest request) {
-        HttpSession s = request.getSession(false);
-        return s != null && Boolean.TRUE.equals(s.getAttribute("esAdmin"));
     }
 
     private void bad(HttpServletResponse response, PrintWriter out, String msg) throws IOException {

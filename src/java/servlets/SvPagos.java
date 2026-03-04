@@ -28,6 +28,12 @@ public class SvPagos extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        if (!AuthHelper.tienePermiso(request, "GESTIONAR_PAGOS") && !AuthHelper.estaLogueado(request)) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            out.print("{\"error\":\"Sin permiso: GESTIONAR_PAGOS\"}");
+            return;
+        }
+
         String idPedidoStr = request.getParameter("idPedido");
         EntityManager em = null;
         try {
@@ -88,6 +94,12 @@ public class SvPagos extends HttpServlet {
 
         EntityManager em = null;
         try {
+            if (!AuthHelper.estaLogueado(request)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                out.print("{\"error\":\"Debes iniciar sesi\u00f3n\"}");
+                return;
+            }
+
             String accion      = request.getParameter("accion");
             String idPedidoStr = request.getParameter("idPedido");
             String metodo      = request.getParameter("metodo");

@@ -77,6 +77,12 @@ public class SvEnvios extends HttpServlet {
 
         EntityManager em = null;
         try {
+            if (!AuthHelper.tienePermiso(request, "GESTIONAR_ENVIOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: GESTIONAR_ENVIOS\"}");
+                return;
+            }
+
             String accion          = request.getParameter("accion");
             String idPedidoStr     = request.getParameter("idPedido");
             String direccion       = request.getParameter("direccion");

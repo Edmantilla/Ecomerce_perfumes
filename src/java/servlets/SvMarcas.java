@@ -64,6 +64,12 @@ public class SvMarcas extends HttpServlet {
 
         EntityManager em = null;
         try {
+            if (!AuthHelper.tienePermiso(request, "GESTIONAR_MARCAS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: GESTIONAR_MARCAS\"}");
+                return;
+            }
+
             String accion = request.getParameter("accion");
             MarcaJpaController ctrl = new MarcaJpaController();
 

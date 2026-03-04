@@ -1,4 +1,31 @@
 ﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.List" %>
+<%
+    // Proteger acceso: solo usuarios con VER_DASHBOARD o esAdmin
+    Object usuarioSess = session.getAttribute("usuario");
+    if (usuarioSess == null) {
+        response.sendRedirect(request.getContextPath() + "/vistas/perfil.jsp");
+        return;
+    }
+    boolean esAdminPuro = Boolean.TRUE.equals(session.getAttribute("esAdmin"));
+    @SuppressWarnings("unchecked")
+    List<String> permisosUsuario = (List<String>) session.getAttribute("permisosUsuario");
+    boolean puedeAcceder = esAdminPuro ||
+        (permisosUsuario != null && permisosUsuario.stream().anyMatch(p -> p.equalsIgnoreCase("VER_DASHBOARD")));
+    if (!puedeAcceder) {
+        response.sendRedirect(request.getContextPath() + "/vistas/perfil.jsp?error=Sin+acceso+al+panel");
+        return;
+    }
+    // Helper lambda para chequear permisos
+    java.util.function.Predicate<String> perm = p -> esAdminPuro ||
+        (permisosUsuario != null && permisosUsuario.stream().anyMatch(x -> x.equalsIgnoreCase(p)));
+    String nombreUsuario = ((logica.Usuario) usuarioSess).getCliente() != null
+        ? ((logica.Usuario) usuarioSess).getCliente().getNombreCompleto()
+        : "Admin";
+    String rolUsuario = ((logica.Usuario) usuarioSess).getRol() != null
+        ? ((logica.Usuario) usuarioSess).getRol().getNombreRol()
+        : "Administrador";
+%>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -33,6 +60,7 @@
             </div>
 
             <!-- Productos -->
+            <% if (perm.test("VER_PRODUCTOS")) { %>
             <div class="admin-nav__item" data-section="productos" data-label="Productos">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -41,8 +69,10 @@
                 </svg>
                 Productos
             </div>
+            <% } %>
 
             <!-- Pedidos -->
+            <% if (perm.test("VER_PEDIDOS")) { %>
             <div class="admin-nav__item" data-section="pedidos" data-label="Pedidos">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <path d="M9 17H5a2 2 0 0 0-2 2" />
@@ -53,8 +83,10 @@
                 </svg>
                 Pedidos
             </div>
+            <% } %>
 
             <!-- Usuarios -->
+            <% if (perm.test("VER_USUARIOS")) { %>
             <div class="admin-nav__item" data-section="usuarios" data-label="Usuarios">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -64,8 +96,10 @@
                 </svg>
                 Usuarios
             </div>
+            <% } %>
 
-            <!-- Categor&#237;as -->
+            <!-- Categorías -->
+            <% if (perm.test("GESTIONAR_CATEGORIAS")) { %>
             <div class="admin-nav__item" data-section="categorias" data-label="Categor&#237;as">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <path d="M3 3h7v7H3z" /><path d="M14 3h7v7h-7z" /><path d="M3 14h7v7H3z" />
@@ -73,16 +107,20 @@
                 </svg>
                 Categor&#237;as
             </div>
+            <% } %>
 
             <!-- Marcas -->
+            <% if (perm.test("GESTIONAR_MARCAS")) { %>
             <div class="admin-nav__item" data-section="marcas" data-label="Marcas">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z" />
                 </svg>
                 Marcas
             </div>
+            <% } %>
 
             <!-- Roles y Permisos -->
+            <% if (perm.test("GESTIONAR_ROLES")) { %>
             <div class="admin-nav__item" data-section="permisos" data-label="Roles y Permisos">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -90,6 +128,7 @@
                 </svg>
                 Roles y Permisos
             </div>
+            <% } %>
 
             <div class="admin-nav__separator"></div>
 
@@ -119,8 +158,8 @@
             <div class="admin-sidebar__user">
                 <div class="admin-sidebar__avatar">A</div>
                 <div>
-                    <div class="admin-sidebar__username">Admin</div>
-                    <div class="admin-sidebar__role">Administrador</div>
+                    <div class="admin-sidebar__username"><%=nombreUsuario%></div>
+                    <div class="admin-sidebar__role"><%=rolUsuario%></div>
                 </div>
             </div>
         </div>
