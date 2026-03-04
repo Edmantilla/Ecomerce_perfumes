@@ -64,28 +64,7 @@
 
     </main>
 
-    <!-- Footer (Reused) -->
-    <footer>
-        <div class="footer__section--newsletter">
-            <h2 class="footer__title">Reciba un 10% de descuento en su próximo pedido.</h2>
-            <div class="footer__form-wrapper">
-                <form action=""><input type="text" placeholder="CORREO ELECTRONICO"><button>INSCRIBIRSE</button></form>
-            </div>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">SERVICIO AL CLIENTE</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
-            </ul>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">ELECCION DE PAIS</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="Colombia.jsp">Colombia</a></li>
-                <li class="footer__item"><a class="footer__link" href="Venezuela.jsp">Venezuela</a></li>
-            </ul>
-        </div>
-    </footer>
+    <%@ include file="_footer.jsp" %>
 
     <script src="../assets/scripts/cart.js"></script>
 </body>

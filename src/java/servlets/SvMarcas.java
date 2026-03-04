@@ -212,6 +212,7 @@ public class SvMarcas extends HttpServlet {
         sb.append("            .catch(function() {});\n");
         sb.append("    })();\n");
         sb.append("    </script>\n");
+        sb.append("    <%@ include file=\"_footer.jsp\" %>\n");
         sb.append("    <script src=\"../assets/scripts/cart.js\"></script>\n");
         sb.append("</body>\n</html>\n");
 

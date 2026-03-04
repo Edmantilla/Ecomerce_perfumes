@@ -56,6 +56,7 @@
             .catch(function() {});
     })();
     </script>
+    <%@ include file="_footer.jsp" %>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 </html>

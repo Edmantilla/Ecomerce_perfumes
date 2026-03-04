@@ -54,36 +54,7 @@
         </section>
     </main>
 
-    <footer>
-        <div class="footer__section--newsletter">
-            <h2 class="footer__title">Reciba un 10% de descuento en su proximo pedido superior a 300 cop al suscribirse al boletin informativo de andreylpz.</h2>
-            <div class="footer__form-wrapper">
-                <form action=""><input type="text" name="correo_electronico" placeholder="DIRECCION DE CORREO ELECTRONICO"><button>INSCRIBIRSE</button></form>
-            </div>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">SERVICIO AL CLIENTE</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Preguntas Frecuentes</a></li>
-            </ul>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">LEGAL</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Politica de cookies</a></li>
-            </ul>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">ELECCION DE PAIS</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="Colombia.jsp">Colombia</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Estados unidos</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Ecuador</a></li>
-            </ul>
-        </div>
-    </footer>
+    <%@ include file="_footer.jsp" %>
 
     <script src="../assets/scripts/cart.js"></script>
     <script>
