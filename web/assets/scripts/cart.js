@@ -287,32 +287,140 @@
         const existing = document.getElementById('order-confirm-modal');
         if (existing) existing.remove();
 
-        const fmt = n => parseFloat(n).toLocaleString('es-CO') + ' COP';
+        const fmtNum = n => parseFloat(n).toLocaleString('es-CO') + ' COP';
+        const ctx2 = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
+
         const modal = document.createElement('div');
         modal.id = 'order-confirm-modal';
-        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center';
-        const ctx2 = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
-        modal.innerHTML = `
-            <div style="background:#fff;border-radius:12px;padding:40px 32px;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-                <div style="font-size:48px;margin-bottom:12px">✅</div>
-                <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;color:#1a1a1a">¡Pedido confirmado!</h2>
-                <p style="color:#666;margin-bottom:6px">Tu pedido <strong>#${idPedido}</strong> ha sido recibido.</p>
-                <p style="color:#666;margin-bottom:24px">Total: <strong>${fmt(total)}</strong></p>
-                <p style="font-size:13px;color:#999;margin-bottom:20px">El administrador ha sido notificado y pronto procesará tu pedido.</p>
-                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-                    <a href="${ctx2}/vistas/perfil.jsp"
-                       style="background:#1a1a1a;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-size:13px;letter-spacing:1px;cursor:pointer;font-weight:600;text-decoration:none">
-                        VER MIS PEDIDOS
-                    </a>
-                    <button onclick="document.getElementById('order-confirm-modal').remove()"
-                        style="background:#fff;color:#1a1a1a;border:1px solid #ccc;padding:12px 24px;border-radius:6px;font-size:13px;letter-spacing:1px;cursor:pointer;font-weight:600">
-                        SEGUIR COMPRANDO
-                    </button>
-                </div>
-            </div>`;
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+
+        modal.innerHTML =
+            '<div id="pago-box" style="background:#fff;border-radius:12px;padding:36px 32px;max-width:460px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.25)">' +
+                '<h2 style="font-size:18px;font-weight:700;color:#1a1a1a;margin:0 0 4px;letter-spacing:1px">MÉTODO DE PAGO</h2>' +
+                '<p style="color:#666;font-size:14px;margin:0 0 24px">Pedido <strong>#' + idPedido + '</strong> &bull; Total: <strong>' + fmtNum(total) + '</strong></p>' +
+
+                '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">' +
+                    '<label style="display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;transition:border-color .2s" id="opt-tarjeta">' +
+                        '<input type="radio" name="pago-metodo" value="TARJETA_CREDITO" style="accent-color:#1a1a1a;width:18px;height:18px">' +
+                        '<span style="font-size:22px">💳</span>' +
+                        '<div><p style="margin:0;font-weight:600;font-size:14px">Tarjeta de crédito / débito</p><p style="margin:0;font-size:12px;color:#888">Visa, Mastercard, Amex</p></div>' +
+                    '</label>' +
+                    '<label style="display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;transition:border-color .2s" id="opt-transferencia">' +
+                        '<input type="radio" name="pago-metodo" value="TRANSFERENCIA" style="accent-color:#1a1a1a;width:18px;height:18px">' +
+                        '<span style="font-size:22px">🏦</span>' +
+                        '<div><p style="margin:0;font-weight:600;font-size:14px">Transferencia bancaria</p><p style="margin:0;font-size:12px;color:#888">PSE / Nequi / Daviplata</p></div>' +
+                    '</label>' +
+                    '<label style="display:flex;align-items:center;gap:10px;padding:14px 16px;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;transition:border-color .2s" id="opt-efectivo">' +
+                        '<input type="radio" name="pago-metodo" value="EFECTIVO" style="accent-color:#1a1a1a;width:18px;height:18px">' +
+                        '<span style="font-size:22px">💵</span>' +
+                        '<div><p style="margin:0;font-weight:600;font-size:14px">Efectivo / Contraentrega</p><p style="margin:0;font-size:12px;color:#888">Pago al momento de la entrega</p></div>' +
+                    '</label>' +
+                '</div>' +
+
+                '<div id="pago-ref-wrap" style="display:none;margin-bottom:16px">' +
+                    '<label style="font-size:12px;color:#666;font-weight:600">NÚMERO DE REFERENCIA / COMPROBANTE (opcional)</label>' +
+                    '<input id="pago-referencia" type="text" placeholder="Ej: 00123456789" style="margin-top:4px;padding:10px 14px;border:1px solid #ddd;border-radius:6px;font-size:14px;width:100%;box-sizing:border-box">' +
+                '</div>' +
+
+                '<div id="pago-err" style="display:none;padding:10px 14px;background:#ffebee;border-radius:6px;color:#c62828;font-size:13px;margin-bottom:14px"></div>' +
+
+                '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+                    '<button id="pago-confirmar-btn" onclick="confirmarPago(' + idPedido + ',' + total + ')" ' +
+                        'style="flex:1;padding:13px 20px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer">CONFIRMAR PAGO</button>' +
+                    '<button onclick="document.getElementById(\'order-confirm-modal\').remove()" ' +
+                        'style="padding:13px 20px;background:#fff;color:#1a1a1a;border:1px solid #ccc;border-radius:6px;font-size:13px;cursor:pointer">Cancelar</button>' +
+                '</div>' +
+                '<p style="font-size:11px;color:#bbb;text-align:center;margin:14px 0 0">Tu pedido ya fue registrado. El pago confirma el procesamiento.</p>' +
+            '</div>';
+
         document.body.appendChild(modal);
-        modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+        // Resaltar opción seleccionada
+        modal.querySelectorAll('input[name="pago-metodo"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                modal.querySelectorAll('label[id^="opt-"]').forEach(function(lbl) {
+                    lbl.style.borderColor = '#e0e0e0';
+                });
+                this.closest('label').style.borderColor = '#1a1a1a';
+                // Mostrar campo referencia solo en transferencia
+                var refWrap = document.getElementById('pago-ref-wrap');
+                if (refWrap) refWrap.style.display = (this.value === 'TRANSFERENCIA') ? 'block' : 'none';
+            });
+        });
+
+        window._pagoCtx = ctx2;
     }
+
+    window.confirmarPago = function(idPedido, total) {
+        var metodoEl = document.querySelector('input[name="pago-metodo"]:checked');
+        var errEl = document.getElementById('pago-err');
+        var btn = document.getElementById('pago-confirmar-btn');
+        if (errEl) errEl.style.display = 'none';
+
+        if (!metodoEl) {
+            if (errEl) { errEl.textContent = 'Selecciona un método de pago.'; errEl.style.display = 'block'; }
+            return;
+        }
+
+        var metodo = metodoEl.value;
+        var referencia = (document.getElementById('pago-referencia') || {}).value || '';
+        var ctx2 = window._pagoCtx || '';
+        var fmtNum = function(n) { return parseFloat(n).toLocaleString('es-CO') + ' COP'; };
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
+
+        var body = new URLSearchParams({
+            idPedido: idPedido,
+            metodo: metodo,
+            monto: total,
+            referencia: referencia
+        });
+
+        fetch(ctx2 + '/SvPagos', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var modal = document.getElementById('order-confirm-modal');
+            if (modal) modal.remove();
+
+            if (d.error) {
+                // Recrear modal con error
+                showOrderConfirmation(idPedido, total);
+                var errEl2 = document.getElementById('pago-err');
+                if (errEl2) { errEl2.textContent = d.error; errEl2.style.display = 'block'; }
+                return;
+            }
+
+            // Mostrar confirmación final
+            var conf = document.createElement('div');
+            conf.id = 'order-confirm-modal';
+            conf.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+            var metodosLabel = { 'TARJETA_CREDITO': 'Tarjeta', 'TRANSFERENCIA': 'Transferencia', 'EFECTIVO': 'Efectivo/Contraentrega' };
+            conf.innerHTML =
+                '<div style="background:#fff;border-radius:12px;padding:40px 32px;max-width:420px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)">' +
+                    '<div style="font-size:48px;margin-bottom:12px">✅</div>' +
+                    '<h2 style="font-size:20px;font-weight:700;margin-bottom:8px;color:#1a1a1a">¡Pago registrado!</h2>' +
+                    '<p style="color:#666;margin-bottom:4px">Pedido <strong>#' + idPedido + '</strong></p>' +
+                    '<p style="color:#666;margin-bottom:4px">Total: <strong>' + fmtNum(total) + '</strong></p>' +
+                    '<p style="color:#666;margin-bottom:20px">Método: <strong>' + (metodosLabel[metodo] || metodo) + '</strong></p>' +
+                    '<p style="font-size:13px;color:#999;margin-bottom:24px">El administrador procesará tu pedido pronto.</p>' +
+                    '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+                        '<a href="' + ctx2 + '/vistas/perfil.jsp" style="background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:6px;font-size:13px;letter-spacing:1px;font-weight:600;text-decoration:none">VER MIS PEDIDOS</a>' +
+                        '<button onclick="document.getElementById(\'order-confirm-modal\').remove()" style="background:#fff;color:#1a1a1a;border:1px solid #ccc;padding:12px 24px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600">SEGUIR COMPRANDO</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(conf);
+            conf.addEventListener('click', function(e) { if (e.target === conf) conf.remove(); });
+        })
+        .catch(function() {
+            if (btn) { btn.disabled = false; btn.textContent = 'CONFIRMAR PAGO'; }
+            if (errEl) { errEl.textContent = 'Error de conexión. Intenta de nuevo.'; errEl.style.display = 'block'; }
+        });
+    };
 
     // ─── Init ─────────────────────────────────────────────────────────────────
     function init() {

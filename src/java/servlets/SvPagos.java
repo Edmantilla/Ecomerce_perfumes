@@ -18,6 +18,7 @@ import persistencias.JpaProvider;
 import persistencias.PagoJpaController;
 import persistencias.PedidoJpaController;
 
+@javax.servlet.annotation.WebServlet(name = "SvPagos", urlPatterns = {"/SvPagos"})
 public class SvPagos extends HttpServlet {
 
     @Override

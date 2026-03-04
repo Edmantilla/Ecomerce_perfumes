@@ -28,6 +28,8 @@ CREATE TABLE marca (
     id_marca     INT          NOT NULL AUTO_INCREMENT,
     nombre_marca VARCHAR(100) NOT NULL,
     descripcion  VARCHAR(255)     NULL,
+    genero       VARCHAR(6)   NOT NULL DEFAULT 'HOMBRE' COMMENT 'HOMBRE, MUJER',
+    pagina_url   VARCHAR(150)     NULL,
     activo       TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (id_marca)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -231,12 +233,12 @@ INSERT INTO categoria (nombre_categoria, descripcion, activo) VALUES
 ('Colonia',         'Concentración ligera y fresca',        1);
 
 -- Marcas
-INSERT INTO marca (nombre_marca, descripcion, activo) VALUES
-('Xerjoff',            'Perfumería de lujo italiana',           1),
-('Paco Rabanne',       'Marca francesa de moda y perfumería',   1),
-('Chanel',             'Icónica casa de moda y perfumería',     1),
-('Dior',               'Alta costura y perfumería francesa',    1),
-('Yves Saint Laurent', 'Perfumería moderna y sofisticada',      1);
+INSERT INTO marca (nombre_marca, descripcion, genero, pagina_url, activo) VALUES
+('Xerjoff',            'Perfumería de lujo italiana',           'HOMBRE', 'cartas.jsp',          1),
+('Paco Rabanne',       'Marca francesa de moda y perfumería',   'HOMBRE', 'pacco_rabanne.jsp',   1),
+('Chanel',             'Icónica casa de moda y perfumería',     'MUJER',  'Chanel.jsp',          1),
+('Dior',               'Alta costura y perfumería francesa',    'MUJER',  'Cristian_dior.jsp',   1),
+('Yves Saint Laurent', 'Perfumería moderna y sofisticada',      'HOMBRE', 'ejemplo.jsp',         1);
 
 -- Productos Xerjoff (8 productos)
 INSERT INTO producto (id_categoria, id_marca, nombre_producto, descripcion, precio, stock, imagen_url, activo, created_at, updated_at) VALUES
