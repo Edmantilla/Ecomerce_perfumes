@@ -578,6 +578,7 @@
                 </table>
             </div>
             <div id="modal-order-total" style="text-align:right;font-weight:700;font-size:15px;margin-top:14px;padding-top:12px;border-top:1px solid var(--admin-border)"></div>
+            <div id="modal-order-envio" style="display:none;margin-top:14px;padding:12px 14px;background:var(--admin-card);border:1px solid var(--admin-border);border-radius:6px"></div>
             <div style="display:flex;justify-content:flex-end;margin-top:16px">
                 <button class="btn btn-secondary" onclick="adminApp.closeOrderDetail()">Cerrar</button>
             </div>

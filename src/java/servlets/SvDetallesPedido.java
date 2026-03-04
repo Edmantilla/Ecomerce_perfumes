@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import logica.Detallepedido;
-import logica.Usuario;
+import logica.Envio;
 import persistencias.JpaProvider;
 
 public class SvDetallesPedido extends HttpServlet {
@@ -24,11 +24,9 @@ public class SvDetallesPedido extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
-            // Solo admin puede ver detalles de cualquier pedido
-            javax.servlet.http.HttpSession sess = request.getSession(false);
-            Usuario usuario = (sess != null) ? (Usuario) sess.getAttribute("usuario") : null;
-            if (usuario == null || !Boolean.TRUE.equals(sess.getAttribute("esAdmin"))) {
-                out.print("{\"error\":\"No autorizado\"}");
+            if (!AuthHelper.tienePermiso(request, "VER_PEDIDOS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                out.print("{\"error\":\"Sin permiso: VER_PEDIDOS\"}");
                 return;
             }
 
@@ -42,30 +40,51 @@ public class SvDetallesPedido extends HttpServlet {
 
             EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager();
             try {
+                // Detalles de productos
                 TypedQuery<Detallepedido> q = em.createQuery(
                     "SELECT d FROM Detallepedido d WHERE d.pedido.idPedido = :pid", Detallepedido.class);
                 q.setParameter("pid", idPedido);
                 List<Detallepedido> detalles = q.getResultList();
 
-                StringBuilder sb = new StringBuilder("[");
+                StringBuilder items = new StringBuilder("[");
                 for (int i = 0; i < detalles.size(); i++) {
                     Detallepedido d = detalles.get(i);
-                    if (i > 0) sb.append(",");
-                    sb.append("{");
-                    sb.append("\"producto\":\"").append(esc(d.getProducto() != null ? d.getProducto().getNombreProducto() : "Producto")).append("\",");
-                    sb.append("\"cantidad\":").append(d.getCantidad()).append(",");
-                    sb.append("\"precioUnitario\":").append(d.getPrecioUnitario() != null ? d.getPrecioUnitario() : 0).append(",");
-                    sb.append("\"subtotal\":").append(d.getSubtotal());
-                    sb.append("}");
+                    if (i > 0) items.append(",");
+                    items.append("{");
+                    items.append("\"producto\":\"").append(esc(d.getProducto() != null ? d.getProducto().getNombreProducto() : "Producto")).append("\",");
+                    items.append("\"cantidad\":").append(d.getCantidad()).append(",");
+                    items.append("\"precioUnitario\":").append(d.getPrecioUnitario() != null ? d.getPrecioUnitario() : 0).append(",");
+                    items.append("\"subtotal\":").append(d.getSubtotal());
+                    items.append("}");
                 }
-                sb.append("]");
-                out.print(sb.toString());
+                items.append("]");
+
+                // Envío del pedido
+                TypedQuery<Envio> qe = em.createQuery(
+                    "SELECT e FROM Envio e WHERE e.pedido.idPedido = :pid", Envio.class);
+                qe.setParameter("pid", idPedido);
+                List<Envio> envios = qe.getResultList();
+
+                StringBuilder envioJson = new StringBuilder("null");
+                if (!envios.isEmpty()) {
+                    Envio e = envios.get(0);
+                    envioJson = new StringBuilder("{");
+                    envioJson.append("\"transportadora\":\"").append(esc(e.getTransportadora())).append("\",");
+                    envioJson.append("\"guia\":\"").append(esc(e.getNumeroGuia())).append("\",");
+                    envioJson.append("\"estado\":\"").append(e.getEstadoEntrega() != null ? e.getEstadoEntrega().name() : "").append("\",");
+                    envioJson.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toLocalDate().toString() : "").append("\",");
+                    envioJson.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toLocalDate().toString() : "").append("\"");
+                    envioJson.append("}");
+                }
+
+                out.print("{\"items\":" + items.toString() + ",\"envio\":" + envioJson.toString() + "}");
+
             } finally {
                 if (em.isOpen()) em.close();
             }
 
         } catch (NumberFormatException e) {
-            out.print("{\"error\":\"idPedido inválido\"}");
+            out.print("{\"error\":\"idPedido inv\u00e1lido\"}");
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             out.print("{\"error\":\"" + esc(e.getMessage()) + "\"}");

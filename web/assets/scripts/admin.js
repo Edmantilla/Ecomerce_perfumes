@@ -363,14 +363,29 @@
                         '<tr><td colspan="4" style="color:#c62828;text-align:center;padding:16px">' + data.error + '</td></tr>';
                     return;
                 }
-                if (!Array.isArray(data)) {
-                    document.getElementById('modal-order-items').innerHTML =
-                        '<tr><td colspan="4" style="color:#c62828;text-align:center;padding:16px">Respuesta inesperada del servidor.</td></tr>';
-                    return;
+
+                // Respuesta puede ser array (legacy) u objeto {items, envio}
+                let items, envio;
+                if (Array.isArray(data)) {
+                    items = data;
+                    envio = null;
+                } else if (data && Array.isArray(data.items)) {
+                    items = data.items;
+                    envio = data.envio || null;
+                } else if (data && typeof data === 'object') {
+                    // Último recurso: intentar extraer cualquier array del objeto
+                    const keys = Object.keys(data);
+                    const arrKey = keys.find(k => Array.isArray(data[k]));
+                    items = arrKey ? data[arrKey] : [];
+                    envio = data.envio || null;
+                } else {
+                    items = [];
+                    envio = null;
                 }
-                const rows = data.map(d =>
+
+                const rows = items.map(d =>
                     '<tr>' +
-                    '<td>' + d.producto + '</td>' +
+                    '<td>' + esc(d.producto) + '</td>' +
                     '<td style="text-align:center">' + d.cantidad + '</td>' +
                     '<td style="text-align:right">' + fmt(d.precioUnitario) + '</td>' +
                     '<td style="text-align:right;font-weight:600">' + fmt(d.subtotal) + '</td>' +
@@ -378,6 +393,34 @@
                 ).join('');
                 document.getElementById('modal-order-items').innerHTML = rows || '<tr><td colspan="4" style="text-align:center;color:var(--admin-muted)">Sin productos</td></tr>';
                 document.getElementById('modal-order-total').textContent = 'Total: ' + fmt(total);
+
+                // Mostrar bloque de envío
+                const envioBox = document.getElementById('modal-order-envio');
+                if (envioBox) {
+                    if (envio) {
+                        const estadoEnvioLabels = { PREPARANDO: 'Preparando', EN_TRANSITO: 'En tránsito', ENTREGADO: 'Entregado', DEVUELTO: 'Devuelto' };
+                        const estadoLabel = estadoEnvioLabels[envio.estado] || envio.estado || '—';
+                        const estadoColor = envio.estado === 'ENTREGADO' ? '#2e7d32' : envio.estado === 'EN_TRANSITO' ? '#1565c0' : envio.estado === 'DEVUELTO' ? '#c62828' : '#f57c00';
+                        envioBox.innerHTML =
+                            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+                            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' +
+                            '<strong style="color:var(--admin-text)">Información de Envío</strong>' +
+                            '<span style="background:' + estadoColor + '22;color:' + estadoColor + ';padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">' + estadoLabel + '</span>' +
+                            '</div>' +
+                            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:13px">' +
+                            '<span><span style="color:var(--admin-muted)">Transportadora:</span> ' + (envio.transportadora || '—') + '</span>' +
+                            '<span><span style="color:var(--admin-muted)">Guía:</span> ' + (envio.guia || '—') + '</span>' +
+                            '<span><span style="color:var(--admin-muted)">Fecha de envío:</span> ' + (envio.fechaEnvio || '—') + '</span>' +
+                            '<span style="font-weight:600"><span style="color:var(--admin-muted)">Entrega estimada:</span> ' +
+                            (envio.fechaEstimada ? '<span style="color:#1565c0">' + envio.fechaEstimada + '</span>' : '<span style="color:var(--admin-muted)">No definida</span>') +
+                            '</span>' +
+                            '</div>';
+                        envioBox.style.display = 'block';
+                    } else {
+                        envioBox.innerHTML = '<span style="color:var(--admin-muted);font-size:13px">Sin información de envío registrada</span>';
+                        envioBox.style.display = 'block';
+                    }
+                }
             })
             .catch(err => {
                 console.error('SvDetallesPedido error:', err);
@@ -389,6 +432,8 @@
     function closeOrderDetail() {
         const modal = document.getElementById('modal-order-detail');
         if (modal) modal.classList.remove('open');
+        const envioBox = document.getElementById('modal-order-envio');
+        if (envioBox) { envioBox.innerHTML = ''; envioBox.style.display = 'none'; }
     }
 
     // ─── Users ───────────────────────────────────────────────────────────────
