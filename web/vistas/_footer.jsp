@@ -14,17 +14,10 @@
             </form>
         </div>
     </div>
-    <div class="footer__section">
-        <h2 class="footer__title">SERVICIO AL CLIENTE</h2>
-        <ul class="footer__list">
-            <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
-            <li class="footer__item"><a class="footer__link" href="#">Preguntas Frecuentes</a></li>
-        </ul>
-    </div>
+
     <div class="footer__section">
         <h2 class="footer__title">LEGAL</h2>
         <ul class="footer__list">
-            <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
             <li class="footer__item"><a class="footer__link" href="#">Politica de cookies</a></li>
         </ul>
     </div>
