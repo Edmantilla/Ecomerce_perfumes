@@ -345,6 +345,85 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') closeCart();
         });
+
+        initSearch();
+    }
+
+    // ─── Search ───────────────────────────────────────────────────────────────
+    var _allProducts = null;
+
+    function getCtx() {
+        var p = window.location.pathname.split('/');
+        return '/' + p[1];
+    }
+
+    function loadAllProducts(cb) {
+        if (_allProducts) { cb(_allProducts); return; }
+        fetch(getCtx() + '/SvProductos', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                _allProducts = Array.isArray(data) ? data.filter(function(p) { return p.activo; }) : [];
+                cb(_allProducts);
+            })
+            .catch(function() { cb([]); });
+    }
+
+    function initSearch() {
+        var input = document.getElementById('search-input');
+        var results = document.getElementById('search-results');
+        if (!input || !results) return;
+
+        input.addEventListener('input', function() {
+            var q = input.value.trim().toLowerCase();
+            if (q.length < 2) {
+                results.innerHTML = '';
+                results.classList.remove('visible');
+                return;
+            }
+            loadAllProducts(function(productos) {
+                var found = productos.filter(function(p) {
+                    return (p.nombre && p.nombre.toLowerCase().includes(q)) ||
+                           (p.marca  && p.marca.toLowerCase().includes(q))  ||
+                           (p.descripcion && p.descripcion.toLowerCase().includes(q));
+                });
+
+                if (found.length === 0) {
+                    results.innerHTML = '<div class="search-no-results">Sin resultados para "' + input.value.trim() + '"</div>';
+                    results.classList.add('visible');
+                    return;
+                }
+
+                var ctx = getCtx();
+                var isVistas = window.location.pathname.includes('/vistas/');
+                var base = isVistas ? 'detalle.jsp' : 'vistas/detalle.jsp';
+
+                results.innerHTML = found.slice(0, 8).map(function(p) {
+                    var precio = parseFloat(p.precio) || 0;
+                    var precioStr = precio.toLocaleString('es-CO') + ' COP';
+                    var img = (p.imagenUrl && p.imagenUrl.trim() !== '')
+                        ? p.imagenUrl
+                        : ctx + '/assets/imagenes/Imagen de la losion.webp';
+                    var href = base + '?nombre=' + encodeURIComponent(p.nombre);
+                    return '<a class="search-result-item" href="' + href + '">' +
+                        '<img src="' + img + '" alt="' + p.nombre + '" onerror="this.style.display=\'none\'">' +
+                        '<div class="search-result-item__info">' +
+                            '<span class="search-result-item__name">' + p.nombre + '</span>' +
+                            '<span class="search-result-item__brand">' + (p.marca || '') + '</span>' +
+                        '</div>' +
+                        '<span class="search-result-item__price">' + precioStr + '</span>' +
+                        '</a>';
+                }).join('');
+                results.classList.add('visible');
+            });
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                results.innerHTML = '';
+                results.classList.remove('visible');
+                input.value = '';
+            }
+        });
     }
 
     // Run after DOM is ready

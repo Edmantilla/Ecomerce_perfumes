@@ -122,7 +122,8 @@
                             <div class="navbar__list-megamenu__list">
                                 <div class="navbar__list-megamenu__links--buscador">
                                     <h2>BUSCAR</h2>
-                                    <input type="text">
+                                    <input type="text" id="search-input" placeholder="Buscar perfumes..." autocomplete="off">
+                                    <div id="search-results" class="search-results"></div>
                                 </div>
                             </div>
                         </div>
