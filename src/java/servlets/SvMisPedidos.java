@@ -16,6 +16,14 @@ import logica.Pedido;
 import logica.Usuario;
 import persistencias.JpaProvider;
 
+/**
+ * SvMisPedidos — Servlet que devuelve los pedidos del cliente logueado.
+ * GET: retorna un array JSON con todos los pedidos del usuario en sesión,
+ *      ordenados del más reciente al más antiguo.
+ * Cada pedido incluye: id, estado, fecha, total, detalles (productos) y envio.
+ * Es usado por la sección "MIS PEDIDOS" en perfil.jsp.
+ * Requiere sesión activa.
+ */
 @WebServlet(name = "SvMisPedidos", urlPatterns = {"/SvMisPedidos"})
 public class SvMisPedidos extends HttpServlet {
 
@@ -28,9 +36,11 @@ public class SvMisPedidos extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
+            // Obtener el usuario desde la sesión HTTP activa
             javax.servlet.http.HttpSession sess = request.getSession(false);
             Usuario usuario = (sess != null) ? (Usuario) sess.getAttribute("usuario") : null;
 
+            // Si no hay sesión activa, el frontend redirige al login
             if (usuario == null) {
                 out.print("{\"error\":\"no-session\"}");
                 return;
@@ -38,6 +48,9 @@ public class SvMisPedidos extends HttpServlet {
 
             EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager();
             try {
+                // Consultar todos los pedidos del cliente del usuario logueado, ordenados del más reciente
+                // Si el cliente ya está cargado en el objeto de sesión se usa directamente;
+                // si no, se vuelve a cargar desde BD para evitar LazyInitializationException
                 TypedQuery<Pedido> q = em.createQuery(
                     "SELECT p FROM Pedido p WHERE p.cliente.idCliente = :cid ORDER BY p.fechaPedido DESC",
                     Pedido.class);
@@ -56,7 +69,7 @@ public class SvMisPedidos extends HttpServlet {
                     sb.append("\"fecha\":\"").append(p.getFechaPedido() != null ? p.getFechaPedido().toString().replace("T", " ").substring(0, 16) : "").append("\",");
                     sb.append("\"total\":").append(p.getTotal() != null ? p.getTotal() : 0).append(",");
 
-                    // Detalles del pedido
+                    // Consultar los productos del pedido (cada línea de detalle)
                     sb.append("\"detalles\":[");
                     TypedQuery<Detallepedido> dq = em.createQuery(
                         "SELECT d FROM Detallepedido d WHERE d.pedido.idPedido = :pid", Detallepedido.class);
@@ -69,26 +82,29 @@ public class SvMisPedidos extends HttpServlet {
                         sb.append("\"producto\":\"").append(esc(d.getProducto() != null ? d.getProducto().getNombreProducto() : "Producto")).append("\",");
                         sb.append("\"cantidad\":").append(d.getCantidad()).append(",");
                         sb.append("\"precioUnitario\":").append(d.getPrecioUnitario() != null ? d.getPrecioUnitario() : 0).append(",");
-                        sb.append("\"subtotal\":").append(d.getSubtotal());
+                        sb.append("\"subtotal\":").append(d.getSubtotal()); // precio * cantidad
                         sb.append("}");
                     }
                     sb.append("],");
 
-                    // Envío del pedido
+                    // Consultar el envío del pedido (puede ser null si aún no se ha despachado)
                     TypedQuery<Envio> eq = em.createQuery(
                         "SELECT e FROM Envio e WHERE e.pedido.idPedido = :pid", Envio.class);
                     eq.setParameter("pid", p.getIdPedido());
                     List<Envio> envios = eq.getResultList();
                     if (!envios.isEmpty()) {
+                        // Incluir los datos de envío para que el cliente vea el seguimiento
                         Envio e = envios.get(0);
                         sb.append("\"envio\":{");
                         sb.append("\"transportadora\":\"").append(esc(e.getTransportadora())).append("\",");
                         sb.append("\"guia\":\"").append(esc(e.getNumeroGuia())).append("\",");
                         sb.append("\"estado\":\"").append(e.getEstadoEntrega() != null ? e.getEstadoEntrega().name() : "").append("\",");
+                        // Usar solo la parte de fecha (sin hora) para presentación en la UI
                         sb.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toLocalDate().toString() : "").append("\",");
                         sb.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toLocalDate().toString() : "").append("\"");
                         sb.append("}");
                     } else {
+                        // Sin envío todavía: el pedido sigue en proceso interno
                         sb.append("\"envio\":null");
                     }
                     sb.append("}");

@@ -1,21 +1,24 @@
 package servlets;
 
+/**
+ * AuthHelper — Clase utilitaria de seguridad.
+ * Contiene métodos estáticos para verificar si un usuario tiene sesión activa,
+ * si es administrador, y si posee un permiso específico.
+ * Todos los servlets del panel admin la usan antes de ejecutar cualquier acción.
+ * Los permisos se cargan en sesión durante el login (SvLogin) y se consultan aquí.
+ */
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-/**
- * Utilidad centralizada para verificar autorizacion en servlets.
- * Lee los permisos cargados en sesion por SvLogin.
- */
 public class AuthHelper {
 
-    /** Atributo de sesion que contiene la lista de nombres de permiso del usuario. */
+    // Clave del atributo de sesión que contiene la lista de nombres de permisos del usuario logueado
     public static final String SESS_PERMISOS = "permisosUsuario";
 
     /**
-     * Retorna true si el usuario en sesion es administrador puro
-     * (sin cliente asociado) O tiene el permiso VER_DASHBOARD.
+     * Verifica si el usuario logueado es administrador puro (sin cliente asociado)
+     * o tiene el permiso VER_DASHBOARD. Ambos casos dan acceso al panel admin.
      */
     public static boolean esAdmin(HttpServletRequest request) {
         HttpSession s = request.getSession(false);
@@ -25,8 +28,10 @@ public class AuthHelper {
     }
 
     /**
-     * Retorna true si el usuario en sesion tiene el permiso indicado.
-     * Compara sin importar mayusculas/minusculas.
+     * Verifica si el usuario logueado tiene un permiso específico.
+     * Los permisos se leen de la lista cargada en sesión durante el login.
+     * Ejemplos: "VER_PEDIDOS", "GESTIONAR_ENVIOS", "VER_DASHBOARD".
+     * El admin puro siempre retorna true sin importar el permiso pedido.
      */
     @SuppressWarnings("unchecked")
     public static boolean tienePermiso(HttpServletRequest request, String nombrePermiso) {
@@ -42,7 +47,10 @@ public class AuthHelper {
         return false;
     }
 
-    /** Retorna true si hay sesion activa (cualquier usuario logueado). */
+    /**
+     * Verifica si hay una sesión activa con un usuario logueado.
+     * Retorna true si la sesión existe y tiene el atributo "usuario" cargado.
+     */
     public static boolean estaLogueado(HttpServletRequest request) {
         HttpSession s = request.getSession(false);
         return s != null && s.getAttribute("usuario") != null;

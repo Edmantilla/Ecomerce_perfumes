@@ -14,6 +14,14 @@ import logica.Detallepedido;
 import logica.Envio;
 import persistencias.JpaProvider;
 
+/**
+ * SvDetallesPedido — Servlet que devuelve el detalle completo de un pedido específico.
+ * GET ?idPedido=X: retorna un objeto JSON con:
+ *   - items: lista de productos comprados (nombre, cantidad, precio unitario, subtotal)
+ *   - envio: información del envío si existe (transportadora, guía, fechas, estado)
+ * Es usado por el modal de detalle de pedido en el panel admin.
+ * Requiere el permiso VER_PEDIDOS.
+ */
 @WebServlet(name = "SvDetallesPedido", urlPatterns = {"/SvDetallesPedido"})
 public class SvDetallesPedido extends HttpServlet {
 
@@ -42,12 +50,13 @@ public class SvDetallesPedido extends HttpServlet {
 
             EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager();
             try {
-                // Detalles de productos
+                // Consultar todos los productos (Detallepedido) de este pedido
                 TypedQuery<Detallepedido> q = em.createQuery(
                     "SELECT d FROM Detallepedido d WHERE d.pedido.idPedido = :pid", Detallepedido.class);
                 q.setParameter("pid", idPedido);
                 List<Detallepedido> detalles = q.getResultList();
 
+                // Construir el array JSON de items (productos del pedido)
                 StringBuilder items = new StringBuilder("[");
                 for (int i = 0; i < detalles.size(); i++) {
                     Detallepedido d = detalles.get(i);
@@ -56,17 +65,18 @@ public class SvDetallesPedido extends HttpServlet {
                     items.append("\"producto\":\"").append(esc(d.getProducto() != null ? d.getProducto().getNombreProducto() : "Producto")).append("\",");
                     items.append("\"cantidad\":").append(d.getCantidad()).append(",");
                     items.append("\"precioUnitario\":").append(d.getPrecioUnitario() != null ? d.getPrecioUnitario() : 0).append(",");
-                    items.append("\"subtotal\":").append(d.getSubtotal());
+                    items.append("\"subtotal\":").append(d.getSubtotal()); // precio * cantidad
                     items.append("}");
                 }
                 items.append("]");
 
-                // Envío del pedido
+                // Consultar el envío asociado al pedido (puede no existir si aún no se ha despachado)
                 TypedQuery<Envio> qe = em.createQuery(
                     "SELECT e FROM Envio e WHERE e.pedido.idPedido = :pid", Envio.class);
                 qe.setParameter("pid", idPedido);
                 List<Envio> envios = qe.getResultList();
 
+                // Si no hay envío, el campo envio será null en el JSON
                 StringBuilder envioJson = new StringBuilder("null");
                 if (!envios.isEmpty()) {
                     Envio e = envios.get(0);
@@ -74,11 +84,13 @@ public class SvDetallesPedido extends HttpServlet {
                     envioJson.append("\"transportadora\":\"").append(esc(e.getTransportadora())).append("\",");
                     envioJson.append("\"guia\":\"").append(esc(e.getNumeroGuia())).append("\",");
                     envioJson.append("\"estado\":\"").append(e.getEstadoEntrega() != null ? e.getEstadoEntrega().name() : "").append("\",");
+                    // Solo la parte de fecha (sin hora) para mostrar en el modal del admin
                     envioJson.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toLocalDate().toString() : "").append("\",");
                     envioJson.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toLocalDate().toString() : "").append("\"");
                     envioJson.append("}");
                 }
 
+                // Retornar el objeto completo: items + envio
                 out.print("{\"items\":" + items.toString() + ",\"envio\":" + envioJson.toString() + "}");
 
             } finally {

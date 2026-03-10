@@ -17,6 +17,15 @@ import logica.Marca;
 import persistencias.JpaProvider;
 import persistencias.MarcaJpaController;
 
+/**
+ * SvMarcas — Servlet de gestión de marcas de productos.
+ * GET: retorna la lista de todas las marcas con id, nombre, género, páginaUrl, activo y conteo de productos.
+ * POST accion=eliminar: eliminación física. Bloqueada si la marca tiene productos vinculados.
+ * POST accion=editar: actualiza nombre y descripción de una marca existente.
+ * POST accion=desactivar: activa/desactiva una marca (toggle). Bloqueado si tiene productos activos.
+ * POST sin accion: crea la marca en BD y genera automáticamente un archivo JSP físico en web/vistas/.
+ * Todas las operaciones POST requieren el permiso GESTIONAR_MARCAS.
+ */
 public class SvMarcas extends HttpServlet {
 
     @Override
@@ -27,21 +36,24 @@ public class SvMarcas extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
-            List<Marca> lista = new MarcaJpaController().findMarcaEntities();
+            List<Marca> lista = new MarcaJpaController().findMarcaEntities(); // traer todas desde BD
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < lista.size(); i++) {
                 Marca m = lista.get(i);
                 if (i > 0) sb.append(",");
                 sb.append("{");
+                // Si la marca tiene paginaUrl guardada se usa; si no, se genera dinámicamente
+                // desde el nombre: ej. "Paco Rabanne" -> "paco_rabanne.jsp"
                 String paginaUrl = m.getPaginaUrl() != null && !m.getPaginaUrl().isEmpty()
                     ? m.getPaginaUrl()
                     : m.getNombreMarca().trim().toLowerCase().replace(" ", "_").replaceAll("[^a-z0-9_]", "") + ".jsp";
                 sb.append("\"id\":").append(m.getIdMarca()).append(",");
                 sb.append("\"nombre\":\"").append(escapeJson(m.getNombreMarca())).append("\",");
                 sb.append("\"descripcion\":\"").append(escapeJson(m.getDescripcion())).append("\",");
-                sb.append("\"genero\":\"").append(escapeJson(m.getGenero())).append("\",");
+                sb.append("\"genero\":\"").append(escapeJson(m.getGenero())).append("\","); // HOMBRE o MUJER
                 sb.append("\"pagina\":\"").append(escapeJson(paginaUrl)).append("\",");
                 sb.append("\"activo\":").append(m.isActivo()).append(",");
+                // Conteo de productos vinculados (para bloquear eliminación si tiene productos)
                 sb.append("\"productos\":").append(m.getProductos() != null ? m.getProductos().size() : 0);
                 sb.append("}");
             }
@@ -74,6 +86,7 @@ public class SvMarcas extends HttpServlet {
             MarcaJpaController ctrl = new MarcaJpaController();
 
             if ("eliminar".equals(accion)) {
+                // ELIMINAR: bloquear si la marca tiene productos vinculados
                 int id = Integer.parseInt(request.getParameter("id"));
                 em = JpaProvider.getEntityManagerFactory().createEntityManager();
                 TypedQuery<Long> q = em.createQuery(
@@ -85,14 +98,14 @@ public class SvMarcas extends HttpServlet {
                     out.print("{\"error\":\"No se puede eliminar: tiene " + count + " producto(s) vinculado(s)\"}");
                     return;
                 }
-                ctrl.destroy(id);
+                ctrl.destroy(id); // eliminación física en BD
                 out.print("{\"ok\":true}");
                 return;
             }
 
-            String nombre      = request.getParameter("nombre");
-            String descripcion = request.getParameter("descripcion");
-            String idStr       = request.getParameter("id");
+            String nombre      = request.getParameter("nombre");      // nombre de la marca
+            String descripcion = request.getParameter("descripcion"); // descripción opcional
+            String idStr       = request.getParameter("id");          // ID para editar/desactivar
 
             if (nombre == null || nombre.isBlank()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -100,6 +113,7 @@ public class SvMarcas extends HttpServlet {
                 return;
             }
 
+            // Verificar que no exista otra marca con el mismo nombre (al editar se excluye la propia)
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
             TypedQuery<Long> dupQ = em.createQuery(
                 "SELECT COUNT(m) FROM Marca m WHERE LOWER(m.nombreMarca) = LOWER(:n)" +
@@ -113,11 +127,13 @@ public class SvMarcas extends HttpServlet {
             }
 
             if ("editar".equals(accion) && idStr != null) {
+                // EDITAR: actualizar nombre y descripción (no se cambia el JSP generado)
                 Marca marca = ctrl.findMarca(Integer.parseInt(idStr));
                 marca.setNombreMarca(nombre);
                 marca.setDescripcion(descripcion);
-                ctrl.edit(marca);
+                ctrl.edit(marca); // UPDATE en BD
             } else if ("desactivar".equals(accion) && idStr != null) {
+                // DESACTIVAR: bloquear si la marca tiene productos activos (para no romper el catálogo)
                 Marca marca = ctrl.findMarca(Integer.parseInt(idStr));
                 em.close(); em = null;
                 em = JpaProvider.getEntityManagerFactory().createEntityManager();
@@ -129,11 +145,14 @@ public class SvMarcas extends HttpServlet {
                     out.print("{\"error\":\"No se puede desactivar: tiene productos activos vinculados\"}");
                     return;
                 }
-                marca.setActivo(!marca.isActivo());
-                ctrl.edit(marca);
+                marca.setActivo(!marca.isActivo()); // toggle activo/inactivo
+                ctrl.edit(marca); // UPDATE en BD
             } else {
-                String genero = request.getParameter("genero");
-                if (genero == null || genero.isBlank()) genero = "HOMBRE";
+                // CREAR: registrar la marca y generar automáticamente su archivo JSP
+                String genero = request.getParameter("genero"); // HOMBRE o MUJER
+                if (genero == null || genero.isBlank()) genero = "HOMBRE"; // valor por defecto
+                // Generar el nombre del archivo JSP desde el nombre de la marca
+                // ej: "Paco Rabanne" -> "paco_rabanne.jsp"
                 String nombreJsp = nombre.trim().toLowerCase()
                     .replace(" ", "_")
                     .replaceAll("[^a-z0-9_]", "") + ".jsp";
@@ -141,11 +160,11 @@ public class SvMarcas extends HttpServlet {
                 marca.setNombreMarca(nombre);
                 marca.setDescripcion(descripcion);
                 marca.setGenero(genero);
-                marca.setPaginaUrl(nombreJsp);
+                marca.setPaginaUrl(nombreJsp); // ruta relativa del JSP dentro de web/vistas/
                 marca.setActivo(true);
-                ctrl.create(marca);
+                ctrl.create(marca); // INSERT en BD
 
-                // Generar JSP físico para la nueva marca
+                // Generar el archivo JSP físico en el servidor si no existe ya
                 String rutaVistas = request.getServletContext().getRealPath("/vistas/");
                 File jspFile = new File(rutaVistas, nombreJsp);
                 if (!jspFile.exists()) {

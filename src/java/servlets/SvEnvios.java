@@ -20,6 +20,14 @@ import persistencias.EnvioJpaController;
 import persistencias.JpaProvider;
 import persistencias.PedidoJpaController;
 
+/**
+ * SvEnvios — Servlet de gestión de envíos de pedidos.
+ * GET ?idPedido=X: retorna el envío asociado a un pedido (requiere sesión activa).
+ * POST: crea un nuevo envío y cambia el estado del pedido a ENVIADO automáticamente.
+ * POST accion=actualizar: cambia el estado del envío. Si pasa a ENTREGADO,
+ *      cambia también el estado del pedido a ENTREGADO automáticamente.
+ * Requiere permiso GESTIONAR_ENVIOS para el POST.
+ */
 @WebServlet(name = "SvEnvios", urlPatterns = {"/SvEnvios"})
 public class SvEnvios extends HttpServlet {
 
@@ -43,14 +51,17 @@ public class SvEnvios extends HttpServlet {
 
             if (idPedidoStr != null) {
                 int idPedido = Integer.parseInt(idPedidoStr);
+                // Buscar el envío asociado al pedido dado su ID
                 TypedQuery<Envio> q = em.createQuery(
                     "SELECT e FROM Envio e WHERE e.pedido.idPedido = :id", Envio.class);
                 q.setParameter("id", idPedido);
                 List<Envio> envios = q.getResultList();
 
                 if (envios.isEmpty()) {
+                    // El pedido todavía no tiene envío registrado
                     out.print("{\"envio\":null}");
                 } else {
+                    // Serializar los datos del envío a JSON
                     Envio e = envios.get(0);
                     StringBuilder sb = new StringBuilder("{\"envio\":{");
                     sb.append("\"id\":").append(e.getIdEnvio()).append(",");
@@ -58,6 +69,7 @@ public class SvEnvios extends HttpServlet {
                     sb.append("\"transportadora\":\"").append(escapeJson(e.getTransportadora())).append("\",");
                     sb.append("\"guia\":\"").append(escapeJson(e.getNumeroGuia())).append("\",");
                     sb.append("\"estado\":\"").append(e.getEstadoEntrega() != null ? e.getEstadoEntrega().name() : "").append("\",");
+                    // Usar solo la parte de fecha (sin hora) para presentación en el frontend
                     sb.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toLocalDate().toString() : "").append("\",");
                     sb.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toLocalDate().toString() : "").append("\"");
                     sb.append("}}");
@@ -91,13 +103,13 @@ public class SvEnvios extends HttpServlet {
                 return;
             }
 
-            String accion          = request.getParameter("accion");
+            String accion          = request.getParameter("accion");        // null = crear, "actualizar" = cambiar estado
             String idPedidoStr     = request.getParameter("idPedido");
-            String direccion       = request.getParameter("direccion");
-            String transportadora  = request.getParameter("transportadora");
-            String guia            = request.getParameter("guia");
-            String fechaEstStr     = request.getParameter("fechaEstimada");
-            String estadoStr       = request.getParameter("estado");
+            String direccion       = request.getParameter("direccion");      // dirección física de entrega
+            String transportadora  = request.getParameter("transportadora"); // ej: "Servientrega", "Coordinadora"
+            String guia            = request.getParameter("guia");           // número de guía de la transportadora
+            String fechaEstStr     = request.getParameter("fechaEstimada");  // formato YYYY-MM-DD
+            String estadoStr       = request.getParameter("estado");         // valor del enum EstadoEntrega
 
             if (idPedidoStr == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -117,8 +129,8 @@ public class SvEnvios extends HttpServlet {
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
             EnvioJpaController envioCtrl = new EnvioJpaController();
 
+            // ACTUALIZAR: cambiar el estado del envío existente
             if ("actualizar".equals(accion)) {
-                // Actualizar estado de entrega de un envío existente (RF025)
                 String idEnvioStr = request.getParameter("idEnvio");
                 if (idEnvioStr == null || estadoStr == null) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -126,59 +138,62 @@ public class SvEnvios extends HttpServlet {
                     return;
                 }
                 Envio envio = envioCtrl.findEnvio(Integer.parseInt(idEnvioStr));
-                if (envio == null) { out.print("{\"error\":\"Env\u00edo no encontrado\"}"); return; }
-                EstadoEntrega nuevoEstado = EstadoEntrega.valueOf(estadoStr);
+                if (envio == null) { out.print("{\"error\":\"Envío no encontrado\"}"); return; }
+                EstadoEntrega nuevoEstado = EstadoEntrega.valueOf(estadoStr); // convertir texto a enum
                 envio.setEstadoEntrega(nuevoEstado);
                 envio.setUpdatedAt(LocalDateTime.now());
-                if (guia != null && !guia.isBlank()) envio.setNumeroGuia(guia);
+                if (guia != null && !guia.isBlank()) envio.setNumeroGuia(guia); // actualizar guía si se envió
+                // Si el envío pasa a ENTREGADO, actualizar también el estado del pedido
                 if (nuevoEstado == EstadoEntrega.ENTREGADO) {
                     em.getTransaction().begin();
                     Pedido p = em.find(Pedido.class, idPedido);
                     if (p != null) { p.setEstado(EstadoPedido.ENTREGADO); p.setUpdatedAt(LocalDateTime.now()); }
                     em.getTransaction().commit();
                 }
-                envioCtrl.edit(envio);
+                envioCtrl.edit(envio); // UPDATE en BD
                 out.print("{\"ok\":true}");
                 return;
             }
 
-            // Crear nuevo envío (RF023/RF024)
-            // Verificar que no existe ya un envío para este pedido
+            // CREAR: registrar un nuevo envío para el pedido
+            // Verificar que el pedido no tenga ya un envío registrado (sólo puede tener uno)
             TypedQuery<Long> checkQ = em.createQuery(
                 "SELECT COUNT(e) FROM Envio e WHERE e.pedido.idPedido = :id", Long.class);
             checkQ.setParameter("id", idPedido);
             if (checkQ.getSingleResult() > 0) {
                 response.setStatus(HttpServletResponse.SC_CONFLICT);
-                out.print("{\"error\":\"Este pedido ya tiene un env\u00edo registrado\"}");
+                out.print("{\"error\":\"Este pedido ya tiene un envío registrado\"}");
                 return;
             }
 
             if (direccion == null || direccion.isBlank()) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                out.print("{\"error\":\"La direcci\u00f3n de env\u00edo es obligatoria\"}");
+                out.print("{\"error\":\"La dirección de envío es obligatoria\"}");
                 return;
             }
 
+            // Construir el objeto Envio con los datos recibidos
             Envio envio = new Envio();
             envio.setPedido(pedido);
             envio.setDireccionEnvio(direccion);
             envio.setTransportadora(transportadora != null ? transportadora : "");
             envio.setNumeroGuia(guia != null ? guia : "");
-            envio.setFechaEnvio(LocalDateTime.now());
-            envio.setEstadoEntrega(EstadoEntrega.PREPARANDO);
+            envio.setFechaEnvio(LocalDateTime.now()); // fecha actual como fecha de despacho
+            envio.setEstadoEntrega(EstadoEntrega.PREPARANDO); // estado inicial del envío
             envio.setCreatedAt(LocalDateTime.now());
             envio.setUpdatedAt(LocalDateTime.now());
             envio.setActivo(true);
 
+            // Parsear la fecha estimada de entrega si fue enviada (formato YYYY-MM-DD)
             if (fechaEstStr != null && !fechaEstStr.isBlank()) {
                 try {
                     envio.setFechaEstimadaEntrega(LocalDate.parse(fechaEstStr).atStartOfDay());
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {} // si el formato es inválido, ignorar
             }
 
-            envioCtrl.create(envio);
+            envioCtrl.create(envio); // INSERT en BD
 
-            // Cambiar estado del pedido a ENVIADO
+            // Cambiar el estado del pedido a ENVIADO automáticamente al registrar el envío
             em.getTransaction().begin();
             Pedido pedidoMerge = em.find(Pedido.class, idPedido);
             if (pedidoMerge != null) {

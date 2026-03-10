@@ -17,6 +17,16 @@ import logica.Telefonocliente;
 import logica.Usuario;
 import persistencias.JpaProvider;
 
+/**
+ * SvContactoCliente — Servlet de gestión de datos de contacto del cliente logueado.
+ * GET: retorna todos los teléfonos y correos adicionales activos del cliente en sesión.
+ * POST tipo=direccion: actualiza la dirección de entrega del cliente.
+ * POST tipo=telefono accion=agregar: agrega un nuevo teléfono (valida formato y duplicados).
+ * POST tipo=telefono accion=eliminar: desactiva un teléfono existente (no se elimina físicamente).
+ * POST tipo=correo accion=agregar: agrega un nuevo correo adicional (valida formato y duplicados).
+ * POST tipo=correo accion=eliminar: desactiva un correo adicional. Bloqueado si es el correo principal.
+ * Requiere sesión activa en todas las operaciones.
+ */
 public class SvContactoCliente extends HttpServlet {
 
     @Override
@@ -26,10 +36,11 @@ public class SvContactoCliente extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        // Verificar que haya sesión activa antes de retornar datos personales
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("usuario") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            out.print("{\"error\":\"Sesi\u00f3n no iniciada\"}");
+            out.print("{\"error\":\"Sesión no iniciada\"}");
             return;
         }
 
@@ -37,6 +48,7 @@ public class SvContactoCliente extends HttpServlet {
         try {
             Usuario usuario = (Usuario) session.getAttribute("usuario");
             Cliente cliente = usuario.getCliente();
+            // Si el usuario no tiene cliente asociado (es admin puro) retornar listas vacías
             if (cliente == null) {
                 out.print("{\"telefonos\":[],\"correos\":[]}");
                 return;
@@ -44,12 +56,14 @@ public class SvContactoCliente extends HttpServlet {
             int idCliente = cliente.getIdCliente();
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
 
+            // Consultar todos los teléfonos activos del cliente, ordenados por ID
             TypedQuery<Telefonocliente> qt = em.createQuery(
                 "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true ORDER BY t.idTelefono",
                 Telefonocliente.class);
             qt.setParameter("id", idCliente);
             List<Telefonocliente> tels = qt.getResultList();
 
+            // Consultar todos los correos adicionales activos del cliente
             TypedQuery<Correocliente> qc = em.createQuery(
                 "SELECT c FROM Correocliente c WHERE c.cliente.idCliente = :id AND c.activo = true ORDER BY c.idCorreo",
                 Correocliente.class);
@@ -92,10 +106,11 @@ public class SvContactoCliente extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        // Verificar que haya sesión activa antes de realizar operaciones
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("usuario") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            out.print("{\"error\":\"Sesi\u00f3n no iniciada\"}");
+            out.print("{\"error\":\"Sesión no iniciada\"}");
             return;
         }
 
@@ -103,6 +118,7 @@ public class SvContactoCliente extends HttpServlet {
         try {
             Usuario usuario = (Usuario) session.getAttribute("usuario");
             Cliente cliente = usuario.getCliente();
+            // Si el usuario no tiene cliente asociado (es admin puro) retornar error
             if (cliente == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 out.print("{\"error\":\"El usuario no tiene cliente asociado\"}");
@@ -110,54 +126,59 @@ public class SvContactoCliente extends HttpServlet {
             }
             int idCliente = cliente.getIdCliente();
 
-            String tipo   = request.getParameter("tipo");   // "telefono" | "correo"
+            String tipo   = request.getParameter("tipo");   // "direccion" | "telefono" | "correo"
             String accion = request.getParameter("accion"); // "agregar" | "eliminar"
-            String idStr  = request.getParameter("id");
+            String idStr  = request.getParameter("id");     // ID del registro a eliminar
 
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
             em.getTransaction().begin();
 
+            // Recargar el cliente desde BD dentro de la transacción activa
             Cliente clienteRef = em.find(Cliente.class, idCliente);
 
             if ("direccion".equals(tipo)) {
+                // DIRECCIÓN: actualizar la dirección de entrega del cliente
                 String nuevaDir = request.getParameter("direccion");
                 if (nuevaDir == null || nuevaDir.isBlank()) {
                     em.getTransaction().rollback();
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    out.print("{\"error\":\"La direcci\u00f3n no puede estar vac\u00eda\"}");
+                    out.print("{\"error\":\"La dirección no puede estar vacía\"}");
                     return;
                 }
-                clienteRef.setDireccion(nuevaDir.trim());
+                clienteRef.setDireccion(nuevaDir.trim()); // UPDATE en BD
                 em.getTransaction().commit();
-                // Actualizar la sesión con el cliente modificado
+                // Sincronizar el objeto en sesión para que el frontend vea el cambio de inmediato
                 usuario.getCliente().setDireccion(nuevaDir.trim());
                 out.print("{\"ok\":true}");
                 return;
 
             } else if ("telefono".equals(tipo)) {
                 if ("eliminar".equals(accion) && idStr != null) {
+                    // ELIMINAR TELÉFONO: desactivar en vez de borrar físicamente
                     Telefonocliente t = em.find(Telefonocliente.class, Integer.parseInt(idStr));
+                    // Verificar que el teléfono pertenezca al cliente logueado (seguridad)
                     if (t != null && t.getCliente().getIdCliente() == idCliente) {
-                        t.setActivo(false);
+                        t.setActivo(false); // desactivar (soft delete)
                     }
                 } else {
-                    String numero    = request.getParameter("numero");
-                    String tipoTelStr = request.getParameter("tipoTel");
+                    // AGREGAR TELÉFONO: validar formato y duplicados antes de persistir
+                    String numero     = request.getParameter("numero");
+                    String tipoTelStr = request.getParameter("tipoTel"); // CELULAR, FIJO, etc.
                     if (numero == null || numero.isBlank()) {
                         em.getTransaction().rollback();
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        out.print("{\"error\":\"El n\u00famero es obligatorio\"}");
+                        out.print("{\"error\":\"El número es obligatorio\"}");
                         return;
                     }
-                    // Validar formato
+                    // Validar formato: solo dígitos (7-15), eliminando espacios, guíones y paréntesis
                     String limpio = numero.replaceAll("[\\s\\-\\(\\)\\+]", "");
                     if (!limpio.matches("\\d{7,15}")) {
                         em.getTransaction().rollback();
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        out.print("{\"error\":\"Formato de tel\u00e9fono inv\u00e1lido\"}");
+                        out.print("{\"error\":\"Formato de teléfono inválido\"}");
                         return;
                     }
-                    // Validar duplicado
+                    // Verificar que el número no esté ya registrado para este cliente
                     TypedQuery<Long> dupQ = em.createQuery(
                         "SELECT COUNT(t) FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.telefono = :num AND t.activo = true",
                         Long.class);
@@ -166,9 +187,10 @@ public class SvContactoCliente extends HttpServlet {
                     if (dupQ.getSingleResult() > 0) {
                         em.getTransaction().rollback();
                         response.setStatus(HttpServletResponse.SC_CONFLICT);
-                        out.print("{\"error\":\"Este n\u00famero ya est\u00e1 registrado\"}");
+                        out.print("{\"error\":\"Este número ya está registrado\"}");
                         return;
                     }
+                    // Convertir el tipo a enum; si no se reconoce, usar CELULAR por defecto
                     TipoTelefono tipoTel = TipoTelefono.CELULAR;
                     try { tipoTel = TipoTelefono.valueOf(tipoTelStr); } catch (Exception ignored) {}
 
@@ -177,30 +199,35 @@ public class SvContactoCliente extends HttpServlet {
                     t.setTelefono(numero.trim());
                     t.setTipoTelefono(tipoTel);
                     t.setActivo(true);
-                    em.persist(t);
+                    em.persist(t); // INSERT en BD
                 }
 
             } else if ("correo".equals(tipo)) {
                 if ("eliminar".equals(accion) && idStr != null) {
+                    // ELIMINAR CORREO: no se puede eliminar el correo principal del cliente
                     Correocliente c = em.find(Correocliente.class, Integer.parseInt(idStr));
+                    // Verificar que el correo pertenezca al cliente logueado (seguridad)
                     if (c != null && c.getCliente().getIdCliente() == idCliente) {
                         if (c.isPrincipal()) {
+                            // El correo principal es necesario para el login; no se puede eliminar
                             em.getTransaction().rollback();
                             response.setStatus(HttpServletResponse.SC_CONFLICT);
                             out.print("{\"error\":\"No se puede eliminar el correo principal\"}");
                             return;
                         }
-                        c.setActivo(false);
+                        c.setActivo(false); // desactivar correo adicional (soft delete)
                     }
                 } else {
+                    // AGREGAR CORREO: validar formato y duplicados
                     String correo = request.getParameter("correo");
+                    // Validar formato con regex básico de correo electrónico
                     if (correo == null || !correo.matches("^[\\w.\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$")) {
                         em.getTransaction().rollback();
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        out.print("{\"error\":\"Formato de correo inv\u00e1lido\"}");
+                        out.print("{\"error\":\"Formato de correo inválido\"}");
                         return;
                     }
-                    // Validar duplicado
+                    // Verificar que el correo no esté ya registrado para este cliente
                     TypedQuery<Long> dupQ = em.createQuery(
                         "SELECT COUNT(c) FROM Correocliente c WHERE c.cliente.idCliente = :id AND LOWER(c.correo) = LOWER(:correo) AND c.activo = true",
                         Long.class);
@@ -209,15 +236,16 @@ public class SvContactoCliente extends HttpServlet {
                     if (dupQ.getSingleResult() > 0) {
                         em.getTransaction().rollback();
                         response.setStatus(HttpServletResponse.SC_CONFLICT);
-                        out.print("{\"error\":\"Este correo ya est\u00e1 registrado\"}");
+                        out.print("{\"error\":\"Este correo ya está registrado\"}");
                         return;
                     }
+                    // Crear el nuevo correo adicional (no principal)
                     Correocliente c = new Correocliente();
                     c.setCliente(clienteRef);
                     c.setCorreo(correo.trim());
-                    c.setPrincipal(false);
+                    c.setPrincipal(false); // solo se puede tener un correo principal (el del usuario)
                     c.setActivo(true);
-                    em.persist(c);
+                    em.persist(c); // INSERT en BD
                 }
             }
 

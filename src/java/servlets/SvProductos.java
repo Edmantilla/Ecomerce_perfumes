@@ -17,6 +17,15 @@ import persistencias.CategoriaJpaController;
 import persistencias.MarcaJpaController;
 import persistencias.ProductoJpaController;
 
+/**
+ * SvProductos — Servlet de gestión del catálogo de productos.
+ * GET: devuelve la lista de productos en formato JSON.
+ *   - Sin parámetros: solo productos activos (para el frontend público).
+ *   - Con ?admin=true: todos los productos incluyendo inactivos (requiere VER_PRODUCTOS).
+ * POST accion=crear: crea un nuevo producto (requiere EDITAR_PRODUCTOS).
+ * POST accion=editar: modifica un producto existente (requiere EDITAR_PRODUCTOS).
+ * POST accion=eliminar: eliminación física del producto (requiere ELIMINAR_PRODUCTOS).
+ */
 @WebServlet(name = "SvProductos", urlPatterns = {"/SvProductos"})
 public class SvProductos extends HttpServlet {
 
@@ -29,19 +38,22 @@ public class SvProductos extends HttpServlet {
 
         try {
             ProductoJpaController ctrl = new ProductoJpaController();
-            List<Producto> productos = ctrl.findProductoEntities();
+            List<Producto> productos = ctrl.findProductoEntities(); // trae todos desde BD
 
-            // Si no es llamada del admin, filtrar solo productos activos
+            // Determinar si es una llamada desde el panel admin (?admin=true)
             boolean esAdminCall = "true".equals(request.getParameter("admin"));
+            // Si es llamada admin, verificar que el usuario tenga el permiso VER_PRODUCTOS
             if (esAdminCall && !AuthHelper.tienePermiso(request, "VER_PRODUCTOS")) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 out.print("{\"error\":\"Sin permiso: VER_PRODUCTOS\"}");
                 return;
             }
+            // Si no es admin, filtrar solo los productos activos (los inactivos no se muestran en la tienda)
             if (!esAdminCall) {
                 productos = productos.stream().filter(Producto::isActivo).collect(java.util.stream.Collectors.toList());
             }
 
+            // Construir la respuesta JSON manualmente (sin librerías externas como Gson/Jackson)
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < productos.size(); i++) {
                 Producto p = productos.get(i);
@@ -78,14 +90,16 @@ public class SvProductos extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
-            String accion = request.getParameter("accion");
+            String accion = request.getParameter("accion"); // "crear", "editar" o "eliminar"
 
+            // Verificar que el usuario tenga permiso para crear o editar productos
             if (!AuthHelper.tienePermiso(request, "EDITAR_PRODUCTOS")) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 out.print("{\"error\":\"Sin permiso: EDITAR_PRODUCTOS\"}");
                 return;
             }
 
+            // La eliminación requiere un permiso adicional más restrictivo
             if ("eliminar".equals(accion)) {
                 if (!AuthHelper.tienePermiso(request, "ELIMINAR_PRODUCTOS")) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -93,7 +107,7 @@ public class SvProductos extends HttpServlet {
                     return;
                 }
                 int id = Integer.parseInt(request.getParameter("id"));
-                new ProductoJpaController().destroy(id);
+                new ProductoJpaController().destroy(id); // eliminación física de la BD
                 out.print("{\"ok\":true}");
                 return;
             }
@@ -114,24 +128,29 @@ public class SvProductos extends HttpServlet {
             MarcaJpaController marcaCtrl     = new MarcaJpaController();
             ProductoJpaController prodCtrl   = new ProductoJpaController();
 
+            // Resolver la categoría: si viene un número, buscar por ID; si viene un texto, buscar o crear por nombre
             Categoria cat;
             Marca marca;
             try {
-                int idCat = Integer.parseInt(idCatStr);
+                int idCat = Integer.parseInt(idCatStr); // intentar como ID numérico
                 cat = catCtrl.findCategoria(idCat);
                 if (cat == null) throw new Exception("Categoría con ID " + idCat + " no encontrada.");
             } catch (NumberFormatException e) {
+                // Si no es un número, buscar por nombre o crearla si no existe
                 cat = buscarOCrearCategoria(catCtrl, idCatStr != null && !idCatStr.isBlank() ? idCatStr : "General");
             }
+            // Resolver la marca: misma lógica que la categoría
             try {
-                int idMarca = Integer.parseInt(idMarcaStr);
+                int idMarca = Integer.parseInt(idMarcaStr); // intentar como ID numérico
                 marca = marcaCtrl.findMarca(idMarca);
                 if (marca == null) throw new Exception("Marca con ID " + idMarca + " no encontrada.");
             } catch (NumberFormatException e) {
+                // Si no es un número, buscar por nombre o crearla si no existe
                 marca = buscarOCrearMarca(marcaCtrl, idMarcaStr != null && !idMarcaStr.isBlank() ? idMarcaStr : "Sin Marca");
             }
 
             if ("editar".equals(accion) && idStr != null) {
+                // EDITAR: cargar el producto existente y actualizar sus campos
                 Producto p = prodCtrl.findProducto(Integer.parseInt(idStr));
                 p.setNombreProducto(nombre);
                 p.setDescripcion(descripcion);
@@ -139,10 +158,12 @@ public class SvProductos extends HttpServlet {
                 p.setStock(stock);
                 p.setCategoria(cat);
                 p.setMarca(marca);
+                // Solo actualizar la imagen si se envió una nueva URL; si no, mantener la anterior
                 p.setImagenUrl(imagenUrl != null && !imagenUrl.isBlank() ? imagenUrl.trim() : p.getImagenUrl());
                 p.setUpdatedAt(LocalDateTime.now());
-                prodCtrl.edit(p);
+                prodCtrl.edit(p); // UPDATE en BD
             } else {
+                // CREAR: construir un nuevo producto y persistirlo
                 Producto p = new Producto();
                 p.setNombreProducto(nombre);
                 p.setDescripcion(descripcion);
@@ -151,10 +172,10 @@ public class SvProductos extends HttpServlet {
                 p.setCategoria(cat);
                 p.setMarca(marca);
                 p.setImagenUrl(imagenUrl != null && !imagenUrl.isBlank() ? imagenUrl.trim() : null);
-                p.setActivo(true);
+                p.setActivo(true); // los productos nuevos se crean activos por defecto
                 p.setCreatedAt(LocalDateTime.now());
                 p.setUpdatedAt(LocalDateTime.now());
-                prodCtrl.create(p);
+                prodCtrl.create(p); // INSERT en BD
             }
             out.print("{\"ok\":true}");
 
@@ -164,31 +185,43 @@ public class SvProductos extends HttpServlet {
         }
     }
 
+    /**
+     * Busca una categoría por nombre (sin distinción de mayúsculas).
+     * Si no existe, la crea automáticamente. Útil cuando el admin escribe un nombre nuevo.
+     */
     private Categoria buscarOCrearCategoria(CategoriaJpaController ctrl, String nombre) throws Exception {
         List<Categoria> todas = ctrl.findCategoriaEntities();
         for (Categoria c : todas) {
-            if (c.getNombreCategoria().equalsIgnoreCase(nombre)) return c;
+            if (c.getNombreCategoria().equalsIgnoreCase(nombre)) return c; // encontrada
         }
+        // No existe: crear la categoría nueva
         Categoria nueva = new Categoria();
         nueva.setNombreCategoria(nombre);
         nueva.setActivo(true);
         ctrl.create(nueva);
+        // Volver a buscar para obtener el objeto con el ID asignado por la BD
         for (Categoria c : ctrl.findCategoriaEntities()) {
             if (c.getNombreCategoria().equalsIgnoreCase(nombre)) return c;
         }
         return null;
     }
 
+    /**
+     * Busca una marca por nombre (sin distinción de mayúsculas).
+     * Si no existe, la crea automáticamente con género HOMBRE por defecto.
+     */
     private Marca buscarOCrearMarca(MarcaJpaController ctrl, String nombre) throws Exception {
         List<Marca> todas = ctrl.findMarcaEntities();
         for (Marca m : todas) {
-            if (m.getNombreMarca().equalsIgnoreCase(nombre)) return m;
+            if (m.getNombreMarca().equalsIgnoreCase(nombre)) return m; // encontrada
         }
+        // No existe: crear la marca nueva
         Marca nueva = new Marca();
         nueva.setNombreMarca(nombre);
-        nueva.setGenero("HOMBRE");
+        nueva.setGenero("HOMBRE"); // género por defecto al crear desde aquí
         nueva.setActivo(true);
         ctrl.create(nueva);
+        // Volver a buscar para obtener el objeto con el ID asignado por la BD
         for (Marca m : ctrl.findMarcaEntities()) {
             if (m.getNombreMarca().equalsIgnoreCase(nombre)) return m;
         }

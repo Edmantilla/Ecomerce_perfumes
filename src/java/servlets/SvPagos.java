@@ -18,6 +18,14 @@ import persistencias.JpaProvider;
 import persistencias.PagoJpaController;
 import persistencias.PedidoJpaController;
 
+/**
+ * SvPagos — Servlet de gestión de pagos de pedidos.
+ * GET ?idPedido=X: retorna todos los pagos de un pedido, el total pagado y el monto pendiente.
+ * POST: registra un nuevo pago. Si la suma acumulada cubre el total del pedido,
+ *       cambia automáticamente el estado del pedido a PAGO.
+ * POST accion=actualizar: modifica un pago existente (monto, método, estado).
+ * Requiere permiso GESTIONAR_PAGOS o sesión activa.
+ */
 @javax.servlet.annotation.WebServlet(name = "SvPagos", urlPatterns = {"/SvPagos"})
 public class SvPagos extends HttpServlet {
 
@@ -41,17 +49,19 @@ public class SvPagos extends HttpServlet {
 
             if (idPedidoStr != null) {
                 int idPedido = Integer.parseInt(idPedidoStr);
+                // Traer todos los pagos registrados para este pedido
                 TypedQuery<Pago> q = em.createQuery(
                     "SELECT p FROM Pago p WHERE p.pedido.idPedido = :id", Pago.class);
                 q.setParameter("id", idPedido);
                 List<Pago> pagos = q.getResultList();
 
+                // Calcular cuánto se ha pagado y cuánto queda pendiente
                 Pedido pedido = new PedidoJpaController().findPedido(idPedido);
                 BigDecimal totalPedido = pedido != null && pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO;
                 BigDecimal sumaPagada = pagos.stream()
                     .filter(p -> p.getMontoPagado() != null)
                     .map(Pago::getMontoPagado)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add); // sumar todos los montos pagados
 
                 StringBuilder sb = new StringBuilder("{");
                 sb.append("\"totalPedido\":").append(totalPedido).append(",");
@@ -100,12 +110,13 @@ public class SvPagos extends HttpServlet {
                 return;
             }
 
-            String accion      = request.getParameter("accion");
+            String accion      = request.getParameter("accion");   // null = crear nuevo pago, "actualizar" = editar uno existente
             String idPedidoStr = request.getParameter("idPedido");
-            String metodo      = request.getParameter("metodo");
+            String metodo      = request.getParameter("metodo");    // ej: "EFECTIVO", "TRANSFERENCIA", "TARJETA"
             String montoStr    = request.getParameter("monto");
-            String referencia  = request.getParameter("referencia");
+            String referencia  = request.getParameter("referencia"); // número de transacción o comprobante
 
+            // Validar que los campos obligatorios estén presentes
             if (idPedidoStr == null || montoStr == null || metodo == null) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 out.print("{\"error\":\"idPedido, metodo y monto son obligatorios\"}");
@@ -131,6 +142,7 @@ public class SvPagos extends HttpServlet {
 
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
 
+            // ACTUALIZAR pago existente: modifica monto, método, referencia o estado
             if ("actualizar".equals(accion)) {
                 String idPagoStr = request.getParameter("idPago");
                 String estadoStr = request.getParameter("estado");
@@ -142,12 +154,13 @@ public class SvPagos extends HttpServlet {
                 pago.setMontoPagado(monto);
                 if (referencia != null) pago.setReferenciaTransaccion(referencia);
                 if (estadoStr != null) pago.setEstadoPago(EstadoPago.valueOf(estadoStr));
-                ctrl.edit(pago);
+                ctrl.edit(pago); // UPDATE en BD
                 out.print("{\"ok\":true}");
                 return;
             }
 
-            // Validar que monto no exceda el pendiente (RF022)
+            // NUEVO PAGO: verificar que el monto no exceda el saldo pendiente del pedido
+            // Sumar solo los pagos APROBADOS (no los pendientes o rechazados)
             TypedQuery<BigDecimal> qSum = em.createQuery(
                 "SELECT COALESCE(SUM(p.montoPagado),0) FROM Pago p WHERE p.pedido.idPedido = :id AND p.estadoPago = :estado",
                 BigDecimal.class);
@@ -155,26 +168,29 @@ public class SvPagos extends HttpServlet {
             qSum.setParameter("estado", EstadoPago.APROBADO);
             BigDecimal sumaPagada = qSum.getSingleResult();
             BigDecimal totalPedido = pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO;
-            BigDecimal pendiente = totalPedido.subtract(sumaPagada);
+            BigDecimal pendiente = totalPedido.subtract(sumaPagada); // cuánto queda por pagar
 
+            // Rechazar si el monto enviado supera el saldo pendiente
             if (monto.compareTo(pendiente) > 0) {
                 response.setStatus(HttpServletResponse.SC_CONFLICT);
                 out.print("{\"error\":\"El monto (" + monto + ") supera el pendiente (" + pendiente + ")\"}");
                 return;
             }
 
+            // Crear el nuevo pago y guardarlo en BD
             Pago pago = new Pago();
             pago.setPedido(pedido);
             pago.setMetodoPago(metodo);
             pago.setMontoPagado(monto);
             pago.setFechaPago(LocalDateTime.now());
-            pago.setEstadoPago(EstadoPago.APROBADO);
+            pago.setEstadoPago(EstadoPago.APROBADO); // se registra como aprobado por defecto
             pago.setReferenciaTransaccion(referencia != null ? referencia : "");
             pago.setActivo(true);
 
-            new PagoJpaController().create(pago);
+            new PagoJpaController().create(pago); // INSERT en BD
 
-            // Si suma total == total pedido, actualizar estado a PAGO (RF022)
+            // Verificar si con este pago ya se cubre el total del pedido
+            // Si es así, cambiar el estado del pedido a PAGO automáticamente
             BigDecimal nuevaSuma = sumaPagada.add(monto);
             if (nuevaSuma.compareTo(totalPedido) >= 0) {
                 em.getTransaction().begin();
@@ -184,9 +200,9 @@ public class SvPagos extends HttpServlet {
                     pedidoMerge.setUpdatedAt(LocalDateTime.now());
                 }
                 em.getTransaction().commit();
-                out.print("{\"ok\":true,\"estadoActualizado\":\"PAGO\"}");
+                out.print("{\"ok\":true,\"estadoActualizado\":\"PAGO\"}"); // notificar al frontend del cambio de estado
             } else {
-                out.print("{\"ok\":true}");
+                out.print("{\"ok\":true}"); // pago registrado pero el pedido aún no está completamente pagado
             }
 
         } catch (Exception e) {

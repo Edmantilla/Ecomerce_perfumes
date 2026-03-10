@@ -18,6 +18,11 @@ import logica.Usuario;
 import persistencias.JpaProvider;
 import persistencias.PedidoJpaController;
 
+/**
+ * SvPedidos — Servlet de gestión de pedidos para el panel admin.
+ * GET: lista todos los pedidos con datos del cliente (requiere VER_PEDIDOS).
+ * POST accion=cambiarEstado: actualiza el estado de un pedido (requiere GESTIONAR_PEDIDOS).
+ */
 @WebServlet(name = "SvPedidos", urlPatterns = {"/SvPedidos"})
 public class SvPedidos extends HttpServlet {
 
@@ -37,9 +42,11 @@ public class SvPedidos extends HttpServlet {
         EntityManager emGet = null;
         try {
             PedidoJpaController ctrl = new PedidoJpaController();
-            List<Pedido> pedidos = ctrl.findPedidoEntities();
+            List<Pedido> pedidos = ctrl.findPedidoEntities(); // traer todos los pedidos de la BD
+            // EntityManager separado para consultar teléfonos de cada cliente sin conflicto de transacción
             emGet = JpaProvider.getEntityManagerFactory().createEntityManager();
 
+            // Construir el array JSON de pedidos
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < pedidos.size(); i++) {
                 Pedido p = pedidos.get(i);
@@ -56,6 +63,7 @@ public class SvPedidos extends HttpServlet {
                     int idC = p.getCliente().getIdCliente();
                     String dir = p.getCliente().getDireccion();
                     sb.append("\"direccionCliente\":\"").append(esc(dir != null ? dir : "")).append("\",");
+                    // Consultar los teléfonos activos del cliente para mostrarlos en el panel
                     List<Telefonocliente> tels = emGet.createQuery(
                         "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true ORDER BY t.idTelefono",
                         Telefonocliente.class).setParameter("id", idC).getResultList();
@@ -66,7 +74,8 @@ public class SvPedidos extends HttpServlet {
                     }
                     sb.append("]");
                 } else {
-                    sb.append("\"direccionCliente\":\"\",\"telefonosCliente\":[]");
+                    // Pedido sin cliente (caso admin u otro)
+                    sb.append("\"direccionCliente\":\"\",\"telefonosCliente\":[]" );
                 }
                 sb.append("}");
             }
@@ -100,7 +109,7 @@ public class SvPedidos extends HttpServlet {
 
             if ("cambiarEstado".equals(accion)) {
                 String idStr     = request.getParameter("idPedido");
-                String estadoStr = request.getParameter("estado");
+                String estadoStr = request.getParameter("estado"); // debe coincidir con un valor del enum EstadoPedido
 
                 if (idStr == null || estadoStr == null) {
                     out.print("{\"error\":\"Parámetros faltantes\"}");
@@ -108,20 +117,22 @@ public class SvPedidos extends HttpServlet {
                 }
 
                 int idPedido = Integer.parseInt(idStr.trim());
+                // Convertir el texto recibido al enum EstadoPedido (lanza IllegalArgumentException si no coincide)
                 EstadoPedido nuevoEstado = EstadoPedido.valueOf(estadoStr.trim().toUpperCase());
 
                 EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager();
                 try {
                     em.getTransaction().begin();
-                    Pedido pedido = em.find(Pedido.class, idPedido);
+                    Pedido pedido = em.find(Pedido.class, idPedido); // buscar el pedido por ID
                     if (pedido == null) {
                         em.getTransaction().rollback();
                         out.print("{\"error\":\"Pedido no encontrado\"}");
                         return;
                     }
+                    // Actualizar el estado y la fecha de modificación
                     pedido.setEstado(nuevoEstado);
                     pedido.setUpdatedAt(LocalDateTime.now());
-                    em.merge(pedido);
+                    em.merge(pedido); // UPDATE en BD
                     em.getTransaction().commit();
                     out.print("{\"ok\":true,\"idPedido\":" + idPedido + ",\"estado\":\"" + nuevoEstado.name() + "\"}");
                 } finally {

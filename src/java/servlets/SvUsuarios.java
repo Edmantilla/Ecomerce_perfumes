@@ -16,6 +16,13 @@ import logica.Usuario;
 import persistencias.JpaProvider;
 import persistencias.UsuarioJpaController;
 
+/**
+ * SvUsuarios — Servlet de gestión de usuarios para el panel admin.
+ * GET: lista todos los usuarios con su rol, datos del cliente (nombre, dirección,
+ *      teléfonos, correos adicionales) y cantidad de pedidos (requiere VER_USUARIOS).
+ * POST accion=desactivar: desactiva una cuenta de usuario (requiere EDITAR_USUARIOS).
+ * POST accion=cambiarRol: asigna un nuevo rol a un usuario (requiere EDITAR_USUARIOS).
+ */
 @WebServlet(name = "SvUsuarios", urlPatterns = {"/SvUsuarios"})
 public class SvUsuarios extends HttpServlet {
 
@@ -35,7 +42,8 @@ public class SvUsuarios extends HttpServlet {
             }
 
             UsuarioJpaController ctrl = new UsuarioJpaController();
-            List<Usuario> usuarios = ctrl.findUsuarioEntities();
+            List<Usuario> usuarios = ctrl.findUsuarioEntities(); // traer todos los usuarios de BD
+            // EntityManager separado para consultas de teléfonos y correos de cada cliente
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
 
             StringBuilder sb = new StringBuilder("[");
@@ -48,6 +56,7 @@ public class SvUsuarios extends HttpServlet {
                 sb.append("\"activo\":").append(u.isActivo()).append(",");
                 sb.append("\"rol\":\"").append(u.getRol() != null ? escapeJson(u.getRol().getNombreRol()) : "").append("\",");
                 sb.append("\"idRol\":").append(u.getRol() != null ? u.getRol().getIdRol() : 0).append(",");
+                // Si no tiene cliente asociado es un usuario admin del sistema
                 sb.append("\"nombre\":\"").append(
                     u.getCliente() != null ? escapeJson(u.getCliente().getNombreCompleto()) : "Admin"
                 ).append("\",");
@@ -55,11 +64,10 @@ public class SvUsuarios extends HttpServlet {
 
                 if (u.getCliente() != null) {
                     int idC = u.getCliente().getIdCliente();
-                    // Dirección
                     String dir = u.getCliente().getDireccion();
                     sb.append("\"direccion\":\"").append(escapeJson(dir != null ? dir : "")).append("\",");
 
-                    // Teléfonos activos
+                    // Consultar los teléfonos activos del cliente (puede tener varios)
                     List<Telefonocliente> tels = em.createQuery(
                         "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true ORDER BY t.idTelefono",
                         Telefonocliente.class).setParameter("id", idC).getResultList();
@@ -71,7 +79,7 @@ public class SvUsuarios extends HttpServlet {
                     }
                     sb.append("],");
 
-                    // Correos adicionales activos
+                    // Consultar los correos adicionales activos del cliente
                     List<Correocliente> correos = em.createQuery(
                         "SELECT c FROM Correocliente c WHERE c.cliente.idCliente = :id AND c.activo = true ORDER BY c.idCorreo",
                         Correocliente.class).setParameter("id", idC).getResultList();
@@ -83,12 +91,13 @@ public class SvUsuarios extends HttpServlet {
                     }
                     sb.append("],");
 
-                    // Conteo de pedidos
+                    // Contar cuántos pedidos ha hecho este cliente
                     Long numPedidos = em.createQuery(
                         "SELECT COUNT(p) FROM Pedido p WHERE p.cliente.idCliente = :id", Long.class)
                         .setParameter("id", idC).getSingleResult();
                     sb.append("\"numPedidos\":").append(numPedidos);
                 } else {
+                    // Usuario sin cliente (admin puro): no tiene dirección ni pedidos
                     sb.append("\"direccion\":\"\",\"telefonos\":[],\"correosAdicionales\":[],\"numPedidos\":0");
                 }
 
@@ -120,17 +129,20 @@ public class SvUsuarios extends HttpServlet {
                 return;
             }
 
-            String accion = request.getParameter("accion");
+            String accion = request.getParameter("accion"); // "desactivar" o "cambiarRol"
             if ("desactivar".equals(accion)) {
+                // DESACTIVAR: marcar el usuario como inactivo (no se elimina físicamente)
                 int id = Integer.parseInt(request.getParameter("id"));
                 UsuarioJpaController ctrl = new UsuarioJpaController();
                 Usuario u = ctrl.findUsuario(id);
                 if (u != null) {
-                    u.setActivo(false);
-                    ctrl.edit(u);
+                    u.setActivo(false); // la cuenta queda deshabilitada para login
+                    ctrl.edit(u); // UPDATE en BD
                 }
                 out.print("{\"ok\":true}");
             } else if ("cambiarRol".equals(accion)) {
+                // CAMBIAR ROL: asignar un rol diferente al usuario
+                // Cambiar el rol cambia automáticamente los permisos que tiene el usuario
                 int idUsuario = Integer.parseInt(request.getParameter("id"));
                 int idRol     = Integer.parseInt(request.getParameter("idRol"));
                 EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager();
@@ -140,10 +152,11 @@ public class SvUsuarios extends HttpServlet {
                     if (u == null) { out.print("{\"error\":\"Usuario no encontrado\"}"); return; }
                     logica.Rol nuevoRol = em.find(logica.Rol.class, idRol);
                     if (nuevoRol == null) { out.print("{\"error\":\"Rol no encontrado\"}"); return; }
-                    u.setRol(nuevoRol);
+                    u.setRol(nuevoRol); // asignar el nuevo rol
                     u.setUpdatedAt(java.time.LocalDateTime.now());
-                    em.merge(u);
+                    em.merge(u); // UPDATE en BD
                     em.getTransaction().commit();
+                    // Retornar el nombre del nuevo rol para que el frontend actualice la UI
                     out.print("{\"ok\":true,\"rol\":\"" + escapeJson(nuevoRol.getNombreRol()) + "\"}");
                 } finally {
                     if (em.isOpen()) em.close();
