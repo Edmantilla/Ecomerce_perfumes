@@ -153,6 +153,47 @@
         return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;color:' + e.color + ';background:' + e.bg + '">' + e.label + '</span>';
       }
 
+      var ESTADO_ENVIO_LABEL = {
+        'PREPARANDO':  { label: 'Preparando',   color: '#f57c00', bg: '#fff3e0' },
+        'EN_TRANSITO': { label: 'En tránsito',  color: '#1565c0', bg: '#e3f2fd' },
+        'ENTREGADO':   { label: 'Entregado',     color: '#2e7d32', bg: '#e8f5e9' },
+        'DEVUELTO':    { label: 'Devuelto',      color: '#c62828', bg: '#ffebee' }
+      };
+
+      function envioEstadoBadge(estado) {
+        var e = ESTADO_ENVIO_LABEL[estado] || { label: estado, color: '#555', bg: '#f0f0f0' };
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;color:' + e.color + ';background:' + e.bg + '">' + e.label + '</span>';
+      }
+
+      function renderEnvio(envio) {
+        if (!envio) return '';
+        var html = '<div style="margin-top:14px;padding:12px 14px;background:#f8f8f8;border-radius:6px;border-left:3px solid #1a1a1a">';
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+        html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>';
+        html += '<span style="font-size:13px;font-weight:700;letter-spacing:.5px;color:#1a1a1a">INFORMACIÓN DE ENVÍO</span>';
+        if (envio.estado) html += ' ' + envioEstadoBadge(envio.estado);
+        html += '</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:13px">';
+        if (envio.transportadora) {
+          html += '<div><span style="color:#888;font-size:12px">Transportadora</span><br><span style="font-weight:600">' + envio.transportadora + '</span></div>';
+        }
+        if (envio.guia) {
+          html += '<div><span style="color:#888;font-size:12px">N° Guía</span><br><span style="font-weight:600">' + envio.guia + '</span></div>';
+        }
+        if (envio.fechaEnvio) {
+          html += '<div><span style="color:#888;font-size:12px">Fecha de envío</span><br><span style="font-weight:600">' + envio.fechaEnvio + '</span></div>';
+        }
+        html += '<div><span style="color:#888;font-size:12px">Entrega estimada</span><br>';
+        if (envio.fechaEstimada) {
+          html += '<span style="font-weight:700;color:#1565c0;font-size:14px">' + envio.fechaEstimada + '</span>';
+        } else {
+          html += '<span style="color:#aaa">No definida</span>';
+        }
+        html += '</div>';
+        html += '</div></div>';
+        return html;
+      }
+
       function renderDetalles(detalles) {
         if (!detalles || detalles.length === 0) return '<p style="color:#999;font-size:13px;padding:8px 0">Sin detalles disponibles.</p>';
         var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">'
@@ -202,6 +243,7 @@
             + '</div>'
             + '<div id="' + detId + '" style="display:none;padding:14px 18px;border-top:1px solid #e0e0e0;background:#fff">'
             +   renderDetalles(p.detalles)
+            +   renderEnvio(p.envio)
             + '</div>'
             + '</div>';
         });

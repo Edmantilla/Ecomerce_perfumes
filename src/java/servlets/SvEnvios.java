@@ -10,6 +10,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import persistencias.EnvioJpaController;
 import persistencias.JpaProvider;
 import persistencias.PedidoJpaController;
 
+@WebServlet(name = "SvEnvios", urlPatterns = {"/SvEnvios"})
 public class SvEnvios extends HttpServlet {
 
     @Override
@@ -27,6 +29,12 @@ public class SvEnvios extends HttpServlet {
 
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
+
+        if (!AuthHelper.estaLogueado(request)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            out.print("{\"error\":\"Debes iniciar sesi\u00f3n\"}");
+            return;
+        }
 
         String idPedidoStr = request.getParameter("idPedido");
         EntityManager em = null;
@@ -50,8 +58,8 @@ public class SvEnvios extends HttpServlet {
                     sb.append("\"transportadora\":\"").append(escapeJson(e.getTransportadora())).append("\",");
                     sb.append("\"guia\":\"").append(escapeJson(e.getNumeroGuia())).append("\",");
                     sb.append("\"estado\":\"").append(e.getEstadoEntrega() != null ? e.getEstadoEntrega().name() : "").append("\",");
-                    sb.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toString() : "").append("\",");
-                    sb.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toString() : "").append("\"");
+                    sb.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toLocalDate().toString() : "").append("\",");
+                    sb.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toLocalDate().toString() : "").append("\"");
                     sb.append("}}");
                     out.print(sb.toString());
                 }

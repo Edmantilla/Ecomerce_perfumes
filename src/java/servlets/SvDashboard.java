@@ -27,6 +27,12 @@ public class SvDashboard extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        if (!AuthHelper.tienePermiso(request, "VER_DASHBOARD")) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            out.print("{\"error\":\"Sin permiso: VER_DASHBOARD\"}");
+            return;
+        }
+
         EntityManager em = null;
         try {
             em = JpaProvider.getEntityManagerFactory().createEntityManager();
@@ -36,7 +42,7 @@ public class SvDashboard extends HttpServlet {
             long totalPedidos   = new PedidoJpaController().getPedidoCount();
 
             TypedQuery<BigDecimal> qVentas = em.createQuery(
-                "SELECT COALESCE(SUM(p.total), 0) FROM Pedido p", BigDecimal.class
+                "SELECT COALESCE(SUM(p.total), 0) FROM Pedido p WHERE p.estado <> enums.EstadoPedido.CANCELADO", BigDecimal.class
             );
             BigDecimal ventas = qVentas.getSingleResult();
 

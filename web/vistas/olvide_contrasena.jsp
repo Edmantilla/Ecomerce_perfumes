@@ -1,103 +1,208 @@
 ﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<!-- Página para recuperar contraseña -->
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../assets/estilos/style.css">
     <title>Recuperar Contraseña - ANDREYLPZ</title>
+    <style>
+        .rc-error   { color: #c0392b; font-size: 13px; margin-top: 8px; text-align: center; }
+        .rc-success { color: #27ae60; font-size: 13px; margin-top: 8px; text-align: center; }
+        .rc-nombre  { font-weight: 700; color: #1a1a1a; }
+        .formulario-icono-ok { font-size: 48px; color: #27ae60; text-align: center; margin-bottom: 12px; }
+        .rc-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff;
+                      border-top-color: transparent; border-radius: 50%;
+                      animation: rc-spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+        @keyframes rc-spin { to { transform: rotate(360deg); } }
+        .formulario-button:disabled { opacity: .7; cursor: not-allowed; }
+    </style>
 </head>
-
 <body data-no-cart>
     <%@ include file="_navbar.jsp" %>
 
-    <!-- Contenido Principal: Recuperar Contraseña -->
     <main class="main-perfil">
         <section class="formulario">
             <h2 class="formulario-title">RECUPERAR CONTRASEÑA</h2>
 
-            <!-- Paso 1: Ingresar correo -->
+            <!-- PASO 1: Verificar correo -->
             <div id="paso-correo">
                 <p class="formulario-descripcion">
-                    Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+                    Ingresa tu correo electrónico para cambiar tu contraseña.
                 </p>
-                <form id="form-recuperar" method="post" action="" onsubmit="mostrarPasoConfirmacion(event)">
+                <form id="form-correo" onsubmit="verificarCorreo(event)">
                     <div class="formulario-username">
-                        <label for="correo-recuperar">Correo Electrónico</label>
-                        <input type="email" id="correo-recuperar" name="correo_electronico"
-                            placeholder="ejemplo@correo.com" required>
+                        <label for="correo-input">Correo Electrónico</label>
+                        <input type="email" id="correo-input" name="correo"
+                               placeholder="ejemplo@correo.com" required autocomplete="email">
                     </div>
-                    <button class="formulario-button" type="submit">ENVIAR ENLACE</button>
+                    <div id="error-correo" class="rc-error" style="display:none"></div>
+                    <button class="formulario-button" type="submit" id="btn-verificar">CONTINUAR</button>
                     <div class="formulario-registrarse">
                         <a class="formulario-registrarse" href="perfil.jsp">Volver a Iniciar Sesión</a>
                     </div>
                 </form>
             </div>
 
-            <!-- Paso 2: Confirmación (se muestra tras enviar) -->
-            <div id="paso-confirmacion" style="display: none; text-align: center;">
-                <div class="formulario-icono-ok">âœ“</div>
+            <!-- PASO 2: Nueva contraseña -->
+            <div id="paso-nueva" style="display:none">
                 <p class="formulario-descripcion">
-                    Si el correo está registrado, recibirás un enlace en tu bandeja de entrada en los próximos minutos.
-                    Revisa también tu carpeta de spam.
+                    Hola, <span id="nombre-usuario" class="rc-nombre"></span>. Ingresa tu nueva contraseña.
                 </p>
-                <div class="formulario-registrarse">
-                    <a class="formulario-registrarse" href="perfil.jsp">Volver a Iniciar Sesión</a>
-                </div>
+                <form id="form-cambiar" onsubmit="cambiarContrasena(event)">
+                    <div class="formulario-username">
+                        <label for="nueva-input">Nueva Contraseña</label>
+                        <input type="password" id="nueva-input" name="nueva"
+                               placeholder="Mínimo 6 caracteres" required minlength="6">
+                    </div>
+                    <div class="formulario-username" style="margin-top:12px">
+                        <label for="confirmar-input">Confirmar Contraseña</label>
+                        <input type="password" id="confirmar-input" name="confirmar"
+                               placeholder="Repite la contraseña" required minlength="6">
+                    </div>
+                    <div id="error-cambiar" class="rc-error" style="display:none"></div>
+                    <button class="formulario-button" type="submit" id="btn-cambiar">CAMBIAR CONTRASEÑA</button>
+                    <div class="formulario-registrarse">
+                        <a class="formulario-registrarse" href="#" onclick="volverPaso1(event)">Usar otro correo</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PASO 3: Éxito -->
+            <div id="paso-exito" style="display:none; text-align:center">
+                <div class="formulario-icono-ok">✓</div>
+                <p class="formulario-descripcion">
+                    ¡Tu contraseña fue cambiada exitosamente!<br>
+                    Ya puedes iniciar sesión con tu nueva contraseña.
+                </p>
+                <a class="formulario-button" href="perfil.jsp"
+                   style="display:inline-block;margin-top:12px;text-decoration:none">IR AL LOGIN</a>
             </div>
 
         </section>
     </main>
 
-    <!-- Pie de Página -->
-    <footer>
-        <div class="footer__section--newsletter">
-            <h2 class="footer__title">Reciba un 10% de descuento en su próximo pedido superior a 300 cop al
-                suscribirse al boletín informativo de andreylpz.</h2>
-            <div class="footer__form-wrapper">
-                <form action="">
-                    <input type="text" name="correo_electronico" id="" placeholder="DIRECCION DE CORREO ELECTRONICO">
-                    <button>INSCRIBIRSE</button>
-                </form>
-            </div>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">SERVICIO AL CLIENTE</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Preguntas Frecuentes</a></li>
-            </ul>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">LEGAL</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="#">Contactanos</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Politica de cookies</a></li>
-            </ul>
-        </div>
-        <div class="footer__section">
-            <h2 class="footer__title">ELECCION DE PAIS</h2>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="Colombia.jsp">Colombia</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Estados unidos</a></li>
-                <li class="footer__item"><a class="footer__link" href="#">Ecuador</a></li>
-            </ul>
-        </div>
-    </footer>
+    <%@ include file="_footer.jsp" %>
 
     <script>
-        function mostrarPasoConfirmacion(e) {
-            e.preventDefault();
-            document.getElementById('paso-correo').style.display = 'none';
-            document.getElementById('paso-confirmacion').style.display = 'block';}
-    </script>
+    (function () {
+        var BASE = (function () {
+            var p = window.location.pathname.split('/');
+            return '/' + p[1];
+        })();
+        var correoVerificado = '';
 
+        function setLoading(btn, loading) {
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="rc-spinner"></span>Verificando...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.label || btn.innerHTML;
+            }
+        }
+
+        window.verificarCorreo = function (e) {
+            e.preventDefault();
+            var correo = document.getElementById('correo-input').value.trim();
+            var errEl  = document.getElementById('error-correo');
+            var btn    = document.getElementById('btn-verificar');
+            errEl.style.display = 'none';
+            btn.dataset.label = 'CONTINUAR';
+            setLoading(btn, true);
+
+            var body = new URLSearchParams({ accion: 'verificar', correo: correo });
+            fetch(BASE + '/SvRecuperarContrasena', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                setLoading(btn, false);
+                btn.textContent = 'CONTINUAR';
+                if (data.error) {
+                    errEl.textContent = data.error;
+                    errEl.style.display = 'block';
+                    return;
+                }
+                correoVerificado = correo;
+                document.getElementById('nombre-usuario').textContent = data.nombre;
+                document.getElementById('paso-correo').style.display = 'none';
+                document.getElementById('paso-nueva').style.display  = 'block';
+            })
+            .catch(function () {
+                setLoading(btn, false);
+                btn.textContent = 'CONTINUAR';
+                errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+                errEl.style.display = 'block';
+            });
+        };
+
+        window.cambiarContrasena = function (e) {
+            e.preventDefault();
+            var nueva     = document.getElementById('nueva-input').value;
+            var confirmar = document.getElementById('confirmar-input').value;
+            var errEl     = document.getElementById('error-cambiar');
+            var btn       = document.getElementById('btn-cambiar');
+            errEl.style.display = 'none';
+
+            if (nueva !== confirmar) {
+                errEl.textContent = 'Las contraseñas no coinciden.';
+                errEl.style.display = 'block';
+                return;
+            }
+            btn.dataset.label = 'CAMBIAR CONTRASEÑA';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="rc-spinner"></span>Guardando...';
+
+            var body = new URLSearchParams({
+                accion: 'cambiar',
+                correo: correoVerificado,
+                nueva: nueva,
+                confirmar: confirmar
+            });
+            fetch(BASE + '/SvRecuperarContrasena', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                btn.disabled = false;
+                btn.textContent = 'CAMBIAR CONTRASEÑA';
+                if (data.error) {
+                    errEl.textContent = data.error;
+                    errEl.style.display = 'block';
+                    return;
+                }
+                document.getElementById('paso-nueva').style.display = 'none';
+                document.getElementById('paso-exito').style.display = 'block';
+            })
+            .catch(function () {
+                btn.disabled = false;
+                btn.textContent = 'CAMBIAR CONTRASEÑA';
+                errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+                errEl.style.display = 'block';
+            });
+        };
+
+        window.volverPaso1 = function (e) {
+            e.preventDefault();
+            correoVerificado = '';
+            document.getElementById('correo-input').value = '';
+            document.getElementById('nueva-input').value = '';
+            document.getElementById('confirmar-input').value = '';
+            document.getElementById('error-correo').style.display  = 'none';
+            document.getElementById('error-cambiar').style.display = 'none';
+            document.getElementById('paso-nueva').style.display  = 'none';
+            document.getElementById('paso-correo').style.display = 'block';
+        };
+    })();
+    </script>
 
     <script src="../assets/scripts/cart.js"></script>
 </body>
-
 </html>
 
 

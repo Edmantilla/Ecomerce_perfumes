@@ -7,6 +7,7 @@ package enums;
  */
 public enum EstadoPedido {
     PENDIENTE,
+    PROCESANDO,
     PAGO,
     ENVIADO,
     ENTREGADO,

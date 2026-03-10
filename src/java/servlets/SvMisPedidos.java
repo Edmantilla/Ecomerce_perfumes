@@ -6,14 +6,17 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import logica.Detallepedido;
+import logica.Envio;
 import logica.Pedido;
 import logica.Usuario;
 import persistencias.JpaProvider;
 
+@WebServlet(name = "SvMisPedidos", urlPatterns = {"/SvMisPedidos"})
 public class SvMisPedidos extends HttpServlet {
 
     @Override
@@ -69,7 +72,25 @@ public class SvMisPedidos extends HttpServlet {
                         sb.append("\"subtotal\":").append(d.getSubtotal());
                         sb.append("}");
                     }
-                    sb.append("]");
+                    sb.append("],");
+
+                    // Envío del pedido
+                    TypedQuery<Envio> eq = em.createQuery(
+                        "SELECT e FROM Envio e WHERE e.pedido.idPedido = :pid", Envio.class);
+                    eq.setParameter("pid", p.getIdPedido());
+                    List<Envio> envios = eq.getResultList();
+                    if (!envios.isEmpty()) {
+                        Envio e = envios.get(0);
+                        sb.append("\"envio\":{");
+                        sb.append("\"transportadora\":\"").append(esc(e.getTransportadora())).append("\",");
+                        sb.append("\"guia\":\"").append(esc(e.getNumeroGuia())).append("\",");
+                        sb.append("\"estado\":\"").append(e.getEstadoEntrega() != null ? e.getEstadoEntrega().name() : "").append("\",");
+                        sb.append("\"fechaEnvio\":\"").append(e.getFechaEnvio() != null ? e.getFechaEnvio().toLocalDate().toString() : "").append("\",");
+                        sb.append("\"fechaEstimada\":\"").append(e.getFechaEstimadaEntrega() != null ? e.getFechaEstimadaEntrega().toLocalDate().toString() : "").append("\"");
+                        sb.append("}");
+                    } else {
+                        sb.append("\"envio\":null");
+                    }
                     sb.append("}");
                 }
                 sb.append("]");

@@ -7,10 +7,10 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import logica.Permiso;
 import logica.Rol;
 import logica.Rolpermiso;
@@ -19,6 +19,7 @@ import persistencias.PermisoJpaController;
 import persistencias.RolJpaController;
 import persistencias.RolpermisoJpaController;
 
+@WebServlet(name = "SvPermisos", urlPatterns = {"/SvPermisos"})
 public class SvPermisos extends HttpServlet {
 
     /**

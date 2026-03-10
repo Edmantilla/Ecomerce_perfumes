@@ -6,6 +6,7 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,6 +14,7 @@ import logica.Detallepedido;
 import logica.Envio;
 import persistencias.JpaProvider;
 
+@WebServlet(name = "SvDetallesPedido", urlPatterns = {"/SvDetallesPedido"})
 public class SvDetallesPedido extends HttpServlet {
 
     @Override
