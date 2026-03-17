@@ -222,7 +222,7 @@
     function handleCheckout() {
         const cart = getCart();
         if (cart.length === 0) {
-            alert('Tu carrito está vacío.');
+            showCartError('Tu carrito está vacío. Agrega productos antes de continuar.');
             return;
         }
 
@@ -254,7 +254,7 @@
                 try {
                     return { status: r.status, data: JSON.parse(text) };
                 } catch(e) {
-                    return { status: r.status, data: { error: 'Respuesta inesperada del servidor (status ' + r.status + ')' } };
+                    return { status: r.status, data: { error: 'Ocurrió un problema al procesar tu compra. Intenta de nuevo.' } };
                 }
             });
         })
@@ -262,13 +262,12 @@
             var data = res.data;
             if (res.status === 401 || (data.error && data.error.includes('sesión'))) {
                 if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
-                if (confirm('Debes iniciar sesión para comprar. ¿Ir al login?')) {
-                    window.location.href = ctx + '/vistas/perfil.jsp';
-                }
+                closeCart();
+                showLoginRequiredModal(ctx);
                 return;
             }
             if (data.error) {
-                alert('Error: ' + data.error);
+                showCartError(data.error);
                 if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
                 return;
             }
@@ -277,10 +276,48 @@
             closeCart();
             showOrderConfirmation(data.idPedido, data.total);
         })
-        .catch(function(err) {
-            alert('Error de conexión: ' + err.message);
+        .catch(function() {
+            showCartError('No se pudo procesar tu compra. Verifica tu conexión e intenta de nuevo.');
             if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
         });
+    }
+
+    function showLoginRequiredModal(ctx) {
+        var existing = document.getElementById('login-required-modal');
+        if (existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'login-required-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+        modal.innerHTML =
+            '<div style="background:#fff;border-radius:12px;padding:40px 32px;max-width:400px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.25)">' +
+                '<div style="font-size:48px;margin-bottom:16px">🔒</div>' +
+                '<h2 style="font-size:18px;font-weight:700;color:#1a1a1a;margin:0 0 10px;letter-spacing:0.5px">Inicia sesión para comprar</h2>' +
+                '<p style="color:#666;font-size:14px;margin:0 0 24px;line-height:1.5">Necesitas tener una cuenta activa para realizar tu pedido. Es rápido y gratuito.</p>' +
+                '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">' +
+                    '<a href="' + ctx + '/vistas/perfil.jsp" style="background:#1a1a1a;color:#fff;padding:12px 24px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;text-decoration:none">INICIAR SESIÓN</a>' +
+                    '<a href="' + ctx + '/vistas/registro.jsp" style="background:#fff;color:#1a1a1a;border:1px solid #ccc;padding:12px 24px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none">CREAR CUENTA</a>' +
+                '</div>' +
+                '<button onclick="document.getElementById(\'login-required-modal\').remove()" style="margin-top:16px;background:none;border:none;color:#999;font-size:13px;cursor:pointer;text-decoration:underline">Cancelar</button>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    }
+
+    function showCartError(msg) {
+        var existing = document.getElementById('cart-error-modal');
+        if (existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'cart-error-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+        modal.innerHTML =
+            '<div style="background:#fff;border-radius:12px;padding:36px 32px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.25)">' +
+                '<div style="font-size:44px;margin-bottom:14px">⚠️</div>' +
+                '<h2 style="font-size:17px;font-weight:700;color:#1a1a1a;margin:0 0 10px">Hubo un problema</h2>' +
+                '<p style="color:#555;font-size:14px;margin:0 0 24px;line-height:1.5">' + msg + '</p>' +
+                '<button onclick="document.getElementById(\'cart-error-modal\').remove()" style="background:#1a1a1a;color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer">ENTENDIDO</button>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
     function showOrderConfirmation(idPedido, total) {

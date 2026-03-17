@@ -202,6 +202,53 @@ public class SvContactoCliente extends HttpServlet {
                     em.persist(t); // INSERT en BD
                 }
 
+            } else if ("cambiarContrasena".equals(tipo)) {
+                // CAMBIAR CONTRASEÑA: valida la actual, aplica reglas y actualiza en BD
+                String actual    = request.getParameter("actual");
+                String nueva     = request.getParameter("nueva");
+                String confirmar = request.getParameter("confirmar");
+
+                if (actual == null || actual.isBlank()) {
+                    em.getTransaction().rollback();
+                    out.print("{\"error\":\"Ingresa tu contrase\\u00f1a actual.\"}");
+                    return;
+                }
+                // Recargar usuario desde BD para verificar contraseña
+                Usuario usuarioRef = em.find(Usuario.class, usuario.getIdUsuario());
+                if (!usuarioRef.getContrasena().equals(actual)) {
+                    em.getTransaction().rollback();
+                    out.print("{\"error\":\"La contrase\\u00f1a actual es incorrecta.\"}");
+                    return;
+                }
+                if (nueva == null || nueva.isBlank()) {
+                    em.getTransaction().rollback();
+                    out.print("{\"error\":\"Ingresa la nueva contrase\\u00f1a.\"}");
+                    return;
+                }
+                if (nueva.length() < 8 || nueva.length() > 20) {
+                    em.getTransaction().rollback();
+                    out.print("{\"error\":\"La contrase\\u00f1a debe tener entre 8 y 20 caracteres.\"}");
+                    return;
+                }
+                if (!nueva.matches(".*[a-zA-Z].*") || !nueva.matches(".*[0-9].*")) {
+                    em.getTransaction().rollback();
+                    out.print("{\"error\":\"La contrase\\u00f1a debe contener al menos una letra y un n\\u00famero.\"}");
+                    return;
+                }
+                if (!nueva.equals(confirmar)) {
+                    em.getTransaction().rollback();
+                    out.print("{\"error\":\"Las contrase\\u00f1as no coinciden.\"}");
+                    return;
+                }
+                usuarioRef.setContrasena(nueva);
+                usuarioRef.setUpdatedAt(java.time.LocalDateTime.now());
+                em.merge(usuarioRef);
+                em.getTransaction().commit();
+                // Sincronizar sesión
+                usuario.setContrasena(nueva);
+                out.print("{\"ok\":true}");
+                return;
+
             } else if ("correo".equals(tipo)) {
                 if ("eliminar".equals(accion) && idStr != null) {
                     // ELIMINAR CORREO: no se puede eliminar el correo principal del cliente

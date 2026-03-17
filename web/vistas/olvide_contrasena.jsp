@@ -49,16 +49,25 @@
                 <p class="formulario-descripcion">
                     Hola, <span id="nombre-usuario" class="rc-nombre"></span>. Ingresa tu nueva contraseña.
                 </p>
-                <form id="form-cambiar" onsubmit="cambiarContrasena(event)">
+                <form id="form-cambiar" onsubmit="cambiarContrasena(event)" novalidate>
                     <div class="formulario-username">
                         <label for="nueva-input">Nueva Contraseña</label>
                         <input type="password" id="nueva-input" name="nueva"
-                               placeholder="Mínimo 6 caracteres" required minlength="6">
+                               placeholder="Entre 8 y 20 caracteres" minlength="8" maxlength="20">
+                        <div id="rc-strength-bar" style="display:flex;gap:4px;height:4px;margin-top:6px">
+                            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+                            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+                            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+                            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+                        </div>
+                        <div id="rc-strength-label" style="font-size:11px;color:#888;margin-top:3px"></div>
+                        <span id="rc-err-nueva" class="rc-error" style="display:none;text-align:left"></span>
                     </div>
                     <div class="formulario-username" style="margin-top:12px">
                         <label for="confirmar-input">Confirmar Contraseña</label>
                         <input type="password" id="confirmar-input" name="confirmar"
-                               placeholder="Repite la contraseña" required minlength="6">
+                               placeholder="Repite la contraseña" minlength="8" maxlength="20">
+                        <span id="rc-err-confirmar" class="rc-error" style="display:none;text-align:left"></span>
                     </div>
                     <div id="error-cambiar" class="rc-error" style="display:none"></div>
                     <button class="formulario-button" type="submit" id="btn-cambiar">CAMBIAR CONTRASEÑA</button>
@@ -139,6 +148,56 @@
             });
         };
 
+        // ── Fortaleza y validación cliente ──
+        var RC_STRENGTH_COLORS = ['', '#c62828', '#f57c00', '#f9a825', '#2e7d32'];
+        var RC_STRENGTH_LABELS = ['', 'Muy débil', 'Débil', 'Aceptable', 'Fuerte'];
+
+        function rcStrength(p) {
+            var s = 0;
+            if (p.length >= 8)  s++;
+            if (p.length >= 12) s++;
+            if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
+            if (/[0-9]/.test(p)) s++;
+            if (/[^a-zA-Z0-9]/.test(p)) s++;
+            return Math.min(4, Math.max(1, s <= 1 ? 1 : s === 2 ? 2 : s === 3 ? 3 : 4));
+        }
+
+        function rcUpdateBar(p) {
+            var spans = document.getElementById('rc-strength-bar').querySelectorAll('span');
+            var lbl   = document.getElementById('rc-strength-label');
+            if (!p) { spans.forEach(function(s){ s.style.background='#e0e0e0'; }); lbl.textContent=''; return; }
+            var lvl = rcStrength(p);
+            spans.forEach(function(s, i){ s.style.background = i < lvl ? RC_STRENGTH_COLORS[lvl] : '#e0e0e0'; });
+            lbl.textContent = 'Fortaleza: ' + RC_STRENGTH_LABELS[lvl];
+        }
+
+        function rcSetErr(id, msg) {
+            var el = document.getElementById(id);
+            if (msg) { el.textContent = msg; el.style.display = 'block'; return false; }
+            else { el.textContent = ''; el.style.display = 'none'; return true; }
+        }
+
+        function rcValidateNueva() {
+            var v = document.getElementById('nueva-input').value;
+            rcUpdateBar(v);
+            if (!v) return rcSetErr('rc-err-nueva', 'Ingresa la nueva contraseña.');
+            if (v.length < 8) return rcSetErr('rc-err-nueva', 'Mínimo 8 caracteres.');
+            if (v.length > 20) return rcSetErr('rc-err-nueva', 'Máximo 20 caracteres.');
+            if (!/[a-zA-Z]/.test(v) || !/[0-9]/.test(v)) return rcSetErr('rc-err-nueva', 'Debe contener al menos una letra y un número.');
+            return rcSetErr('rc-err-nueva', '');
+        }
+
+        function rcValidateConfirmar() {
+            var p2 = document.getElementById('confirmar-input').value;
+            var p1 = document.getElementById('nueva-input').value;
+            if (!p2) return rcSetErr('rc-err-confirmar', 'Confirma la contraseña.');
+            if (p1 !== p2) return rcSetErr('rc-err-confirmar', 'Las contraseñas no coinciden.');
+            return rcSetErr('rc-err-confirmar', '');
+        }
+
+        document.getElementById('nueva-input').addEventListener('input', function() { rcValidateNueva(); rcValidateConfirmar(); });
+        document.getElementById('confirmar-input').addEventListener('input', rcValidateConfirmar);
+
         window.cambiarContrasena = function (e) {
             e.preventDefault();
             var nueva     = document.getElementById('nueva-input').value;
@@ -147,11 +206,10 @@
             var btn       = document.getElementById('btn-cambiar');
             errEl.style.display = 'none';
 
-            if (nueva !== confirmar) {
-                errEl.textContent = 'Las contraseñas no coinciden.';
-                errEl.style.display = 'block';
-                return;
-            }
+            var ok = true;
+            if (!rcValidateNueva())    ok = false;
+            if (!rcValidateConfirmar()) ok = false;
+            if (!ok) return;
             btn.dataset.label = 'CAMBIAR CONTRASEÑA';
             btn.disabled = true;
             btn.innerHTML = '<span class="rc-spinner"></span>Guardando...';

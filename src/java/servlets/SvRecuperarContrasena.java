@@ -79,10 +79,16 @@ public class SvRecuperarContrasena extends HttpServlet {
                     out.print("{\"error\":\"La nueva contrase\\u00f1a es obligatoria\"}");
                     return;
                 }
-                // Validación: mínimo 6 caracteres
-                if (nueva.length() < 6) {
+                // Validación: entre 8 y 20 caracteres
+                if (nueva.length() < 8 || nueva.length() > 20) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    out.print("{\"error\":\"La contrase\\u00f1a debe tener al menos 6 caracteres\"}");
+                    out.print("{\"error\":\"La contrase\\u00f1a debe tener entre 8 y 20 caracteres\"}");
+                    return;
+                }
+                // Validación: al menos 1 letra y 1 número
+                if (!nueva.matches(".*[a-zA-Z].*") || !nueva.matches(".*[0-9].*")) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    out.print("{\"error\":\"La contrase\\u00f1a debe contener al menos una letra y un n\\u00famero\"}");
                     return;
                 }
                 // Validación: las dos contraseñas deben ser iguales

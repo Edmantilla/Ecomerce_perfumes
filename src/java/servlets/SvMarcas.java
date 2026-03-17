@@ -35,7 +35,9 @@ public class SvMarcas extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
+        EntityManager em = null;
         try {
+            em = JpaProvider.getEntityManagerFactory().createEntityManager();
             List<Marca> lista = new MarcaJpaController().findMarcaEntities(); // traer todas desde BD
             StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < lista.size(); i++) {
@@ -47,6 +49,10 @@ public class SvMarcas extends HttpServlet {
                 String paginaUrl = m.getPaginaUrl() != null && !m.getPaginaUrl().isEmpty()
                     ? m.getPaginaUrl()
                     : m.getNombreMarca().trim().toLowerCase().replace(" ", "_").replaceAll("[^a-z0-9_]", "") + ".jsp";
+                // Contar productos con JPQL para evitar lazy loading inconsistente
+                long numProductos = em.createQuery(
+                    "SELECT COUNT(p) FROM Producto p WHERE p.marca.idMarca = :id", Long.class)
+                    .setParameter("id", m.getIdMarca()).getSingleResult();
                 sb.append("\"id\":").append(m.getIdMarca()).append(",");
                 sb.append("\"nombre\":\"").append(escapeJson(m.getNombreMarca())).append("\",");
                 sb.append("\"descripcion\":\"").append(escapeJson(m.getDescripcion())).append("\",");
@@ -54,7 +60,7 @@ public class SvMarcas extends HttpServlet {
                 sb.append("\"pagina\":\"").append(escapeJson(paginaUrl)).append("\",");
                 sb.append("\"activo\":").append(m.isActivo()).append(",");
                 // Conteo de productos vinculados (para bloquear eliminación si tiene productos)
-                sb.append("\"productos\":").append(m.getProductos() != null ? m.getProductos().size() : 0);
+                sb.append("\"productos\":").append(numProductos);
                 sb.append("}");
             }
             sb.append("]");
@@ -63,6 +69,8 @@ public class SvMarcas extends HttpServlet {
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             out.print("{\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+        } finally {
+            if (em != null && em.isOpen()) em.close();
         }
     }
 

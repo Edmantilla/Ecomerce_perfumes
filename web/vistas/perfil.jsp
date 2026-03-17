@@ -93,6 +93,40 @@
       </div>
     </section>
 
+    <!-- ── Cambiar Contraseña ── -->
+    <section style="max-width:480px;width:100%;margin:0 auto 40px">
+      <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">CAMBIAR CONTRASE&Ntilde;A</h2>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#666;font-weight:600">Contrase&ntilde;a actual</label>
+          <input id="cp-actual" type="password" placeholder="Tu contrase&ntilde;a actual" maxlength="20"
+            style="padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+          <span id="cp-err-actual" style="display:none;color:#c62828;font-size:12px;margin-top:2px"></span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#666;font-weight:600">Nueva contrase&ntilde;a</label>
+          <input id="cp-nueva" type="password" placeholder="Entre 8 y 20 caracteres" maxlength="20"
+            style="padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+          <div id="cp-strength-bar" style="display:flex;gap:4px;height:4px;margin-top:5px">
+            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+            <span style="flex:1;border-radius:2px;background:#e0e0e0;transition:background .3s"></span>
+          </div>
+          <div id="cp-strength-label" style="font-size:11px;color:#888;margin-top:2px"></div>
+          <span id="cp-err-nueva" style="display:none;color:#c62828;font-size:12px;margin-top:2px"></span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#666;font-weight:600">Confirmar nueva contrase&ntilde;a</label>
+          <input id="cp-confirmar" type="password" placeholder="Repite la nueva contrase&ntilde;a" maxlength="20"
+            style="padding:10px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px">
+          <span id="cp-err-confirmar" style="display:none;color:#c62828;font-size:12px;margin-top:2px"></span>
+        </div>
+        <div id="cp-msg" style="font-size:13px;min-height:18px"></div>
+        <button onclick="guardarContrasena()" style="padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px">CAMBIAR CONTRASE&Ntilde;A</button>
+      </div>
+    </section>
+
     <!-- ── Mis Teléfonos (RF02) ── -->
     <section style="max-width:720px;width:100%;margin:0 auto 40px">
       <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">MIS TEL&Eacute;FONOS</h2>
@@ -364,10 +398,19 @@
         fetch(ctx + '/SvContactoCliente', { credentials: 'same-origin' })
           .then(function(r) { return r.json(); })
           .then(function(d) {
-            if (d.error) return;
+            if (d.error) {
+              var telEl = document.getElementById('tel-lista');
+              var corEl = document.getElementById('correo-lista');
+              if (telEl) telEl.innerHTML = '<p style="color:#c62828;font-size:13px">No se pudo cargar la información de contacto.</p>';
+              if (corEl) corEl.innerHTML = '';
+              return;
+            }
             renderTelefonos(d.telefonos);
             renderCorreos(d.correos);
-          }).catch(function() {});
+          }).catch(function() {
+            var telEl = document.getElementById('tel-lista');
+            if (telEl) telEl.innerHTML = '<p style="color:#999;font-size:13px">Sin conexión con el servidor.</p>';
+          });
       }
 
       function showToast(msg, ok) {
@@ -428,13 +471,36 @@
           }).catch(function(e) { msg.textContent = 'Error al guardar.'; msg.style.color = '#c62828'; });
       }
 
+      function showConfirmPerfil(mensaje, onConfirm) {
+        var existing = document.getElementById('perfil-confirm-modal');
+        if (existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'perfil-confirm-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+        modal.innerHTML =
+          '<div style="background:#fff;border-radius:10px;padding:28px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)">' +
+            '<div style="font-size:34px;margin-bottom:10px">🗑️</div>' +
+            '<p style="color:#1a1a1a;font-size:14px;font-weight:600;margin:0 0 6px">' + mensaje + '</p>' +
+            '<p style="color:#888;font-size:13px;margin:0 0 20px">Esta acción no se puede deshacer.</p>' +
+            '<div style="display:flex;gap:10px;justify-content:center">' +
+              '<button id="perfil-confirm-ok" style="background:#c62828;color:#fff;border:none;padding:9px 22px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">ELIMINAR</button>' +
+              '<button id="perfil-confirm-cancel" style="background:#fff;color:#333;border:1px solid #ccc;padding:9px 18px;border-radius:6px;font-size:13px;cursor:pointer">Cancelar</button>' +
+            '</div>' +
+          '</div>';
+        document.body.appendChild(modal);
+        modal.querySelector('#perfil-confirm-ok').addEventListener('click', function() { modal.remove(); onConfirm(); });
+        modal.querySelector('#perfil-confirm-cancel').addEventListener('click', function() { modal.remove(); });
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+      }
+
       window.eliminarTelefono = function(id) {
-        if (!confirm('¿Eliminar este teléfono?')) return;
-        var body = new URLSearchParams({ tipo: 'telefono', accion: 'eliminar', id: id });
-        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { if (!d.error) { cargarContactos(); showToast('Teléfono eliminado', true); } else showToast(d.error, false); })
-          .catch(function() {});
+        showConfirmPerfil('¿Eliminar este teléfono?', function() {
+          var body = new URLSearchParams({ tipo: 'telefono', accion: 'eliminar', id: id });
+          fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (!d.error) { cargarContactos(); showToast('Teléfono eliminado', true); } else showToast(d.error, false); })
+            .catch(function() {});
+        });
       }
 
       window.agregarCorreo = function() {
@@ -457,15 +523,101 @@
       }
 
       window.eliminarCorreo = function(id) {
-        if (!confirm('¿Eliminar este correo?')) return;
-        var body = new URLSearchParams({ tipo: 'correo', accion: 'eliminar', id: id });
-        fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
-          .then(function(r) { return r.json(); })
-          .then(function(d) { if (!d.error) { cargarContactos(); showToast('Correo eliminado', true); } else showToast(d.error, false); })
-          .catch(function() {});
+        showConfirmPerfil('¿Eliminar este correo adicional?', function() {
+          var body = new URLSearchParams({ tipo: 'correo', accion: 'eliminar', id: id });
+          fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+            .then(function(r) { return r.json(); })
+            .then(function(d) { if (!d.error) { cargarContactos(); showToast('Correo eliminado', true); } else showToast(d.error, false); })
+            .catch(function() {});
+        });
       }
 
       cargarContactos();
+
+      // ── Cambiar Contraseña ─────────────────────────────────────────────────
+      (function() {
+        var STRENGTH_COLORS = ['', '#c62828', '#f57c00', '#f9a825', '#2e7d32'];
+        var STRENGTH_LABELS = ['', 'Muy d\u00e9bil', 'D\u00e9bil', 'Aceptable', 'Fuerte'];
+
+        function cpStrength(p) {
+          var s = 0;
+          if (p.length >= 8)  s++;
+          if (p.length >= 12) s++;
+          if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
+          if (/[0-9]/.test(p)) s++;
+          if (/[^a-zA-Z0-9]/.test(p)) s++;
+          return Math.min(4, Math.max(1, s <= 1 ? 1 : s === 2 ? 2 : s === 3 ? 3 : 4));
+        }
+
+        function cpUpdateBar(p) {
+          var spans = document.getElementById('cp-strength-bar').querySelectorAll('span');
+          var lbl   = document.getElementById('cp-strength-label');
+          if (!p) { spans.forEach(function(s){ s.style.background='#e0e0e0'; }); lbl.textContent=''; return; }
+          var lvl = cpStrength(p);
+          spans.forEach(function(s, i){ s.style.background = i < lvl ? STRENGTH_COLORS[lvl] : '#e0e0e0'; });
+          lbl.textContent = 'Fortaleza: ' + STRENGTH_LABELS[lvl];
+        }
+
+        function cpSetErr(elId, msg) {
+          var el = document.getElementById(elId);
+          if (msg) { el.textContent = msg; el.style.display = 'block'; return false; }
+          else { el.textContent = ''; el.style.display = 'none'; return true; }
+        }
+
+        function cpValidateNueva() {
+          var v = document.getElementById('cp-nueva').value;
+          cpUpdateBar(v);
+          if (!v) return cpSetErr('cp-err-nueva', 'Ingresa la nueva contrase\u00f1a.');
+          if (v.length < 8) return cpSetErr('cp-err-nueva', 'M\u00ednimo 8 caracteres.');
+          if (v.length > 20) return cpSetErr('cp-err-nueva', 'M\u00e1ximo 20 caracteres.');
+          if (!/[a-zA-Z]/.test(v) || !/[0-9]/.test(v)) return cpSetErr('cp-err-nueva', 'Debe contener al menos una letra y un n\u00famero.');
+          return cpSetErr('cp-err-nueva', '');
+        }
+
+        function cpValidateConfirmar() {
+          var p1 = document.getElementById('cp-nueva').value;
+          var p2 = document.getElementById('cp-confirmar').value;
+          if (!p2) return cpSetErr('cp-err-confirmar', 'Confirma la nueva contrase\u00f1a.');
+          if (p1 !== p2) return cpSetErr('cp-err-confirmar', 'Las contrase\u00f1as no coinciden.');
+          return cpSetErr('cp-err-confirmar', '');
+        }
+
+        document.getElementById('cp-nueva').addEventListener('input', function() { cpValidateNueva(); cpValidateConfirmar(); });
+        document.getElementById('cp-confirmar').addEventListener('input', cpValidateConfirmar);
+        document.getElementById('cp-actual').addEventListener('input', function() { cpSetErr('cp-err-actual', ''); });
+
+        window.guardarContrasena = function() {
+          var actual    = document.getElementById('cp-actual').value;
+          var msg       = document.getElementById('cp-msg');
+          msg.textContent = '';
+
+          var ok = true;
+          if (!actual) { cpSetErr('cp-err-actual', 'Ingresa tu contrase\u00f1a actual.'); ok = false; } else cpSetErr('cp-err-actual', '');
+          if (!cpValidateNueva())    ok = false;
+          if (!cpValidateConfirmar()) ok = false;
+          if (!ok) return;
+
+          var nueva = document.getElementById('cp-nueva').value;
+          var conf  = document.getElementById('cp-confirmar').value;
+          msg.textContent = 'Guardando...'; msg.style.color = '#888';
+
+          var body = new URLSearchParams({ tipo: 'cambiarContrasena', actual: actual, nueva: nueva, confirmar: conf });
+          fetch(ctx + '/SvContactoCliente', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+              if (d.error) { msg.textContent = d.error; msg.style.color = '#c62828'; }
+              else {
+                document.getElementById('cp-actual').value = '';
+                document.getElementById('cp-nueva').value = '';
+                document.getElementById('cp-confirmar').value = '';
+                cpUpdateBar('');
+                showToast('\u2713 Contrase\u00f1a cambiada exitosamente', true);
+                msg.textContent = '';
+              }
+            }).catch(function() { msg.textContent = 'Error de conexi\u00f3n. Intenta de nuevo.'; msg.style.color = '#c62828'; });
+        };
+      })();
+
     })();
     </script>
 

@@ -3,10 +3,26 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/web/index.jsp</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Categoria.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Controladora.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/conf/persistence.xml</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvUsuarios.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/vistas/Hombres/Pacco_rabanne/Invictus.jsp</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/vistas/_footer.jsp</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/vistas/perfil.jsp</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/vistas/quienes_somos.jsp</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/vistas/registro.jsp</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/style.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/roots.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/responsive.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/perfumes.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/megamenu_lista.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/megamenu-search.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/main-perfil.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/main-losion.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/main-home.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/cart.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/boutique.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/admin.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/about.css</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/assets/estilos/Base.css</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/config/AppInitializer.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/enums/EstadoEntrega.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/enums/EstadoPago.java</file>
@@ -16,15 +32,10 @@
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/EntidadNoEncontradaException.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/StockInsuficienteException.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/exceptions/ValidacionException.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/RolpermisoId.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Telefonocliente.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Usuario.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/itemCarrito.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Categoria.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/CategoriaJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/RolpermisoJpaController.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvCategorias.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvCompra.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvUsuarios.java</file>
-            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvRegistro.java</file>
         </group>
     </open-files>
 </project-private>

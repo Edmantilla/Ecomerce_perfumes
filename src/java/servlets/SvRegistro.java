@@ -1,7 +1,11 @@
 package servlets;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -37,18 +41,97 @@ public class SvRegistro extends HttpServlet {
         String contrasena  = request.getParameter("contrasena");
         String confirmar   = request.getParameter("confirmar_contrasena");
         String direccion   = request.getParameter("direccion");
+        String fechaNac    = request.getParameter("fecha_nacimiento");
 
-        // Validar que los campos obligatorios no estén vacíos
-        if (nombre == null || correo == null || contrasena == null || direccion == null ||
-                nombre.isBlank() || correo.isBlank() || contrasena.isBlank() || direccion.isBlank()) {
-            request.setAttribute("error", "Todos los campos son obligatorios, incluyendo la dirección.");
+        // Normalizar
+        if (nombre   != null) nombre   = nombre.trim();
+        if (apellido != null) apellido = apellido.trim();
+        if (correo   != null) correo   = correo.trim().toLowerCase();
+        if (direccion != null) direccion = direccion.trim();
+
+        // 1. Campos obligatorios vacíos
+        if (nombre == null || nombre.isBlank() ||
+            apellido == null || apellido.isBlank() ||
+            correo == null || correo.isBlank() ||
+            contrasena == null || contrasena.isBlank() ||
+            confirmar == null || confirmar.isBlank() ||
+            direccion == null || direccion.isBlank() ||
+            fechaNac == null || fechaNac.isBlank()) {
+            request.setAttribute("error", "Todos los campos son obligatorios.");
             request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
             return;
         }
 
-        // Validar que las dos contraseñas escritas coincidan
+        // 2. Nombre solo letras y espacios (mín 2 chars)
+        if (!nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]{2,50}")) {
+            request.setAttribute("error", "El nombre solo puede contener letras (mínimo 2 caracteres).");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 3. Apellido solo letras y espacios (mín 2 chars)
+        if (!apellido.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]{2,50}")) {
+            request.setAttribute("error", "El apellido solo puede contener letras (mínimo 2 caracteres).");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 4. Formato de correo electrónico
+        if (!Pattern.matches("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$", correo)) {
+            request.setAttribute("error", "El correo electrónico no tiene un formato válido.");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 5. Longitud de contraseña: mínimo 8, máximo 20
+        if (contrasena.length() < 8 || contrasena.length() > 20) {
+            request.setAttribute("error", "La contraseña debe tener entre 8 y 20 caracteres.");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 6. Complejidad de contraseña: al menos 1 letra y 1 número
+        if (!contrasena.matches(".*[a-zA-Z].*") || !contrasena.matches(".*[0-9].*")) {
+            request.setAttribute("error", "La contraseña debe contener al menos una letra y un número.");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 7. Las contraseñas coinciden
         if (!contrasena.equals(confirmar)) {
             request.setAttribute("error", "Las contraseñas no coinciden.");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 8. Fecha de nacimiento válida y edad mínima 18 años
+        try {
+            LocalDate nacimiento = LocalDate.parse(fechaNac);
+            if (nacimiento.isAfter(LocalDate.now())) {
+                request.setAttribute("error", "La fecha de nacimiento no puede ser una fecha futura.");
+                request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+                return;
+            }
+            int edad = Period.between(nacimiento, LocalDate.now()).getYears();
+            if (edad < 18) {
+                request.setAttribute("error", "Debes tener al menos 18 años para crear una cuenta.");
+                request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+                return;
+            }
+            if (edad > 120) {
+                request.setAttribute("error", "La fecha de nacimiento ingresada no es válida.");
+                request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+                return;
+            }
+        } catch (DateTimeParseException e) {
+            request.setAttribute("error", "La fecha de nacimiento no tiene un formato válido.");
+            request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
+            return;
+        }
+
+        // 9. Dirección mínimo 10 caracteres
+        if (direccion.length() < 10) {
+            request.setAttribute("error", "La dirección debe ser más específica (mínimo 10 caracteres).");
             request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
             return;
         }
@@ -113,7 +196,7 @@ public class SvRegistro extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/vistas/perfil.jsp");
 
         } catch (Exception e) {
-            request.setAttribute("error", "Error al registrar: " + e.getMessage());
+            request.setAttribute("error", "Ocurrió un error al crear la cuenta. Intenta de nuevo.");
             request.getRequestDispatcher("/vistas/registro.jsp").forward(request, response);
         }
     }

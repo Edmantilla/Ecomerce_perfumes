@@ -27,9 +27,13 @@
     }
 
     // ─── Caché en memoria ────────────────────────────────────────────────────
-    let _products = [];
-    let _orders   = [];
-    let _users    = [];
+    let _products        = [];
+    let _orders          = [];
+    let _users           = [];
+    let _categorias      = [];
+    let _marcas          = [];
+    let _roles           = [];
+    let _permisosCatalogo = [];
 
     // ─── Section Navigation ──────────────────────────────────────────────────
     function navigate(sectionId) {
@@ -61,6 +65,11 @@
         return num.toLocaleString('es-CO') + ' COP';
     }
 
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     function statusBadge(status) {
         const map = {
             'ENTREGADO': 'badge-success', 'Entregado': 'badge-success',
@@ -76,9 +85,18 @@
     }
 
     // ─── Dashboard ───────────────────────────────────────────────────────────
+    function showSectionError(tbodyId, colspan, msg) {
+        const el = document.getElementById(tbodyId);
+        if (el) el.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;color:#c62828;padding:20px;font-size:14px">' + msg + '</td></tr>';
+    }
+
     function loadDashboard() {
         get('SvDashboard').then(data => {
-            if (data.error) { console.error('Dashboard error:', data.error); return; }
+            if (data.error) {
+                const el = document.getElementById('recent-orders-tbody');
+                if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c62828;padding:16px">No se pudieron cargar los datos del panel.</td></tr>';
+                return;
+            }
 
             document.getElementById('stat-revenue').textContent  = fmt(data.ventas);
             document.getElementById('stat-products').textContent = data.productos;
@@ -97,7 +115,10 @@
                     '</tr>'
                 ).join('');
             }
-        }).catch(e => console.error('Dashboard fetch error:', e));
+        }).catch(() => {
+            const el = document.getElementById('recent-orders-tbody');
+            if (el) el.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c62828;padding:16px">Sin conexión con el servidor. Intenta recargar la página.</td></tr>';
+        });
 
         // Stock bajo: cargamos productos para detectarlos
         get('SvProductos?admin=true').then(products => {
@@ -114,16 +135,19 @@
                     '<span class="badge ' + (p.stock === 0 ? 'badge-danger' : 'badge-warning') + '">' + p.stock + ' uds</span>' +
                     '</div>'
                 ).join('');
-        }).catch(e => console.error('Products (stock) fetch error:', e));
+        }).catch(() => {});
     }
 
     // ─── Products ────────────────────────────────────────────────────────────
     function loadProducts() {
         get('SvProductos?admin=true').then(products => {
-            if (!Array.isArray(products)) { console.error('Productos error:', products); return; }
+            if (!Array.isArray(products)) {
+                showSectionError('products-tbody', 7, 'No se pudieron cargar los productos. Intenta de nuevo.');
+                return;
+            }
             _products = products;
             renderProducts(products);
-        }).catch(e => console.error('Products fetch error:', e));
+        }).catch(() => showSectionError('products-tbody', 7, 'Sin conexión con el servidor. Intenta recargar la página.'));
     }
 
     function renderProducts(products) {
@@ -208,15 +232,15 @@
         const stock       = document.getElementById('prod-stock').value.trim();
 
         if (!nombre || !precio || !stock) {
-            alert('Por favor completa los campos requeridos: Nombre, Precio y Stock.');
+            showAdminAlert('Por favor completa los campos requeridos: Nombre, Precio y Stock.');
             return;
         }
         if (!idMarca) {
-            alert('Por favor selecciona una marca.');
+            showAdminAlert('Por favor selecciona una marca.');
             return;
         }
         if (!idCategoria) {
-            alert('Por favor selecciona una categoría.');
+            showAdminAlert('Por favor selecciona una categoría.');
             return;
         }
 
@@ -234,20 +258,21 @@
         if (editingProductId) params.id = editingProductId;
 
         post('SvProductos', params).then(r => {
-            if (r.error) { alert('Error: ' + r.error); return; }
+            if (r.error) { showAdminAlert(r.error); return; }
             closeProductModal();
             loadProducts();
             loadDashboard();
-        }).catch(e => { alert('Error de conexión: ' + e.message); });
+        }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function deleteProduct(id) {
-        if (!confirm('¿Eliminar este producto?')) return;
+        showConfirmModal('¿Eliminar este producto?', function() {
         post('SvProductos', { accion: 'eliminar', id: id }).then(r => {
-            if (r.error) { alert('Error: ' + r.error); return; }
+            if (r.error) { showAdminAlert(r.error); return; }
             loadProducts();
             loadDashboard();
-        }).catch(e => alert('Error de conexión: ' + e.message));
+        }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
+        }); // fin showConfirmModal
     }
 
     function editProduct(id) {
@@ -260,10 +285,13 @@
 
     function loadOrders() {
         get('SvPedidos').then(orders => {
-            if (!Array.isArray(orders)) { console.error('Pedidos error:', orders); return; }
+            if (!Array.isArray(orders)) {
+                showSectionError('orders-tbody', 8, 'No se pudieron cargar los pedidos. Intenta de nuevo.');
+                return;
+            }
             _orders = orders;
             renderOrders(orders);
-        }).catch(e => console.error('Orders fetch error:', e));
+        }).catch(() => showSectionError('orders-tbody', 8, 'Sin conexión con el servidor. Intenta recargar la página.'));
     }
 
     function renderOrders(orders) {
@@ -304,7 +332,7 @@
         const nuevoEstado = sel.value;
         post('SvPedidos', { accion: 'cambiarEstado', idPedido: idPedido, estado: nuevoEstado })
             .then(r => {
-                if (r.error) { alert('Error: ' + r.error); return; }
+                if (r.error) { showAdminAlert(r.error); return; }
                 // Actualizar badge en la misma fila sin recargar toda la tabla
                 const badge = sel.closest('tr').querySelector('.badge');
                 if (badge) {
@@ -317,7 +345,7 @@
                 if (o) o.estado = nuevoEstado;
                 showToast('Pedido #' + idPedido + ' → ' + nuevoEstado.charAt(0) + nuevoEstado.slice(1).toLowerCase());
             })
-            .catch(e => alert('Error de conexión: ' + e.message));
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     // ─── Order Detail Modal ──────────────────────────────────────────────────
@@ -439,10 +467,13 @@
     // ─── Users ───────────────────────────────────────────────────────────────
     function loadUsers() {
         get('SvUsuarios').then(users => {
-            if (!Array.isArray(users)) { console.error('Usuarios error:', users); return; }
+            if (!Array.isArray(users)) {
+                showSectionError('users-tbody', 9, 'No se pudieron cargar los usuarios. Intenta de nuevo.');
+                return;
+            }
             _users = users;
             renderUsers(users);
-        }).catch(e => console.error('Users fetch error:', e));
+        }).catch(() => showSectionError('users-tbody', 9, 'Sin conexión con el servidor. Intenta recargar la página.'));
     }
 
     function renderUsers(users) {
@@ -533,7 +564,7 @@
         if (!idRol) return;
         post('SvUsuarios', { accion: 'cambiarRol', id: idUsuario, idRol: idRol })
             .then(r => {
-                if (r.error) { alert('Error: ' + r.error); return; }
+                if (r.error) { showAdminAlert(r.error); return; }
                 showToast('Rol actualizado a: ' + r.rol);
                 // Actualizar caché local
                 const u = _users.find(x => x.id === idUsuario);
@@ -545,7 +576,7 @@
                 closeUserDetail();
                 loadUsers();
             })
-            .catch(e => alert('Error de conexi\u00f3n: ' + e.message));
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function closeUserDetail() {
@@ -602,7 +633,6 @@
     }
 
     // ─── Categorías ──────────────────────────────────────────────────────────
-    let _categorias = [];
 
     function loadCategorias() {
         get('SvCategorias').then(data => {
@@ -628,7 +658,7 @@
                 '</td>' +
                 '</tr>'
             ).join('');
-        }).catch(e => console.error('loadCategorias:', e));
+        }).catch(() => showSectionError('categorias-tbody', 6, 'No se pudieron cargar las categorías. Intenta de nuevo.'));
     }
 
     function openCategoriaModal(id) {
@@ -654,34 +684,34 @@
         const id     = document.getElementById('cat-id').value;
         const nombre = document.getElementById('cat-nombre').value.trim();
         const desc   = document.getElementById('cat-descripcion').value.trim();
-        if (!nombre) { alert('El nombre es obligatorio'); return; }
+        if (!nombre) { showAdminAlert('El nombre es obligatorio'); return; }
         const params = { nombre, descripcion: desc };
         if (id) { params.accion = 'editar'; params.id = id; }
         post('SvCategorias', params).then(r => {
-            if (r.error) { alert(r.error); return; }
+            if (r.error) { showAdminAlert(r.error); return; }
             document.getElementById('modal-categoria').classList.remove('open');
             showToast('Categor\u00eda guardada correctamente');
             loadCategorias();
-        }).catch(e => alert('Error: ' + e));
+        }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function editCategoria(id)   { openCategoriaModal(id); }
 
     function toggleCategoria(id) {
         post('SvCategorias', { accion: 'desactivar', id, nombre: _categorias.find(c=>c.id===id)?.nombre || '' })
-            .then(r => { if (r.error) { alert(r.error); return; } loadCategorias(); })
-            .catch(e => alert('Error: ' + e));
+            .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadCategorias(); })
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function deleteCategoria(id) {
-        if (!confirm('\u00bfEliminar esta categor\u00eda?')) return;
-        post('SvCategorias', { accion: 'eliminar', id })
-            .then(r => { if (r.error) { alert(r.error); return; } showToast('Categor\u00eda eliminada'); loadCategorias(); })
-            .catch(e => alert('Error: ' + e));
+        showConfirmModal('\u00bfEliminar esta categor\u00eda?', function() {
+            post('SvCategorias', { accion: 'eliminar', id })
+                .then(r => { if (r.error) { showAdminAlert(r.error); return; } showToast('Categor\u00eda eliminada'); loadCategorias(); })
+                .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
+        });
     }
 
     // ─── Marcas ──────────────────────────────────────────────────────────────
-    let _marcas = [];
 
     function loadMarcas() {
         get('SvMarcas').then(data => {
@@ -697,7 +727,7 @@
                 '<tr>' +
                 '<td>' + m.id + '</td>' +
                 '<td><strong>' + esc(m.nombre) + '</strong></td>' +
-                '<td>' + esc(m.descripcion || '—') + '</td>' +
+                '<td>' + esc(m.descripcion || '\u2014') + '</td>' +
                 '<td>' + m.productos + '</td>' +
                 '<td>' + (m.activo ? '<span class="badge badge-success">Activa</span>' : '<span class="badge badge-danger">Inactiva</span>') + '</td>' +
                 '<td style="display:flex;gap:8px">' +
@@ -707,7 +737,7 @@
                 '</td>' +
                 '</tr>'
             ).join('');
-        }).catch(e => console.error('loadMarcas:', e));
+        }).catch(() => showSectionError('marcas-tbody', 6, 'No se pudieron cargar las marcas. Intenta de nuevo.'));
     }
 
     function openMarcaModal(id) {
@@ -737,42 +767,78 @@
         const id     = document.getElementById('marca-id').value;
         const nombre = document.getElementById('marca-nombre').value.trim();
         const desc   = document.getElementById('marca-descripcion').value.trim();
-        if (!nombre) { alert('El nombre es obligatorio'); return; }
+        if (!nombre) { showAdminAlert('El nombre es obligatorio'); return; }
         const genero = document.getElementById('marca-genero').value;
         const params = { nombre, descripcion: desc };
         if (id) { params.accion = 'editar'; params.id = id; }
         else { params.genero = genero; }
         post('SvMarcas', params).then(r => {
-            if (r.error) { alert(r.error); return; }
+            if (r.error) { showAdminAlert(r.error); return; }
             document.getElementById('modal-marca').classList.remove('open');
             showToast('Marca guardada correctamente');
             loadMarcas();
-        }).catch(e => alert('Error: ' + e));
+        }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function editMarca(id)   { openMarcaModal(id); }
 
     function toggleMarca(id) {
-        post('SvMarcas', { accion: 'desactivar', id, nombre: _marcas.find(m=>m.id===id)?.nombre || '' })
-            .then(r => { if (r.error) { alert(r.error); return; } loadMarcas(); })
-            .catch(e => alert('Error: ' + e));
+        post('SvMarcas', { accion: 'desactivar', id, nombre: _marcas.find(m => m.id === id)?.nombre || '' })
+            .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadMarcas(); })
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function deleteMarca(id) {
-        if (!confirm('\u00bfEliminar esta marca?')) return;
-        post('SvMarcas', { accion: 'eliminar', id })
-            .then(r => { if (r.error) { alert(r.error); return; } showToast('Marca eliminada'); loadMarcas(); })
-            .catch(e => alert('Error: ' + e));
+        showConfirmModal('\u00bfEliminar esta marca?', function() {
+            post('SvMarcas', { accion: 'eliminar', id })
+                .then(r => { if (r.error) { showAdminAlert(r.error); return; } showToast('Marca eliminada'); loadMarcas(); })
+                .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
+        });
     }
 
-    function esc(s) {
-        if (!s) return '';
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function showAdminAlert(msg) {
+        var existing = document.getElementById('admin-alert-modal');
+        if (existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'admin-alert-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+        modal.innerHTML =
+            '<div style="background:var(--admin-card,#fff);border-radius:10px;padding:30px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid var(--admin-border,#e5e7eb)">' +
+                '<div style="font-size:36px;margin-bottom:12px">⚠️</div>' +
+                '<p style="color:var(--admin-text,#1a1a1a);font-size:14px;font-weight:500;margin:0 0 22px;line-height:1.5">' + msg + '</p>' +
+                '<button id="admin-alert-ok" style="background:#1a1a1a;color:#fff;border:none;padding:10px 28px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.5px">ENTENDIDO</button>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.querySelector('#admin-alert-ok').addEventListener('click', function() { modal.remove(); });
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    }
+
+    function showConfirmModal(mensaje, onConfirm) {
+        var existing = document.getElementById('admin-confirm-modal');
+        if (existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'admin-confirm-modal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+        modal.innerHTML =
+            '<div style="background:var(--admin-card,#fff);border-radius:10px;padding:32px 28px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.25);border:1px solid var(--admin-border,#e5e7eb)">' +
+                '<div style="font-size:38px;margin-bottom:12px">🗑️</div>' +
+                '<p style="color:var(--admin-text,#1a1a1a);font-size:15px;font-weight:600;margin:0 0 8px">' + mensaje + '</p>' +
+                '<p style="color:var(--admin-muted,#888);font-size:13px;margin:0 0 24px">Esta acción no se puede deshacer.</p>' +
+                '<div style="display:flex;gap:10px;justify-content:center">' +
+                    '<button id="admin-confirm-ok" style="background:#dc2626;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.5px">ELIMINAR</button>' +
+                    '<button id="admin-confirm-cancel" style="background:var(--admin-card,#fff);color:var(--admin-text,#1a1a1a);border:1px solid var(--admin-border,#ccc);padding:10px 20px;border-radius:6px;font-size:13px;cursor:pointer">Cancelar</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.querySelector('#admin-confirm-ok').addEventListener('click', function() {
+            modal.remove();
+            onConfirm();
+        });
+        modal.querySelector('#admin-confirm-cancel').addEventListener('click', function() { modal.remove(); });
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
     // ─── Roles y Permisos (RF07/RF08) ─────────────────────────────────────────
-    let _roles = [];
-    let _permisosCatalogo = [];
     let _permisosActivoTab = 'roles';
 
     function permisosTab(tab) {
@@ -813,7 +879,7 @@
                 '</td>' +
                 '</tr>'
             ).join('');
-        }).catch(e => console.error('loadRoles:', e));
+        }).catch(() => showSectionError('roles-tbody', 6, 'No se pudieron cargar los roles. Intenta de nuevo.'));
     }
 
     function loadPermisosCatalogo() {
@@ -839,7 +905,7 @@
                 '</td>' +
                 '</tr>'
             ).join('');
-        }).catch(e => console.error('loadPermisosCatalogo:', e));
+        }).catch(() => showSectionError('permisos-tbody', 6, 'No se pudieron cargar los permisos. Intenta de nuevo.'));
     }
 
     // -- Rol CRUD --
@@ -865,24 +931,24 @@
         const id     = document.getElementById('rol-id').value;
         const nombre = document.getElementById('rol-nombre').value.trim();
         const desc   = document.getElementById('rol-descripcion').value.trim();
-        if (!nombre) { alert('El nombre es obligatorio'); return; }
+        if (!nombre) { showAdminAlert('El nombre es obligatorio'); return; }
         const params = id
             ? { accion: 'editarRol', id, nombre, descripcion: desc }
             : { accion: 'crearRol',  nombre, descripcion: desc };
         post('SvPermisos', params).then(r => {
-            if (r.error) { alert(r.error); return; }
+            if (r.error) { showAdminAlert(r.error); return; }
             document.getElementById('modal-rol').classList.remove('open');
             showToast('Rol guardado');
             loadRoles();
-        }).catch(e => alert('Error: ' + e));
+        }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function editRol(id)   { openRolModal(id); }
 
     function toggleRol(id) {
         post('SvPermisos', { accion: 'toggleRol', id })
-            .then(r => { if (r.error) { alert(r.error); return; } loadRoles(); })
-            .catch(e => alert('Error: ' + e));
+            .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadRoles(); })
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     // -- Permiso CRUD --
@@ -911,24 +977,24 @@
         const nombre = document.getElementById('permiso-nombre').value.trim();
         const modulo = document.getElementById('permiso-modulo').value.trim();
         const desc   = document.getElementById('permiso-descripcion').value.trim();
-        if (!nombre) { alert('El nombre es obligatorio'); return; }
+        if (!nombre) { showAdminAlert('El nombre es obligatorio'); return; }
         const params = id
             ? { accion: 'editarPermiso', id, nombre, modulo, descripcion: desc }
             : { accion: 'crearPermiso',  nombre, modulo, descripcion: desc };
         post('SvPermisos', params).then(r => {
-            if (r.error) { alert(r.error); return; }
+            if (r.error) { showAdminAlert(r.error); return; }
             document.getElementById('modal-permiso').classList.remove('open');
             showToast('Permiso guardado');
             loadPermisosCatalogo();
-        }).catch(e => alert('Error: ' + e));
+        }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function editPermiso(id)   { openPermisoModal(id); }
 
     function togglePermiso(id) {
         post('SvPermisos', { accion: 'togglePermiso', id })
-            .then(r => { if (r.error) { alert(r.error); return; } loadPermisosCatalogo(); })
-            .catch(e => alert('Error: ' + e));
+            .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadPermisosCatalogo(); })
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     // -- Asignar permisos a rol --
@@ -974,23 +1040,24 @@
         if (!idPermiso) return;
         post('SvPermisos', { accion: 'asignar', idRol, idPermiso })
             .then(r => {
-                if (r.error) { alert(r.error); return; }
+                if (r.error) { showAdminAlert(r.error); return; }
                 showToast('Permiso asignado');
                 loadRoles();
                 // Refrescar modal
                 setTimeout(() => abrirAsignar(idRol), 400);
-            }).catch(e => alert('Error: ' + e));
+            }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function revocarPermiso(idRolPermiso, idRol) {
-        if (!confirm('\u00bfRevocar este permiso?')) return;
-        post('SvPermisos', { accion: 'revocar', idRolPermiso })
-            .then(r => {
-                if (r.error) { alert(r.error); return; }
-                showToast('Permiso revocado');
-                loadRoles();
-                setTimeout(() => abrirAsignar(idRol), 400);
-            }).catch(e => alert('Error: ' + e));
+        showConfirmModal('¿Revocar este permiso?', function() {
+            post('SvPermisos', { accion: 'revocar', idRolPermiso })
+                .then(r => {
+                    if (r.error) { showAdminAlert(r.error); return; }
+                    showToast('Permiso revocado');
+                    loadRoles();
+                    setTimeout(() => abrirAsignar(idRol), 400);
+                }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
+        });
     }
 
     // ─── Pagos (RF020-RF022) ─────────────────────────────────────────────────
@@ -1022,7 +1089,7 @@
                         '<td>' + esc(p.referencia || '—') + '</td></tr>'
                     ).join('') + '</tbody></table>';
             }
-        }).catch(e => { document.getElementById('pago-lista').innerHTML = '<p style="color:var(--admin-danger)">Error cargando pagos</p>'; });
+        }).catch(() => { document.getElementById('pago-lista').innerHTML = '<p style="color:#c62828;font-size:14px">No se pudo cargar la información de pagos. Intenta de nuevo.</p>'; });
     }
 
     function savePago() {
@@ -1030,14 +1097,14 @@
         const metodo   = document.getElementById('pago-metodo').value;
         const monto    = document.getElementById('pago-monto').value;
         const ref      = document.getElementById('pago-referencia').value;
-        if (!monto || parseFloat(monto) <= 0) { alert('Ingresa un monto válido'); return; }
+        if (!monto || parseFloat(monto) <= 0) { showAdminAlert('Ingresa un monto válido para el pago.'); return; }
         post('SvPagos', { idPedido, metodo, monto, referencia: ref })
             .then(r => {
-                if (r.error) { alert(r.error); return; }
+                if (r.error) { showAdminAlert(r.error); return; }
                 showToast('Pago registrado correctamente' + (r.estadoActualizado ? ' — Pedido marcado como PAGO' : ''));
                 document.getElementById('modal-pago').classList.remove('open');
                 loadOrders();
-            }).catch(e => alert('Error: ' + e));
+            }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function closePagoModal() { document.getElementById('modal-pago').classList.remove('open'); }
@@ -1078,16 +1145,16 @@
         const guia       = document.getElementById('envio-guia').value.trim();
         const fechaEst   = document.getElementById('envio-fecha-est').value;
         const estado     = document.getElementById('envio-estado').value;
-        if (!direccion) { alert('La dirección de envío es obligatoria'); return; }
+        if (!direccion) { showAdminAlert('La dirección de envío es obligatoria.'); return; }
         const params = { idPedido, direccion, transportadora: transport, guia, fechaEstimada: fechaEst };
         if (idEnvio) { params.accion = 'actualizar'; params.idEnvio = idEnvio; params.estado = estado; }
         post('SvEnvios', params)
             .then(r => {
-                if (r.error) { alert(r.error); return; }
+                if (r.error) { showAdminAlert(r.error); return; }
                 showToast(idEnvio ? 'Envío actualizado' : 'Envío registrado — Pedido marcado como ENVIADO');
                 document.getElementById('modal-envio').classList.remove('open');
                 loadOrders();
-            }).catch(e => alert('Error: ' + e));
+            }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     function closeEnvioModal() { document.getElementById('modal-envio').classList.remove('open'); }
