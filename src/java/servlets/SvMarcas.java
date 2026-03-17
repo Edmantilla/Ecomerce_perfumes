@@ -120,6 +120,11 @@ public class SvMarcas extends HttpServlet {
                 out.print("{\"error\":\"El nombre es obligatorio\"}");
                 return;
             }
+            if (descripcion != null && descripcion.length() > 120) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":\"La descripci\\u00f3n no puede superar los 120 caracteres\"}");
+                return;
+            }
 
             // Verificar que no exista otra marca con el mismo nombre (al editar se excluye la propia)
             em = JpaProvider.getEntityManagerFactory().createEntityManager();

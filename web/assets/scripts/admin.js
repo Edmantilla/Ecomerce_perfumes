@@ -679,16 +679,18 @@
         document.getElementById('cat-id').value = '';
         document.getElementById('cat-nombre').value = '';
         document.getElementById('cat-descripcion').value = '';
+        document.getElementById('cat-desc-count').textContent = '0';
         if (id) {
             const c = _categorias.find(x => x.id === id);
             if (c) {
-                title.textContent = 'Editar Categor\u00eda';
+                title.textContent = 'Editar Categoría';
                 document.getElementById('cat-id').value = c.id;
                 document.getElementById('cat-nombre').value = c.nombre;
                 document.getElementById('cat-descripcion').value = c.descripcion || '';
+                document.getElementById('cat-desc-count').textContent = (c.descripcion || '').length;
             }
         } else {
-            title.textContent = 'Nueva Categor\u00eda';
+            title.textContent = 'Nueva Categoría';
         }
         document.getElementById('modal-categoria').classList.add('open');
     }
@@ -698,6 +700,7 @@
         const nombre = document.getElementById('cat-nombre').value.trim();
         const desc   = document.getElementById('cat-descripcion').value.trim();
         if (!nombre) { showAdminAlert('El nombre es obligatorio'); return; }
+        if (desc.length > 120) { showAdminAlert('La descripción no puede superar los 120 caracteres.'); return; }
         const params = { nombre, descripcion: desc };
         if (id) { params.accion = 'editar'; params.id = id; }
         post('SvCategorias', params).then(r => {
@@ -767,10 +770,12 @@
                 document.getElementById('marca-id').value = m.id;
                 document.getElementById('marca-nombre').value = m.nombre;
                 document.getElementById('marca-descripcion').value = m.descripcion || '';
+                document.getElementById('marca-desc-count').textContent = (m.descripcion || '').length;
                 generoGroup.style.display = 'none';
             }
         } else {
             title.textContent = 'Nueva Marca';
+            document.getElementById('marca-desc-count').textContent = '0';
             generoGroup.style.display = '';
         }
         document.getElementById('modal-marca').classList.add('open');
@@ -781,6 +786,7 @@
         const nombre = document.getElementById('marca-nombre').value.trim();
         const desc   = document.getElementById('marca-descripcion').value.trim();
         if (!nombre) { showAdminAlert('El nombre es obligatorio'); return; }
+        if (desc.length > 120) { showAdminAlert('La descripción no puede superar los 120 caracteres.'); return; }
         const genero = document.getElementById('marca-genero').value;
         const params = { nombre, descripcion: desc };
         if (id) { params.accion = 'editar'; params.id = id; }

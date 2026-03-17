@@ -102,6 +102,11 @@ public class SvCategorias extends HttpServlet {
                 out.print("{\"error\":\"El nombre es obligatorio\"}");
                 return;
             }
+            if (descripcion != null && descripcion.length() > 120) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":\"La descripci\\u00f3n no puede superar los 120 caracteres\"}");
+                return;
+            }
 
             // Verificar que no exista otra categoría con el mismo nombre (insensible a mayúsculas)
             // Al editar, excluir la propia categoría del chequeo de duplicados

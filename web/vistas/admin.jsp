@@ -614,7 +614,8 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Descripci&#243;n</label>
-                <input class="form-input" id="cat-descripcion" type="text" placeholder="Descripci&#243;n opcional">
+                <input class="form-input" id="cat-descripcion" type="text" placeholder="Descripci&#243;n opcional" maxlength="120" oninput="document.getElementById('cat-desc-count').textContent=this.value.length">
+                <span id="cat-desc-count" style="font-size:11px;color:#888;float:right">0</span>/120 <span style="font-size:11px;color:#888">caracteres</span>
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:12px">
                 <button class="btn btn-secondary" onclick="document.getElementById('modal-categoria').classList.remove('open')">Cancelar</button>
@@ -637,7 +638,8 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Descripci&#243;n</label>
-                <input class="form-input" id="marca-descripcion" type="text" placeholder="Descripci&#243;n opcional">
+                <input class="form-input" id="marca-descripcion" type="text" placeholder="Descripci&#243;n opcional" maxlength="120" oninput="document.getElementById('marca-desc-count').textContent=this.value.length">
+                <span id="marca-desc-count" style="font-size:11px;color:#888;float:right">0</span>/120 <span style="font-size:11px;color:#888">caracteres</span>
             </div>
             <div class="form-group" id="marca-genero-group">
                 <label class="form-label">G&#233;nero *</label>
