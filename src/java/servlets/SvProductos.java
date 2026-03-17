@@ -112,6 +112,23 @@ public class SvProductos extends HttpServlet {
                 return;
             }
 
+            // Activar / desactivar producto (toggle activo)
+            if ("toggleActivo".equals(accion)) {
+                int id = Integer.parseInt(request.getParameter("id"));
+                ProductoJpaController prodCtrlT = new ProductoJpaController();
+                Producto p = prodCtrlT.findProducto(id);
+                if (p == null) {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    out.print("{\"error\":\"Producto no encontrado\"}");
+                    return;
+                }
+                p.setActivo(!p.isActivo());
+                p.setUpdatedAt(LocalDateTime.now());
+                prodCtrlT.edit(p);
+                out.print("{\"ok\":true,\"activo\":" + p.isActivo() + "}");
+                return;
+            }
+
             String nombre        = request.getParameter("nombre");
             String descripcion   = request.getParameter("descripcion");
             String precioStr     = request.getParameter("precio");

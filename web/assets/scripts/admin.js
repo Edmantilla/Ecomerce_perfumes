@@ -154,23 +154,36 @@
         const tbody = document.getElementById('products-tbody');
         if (!tbody) return;
         if (products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--admin-muted)">Sin productos registrados</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--admin-muted)">Sin productos registrados</td></tr>';
             return;
         }
         tbody.innerHTML = products.map(p =>
             '<tr>' +
             '<td><img class="product-img-sm" src="" alt="" style="display:none"></td>' +
-            '<td><strong>' + p.nombre + '</strong></td>' +
-            '<td>' + (p.marca || '—') + '</td>' +
-            '<td>' + (p.categoria || '—') + '</td>' +
+            '<td><strong>' + esc(p.nombre) + '</strong></td>' +
+            '<td>' + esc(p.marca || '\u2014') + '</td>' +
+            '<td>' + esc(p.categoria || '\u2014') + '</td>' +
             '<td>' + fmt(p.precio) + '</td>' +
             '<td><span class="badge ' + (p.stock <= 5 ? 'badge-warning' : 'badge-success') + '">' + p.stock + '</span></td>' +
-            '<td style="display:flex;gap:8px;padding-top:18px">' +
+            '<td>' + (p.activo ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>') + '</td>' +
+            '<td style="display:flex;gap:8px;flex-wrap:wrap;padding-top:12px">' +
             '<button class="btn btn-secondary btn-sm" onclick="adminApp.editProduct(' + p.id + ')">Editar</button>' +
+            '<button class="btn btn-sm" style="background:rgba(245,158,11,.15);color:#f59e0b" onclick="adminApp.toggleProduct(' + p.id + ')">' + (p.activo ? 'Desactivar' : 'Activar') + '</button>' +
             '<button class="btn btn-danger btn-sm" onclick="adminApp.deleteProduct(' + p.id + ')">Eliminar</button>' +
             '</td>' +
             '</tr>'
         ).join('');
+    }
+
+    function toggleProduct(id) {
+        post('SvProductos', { accion: 'toggleActivo', id })
+            .then(r => {
+                if (r.error) { showAdminAlert(r.error); return; }
+                const label = r.activo ? 'activado' : 'desactivado';
+                showToast('Producto ' + label + ' correctamente');
+                loadProducts();
+            })
+            .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
     // ─── Product Modal ───────────────────────────────────────────────────────
@@ -1226,7 +1239,7 @@
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────
-    window.adminApp = { editProduct, deleteProduct, cambiarEstado, verDetalle, closeOrderDetail, verUsuario, closeUserDetail, cambiarRolUsuario, editCategoria, toggleCategoria, deleteCategoria, editMarca, toggleMarca, deleteMarca, abrirPago, closePagoModal, abrirEnvio, closeEnvioModal, permisosTab, editRol, toggleRol, editPermiso, togglePermiso, abrirAsignar, revocarPermiso };
+    window.adminApp = { editProduct, deleteProduct, toggleProduct, cambiarEstado, verDetalle, closeOrderDetail, verUsuario, closeUserDetail, cambiarRolUsuario, editCategoria, toggleCategoria, deleteCategoria, editMarca, toggleMarca, deleteMarca, abrirPago, closePagoModal, abrirEnvio, closeEnvioModal, permisosTab, editRol, toggleRol, editPermiso, togglePermiso, abrirAsignar, revocarPermiso };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

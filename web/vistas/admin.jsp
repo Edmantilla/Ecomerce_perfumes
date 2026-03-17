@@ -303,6 +303,7 @@
                                 <th>Categor&#237;a</th>
                                 <th>Precio</th>
                                 <th>Stock</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
