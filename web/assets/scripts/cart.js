@@ -121,7 +121,7 @@
                     <p class="cart-item__price">${formatPrice(lineTotal)}</p>
                     <div class="cart-item__qty-controls">
                         <button class="cart-item__qty-btn" data-action="decrease" data-index="${index}">−</button>
-                        <span class="cart-item__qty">${item.qty}</span>
+                        <input class="cart-item__qty-input" type="number" min="1" value="${item.qty}" data-action="setqty" data-index="${index}" style="width:46px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:2px 4px;font-size:14px;font-weight:600;-moz-appearance:textfield">
                         <button class="cart-item__qty-btn" data-action="increase" data-index="${index}">+</button>
                     </div>
                 </div>
@@ -198,7 +198,7 @@
     // ─── Cart Item Controls (qty / remove) ───────────────────────────────────
     function handleCartBodyClick(e) {
         const btn = e.target.closest('[data-action]');
-        if (!btn) return;
+        if (!btn || btn.tagName === 'INPUT') return;
 
         const action = btn.dataset.action;
         const index = parseInt(btn.dataset.index, 10);
@@ -213,6 +213,22 @@
             if (cart[index].qty <= 0) cart.splice(index, 1);
         }
 
+        saveCart(cart);
+        updateBadge();
+        renderCart();
+    }
+
+    function handleCartBodyChange(e) {
+        const input = e.target.closest('input[data-action="setqty"]');
+        if (!input) return;
+        const index = parseInt(input.dataset.index, 10);
+        const val = parseInt(input.value, 10);
+        const cart = getCart();
+        if (isNaN(val) || val <= 0) {
+            cart.splice(index, 1);
+        } else {
+            cart[index].qty = val;
+        }
         saveCart(cart);
         updateBadge();
         renderCart();
@@ -484,6 +500,7 @@
         });
 
         document.getElementById('cartBody')?.addEventListener('click', handleCartBodyClick);
+        document.getElementById('cartBody')?.addEventListener('change', handleCartBodyChange);
         document.getElementById('cartCheckout')?.addEventListener('click', handleCheckout);
 
         // Keyboard close

@@ -200,7 +200,7 @@
                                 '<p class="cart-item__price">' + lineTotal.toLocaleString('es-CO') + ' COP</p>' +
                                 '<div class="cart-item__qty-controls">' +
                                 '<button class="cart-item__qty-btn" data-action="decrease" data-index="' + index + '">\u2212</button>' +
-                                '<span class="cart-item__qty">' + item.qty + '</span>' +
+                                '<input class="cart-item__qty-input" type="number" min="1" value="' + item.qty + '" data-action="setqty" data-index="' + index + '" style="width:46px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:2px 4px;font-size:14px;font-weight:600;-moz-appearance:textfield">' +
                                 '<button class="cart-item__qty-btn" data-action="increase" data-index="' + index + '">+</button>' +
                                 '</div></div>' +
                                 '<button class="cart-item__remove" data-action="remove" data-index="' + index + '">\u2715</button>' +
