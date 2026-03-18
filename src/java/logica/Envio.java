@@ -1,8 +1,8 @@
 
 package logica;
 
-import enums.EstadoEntrega;
-import enums.EstadoPedido;
+import enums.EstadoEntrega; // enum con estados: PREPARANDO, EN_TRANSITO, ENTREGADO, DEVUELTO
+import enums.EstadoPedido;  // enum para sincronizar el estado del pedido al cambiar el envío
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,53 +16,60 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 /**
+ * Envio — Entidad JPA que mapea la tabla "envio".
  *
- * @author eduar
+ * Representa el despacho físico de un pedido a un cliente.
+ * Cada pedido puede tener como máximo un envío (relación 1:1 con Pedido).
+ * Registra la transportadora, número de guía, dirección y fechas de despacho/entrega.
+ * Al crearse, cambia automáticamente el estado del pedido a ENVIADO.
+ * Al confirmarse la entrega, cambia el estado del pedido a ENTREGADO.
+ * Es gestionado desde el panel admin mediante SvEnvios.java.
  */
-@Entity
-@Table(name = "envio")
+@Entity                  // esta clase es una entidad JPA (mapea una tabla)
+@Table(name = "envio")   // nombre de la tabla en MySQL
 public class Envio {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_envio")
+    @Id                                                    // clave primaria
+    @GeneratedValue(strategy = GenerationType.IDENTITY)    // AUTO_INCREMENT en MySQL
+    @Column(name = "id_envio")                             // columna id_envio en la tabla
     private int idEnvio;
 
-    @OneToOne
-    @JoinColumn(name = "id_pedido", nullable = false)
+    @OneToOne                                              // relación 1:1 — un envío pertenece a un solo pedido
+    @JoinColumn(name = "id_pedido", nullable = false)      // FK al pedido, no puede ser nula
     private Pedido pedido;
 
-    @Column(name = "fecha_envio")
+    @Column(name = "fecha_envio")                          // fecha y hora en que se despacha el paquete
     private LocalDateTime fechaEnvio;
 
-    @Column(name = "fecha_estimada_entrega")
+    @Column(name = "fecha_estimada_entrega")               // fecha en que se espera llegue al cliente
     private LocalDateTime fechaEstimadaEntrega;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "estado_entrega", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)                           // guarda el nombre del enum como texto en BD (no como número)
+    @Column(name = "estado_entrega", nullable = false, length = 20) // ej: "PREPARANDO", "EN_TRANSITO", "ENTREGADO"
     private EstadoEntrega estadoEntrega;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at")                           // fecha de creación del registro
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at")                           // fecha de última modificación
     private LocalDateTime updatedAt;
 
-    @Column(name = "direccion_envio", length = 255)
+    @Column(name = "direccion_envio", length = 255)        // dirección física a donde se envía el pedido
     private String direccionEnvio;
 
-    @Column(name = "transportadora", length = 100)
+    @Column(name = "transportadora", length = 100)         // empresa de mensajería (ej: Servientrega, Coordinadora)
     private String transportadora;
 
-    @Column(name = "numero_guia", length = 100)
+    @Column(name = "numero_guia", length = 100)            // número de guía para rastreo del paquete
     private String numeroGuia;
 
-    @Column(name = "activo", nullable = false)
+    @Column(name = "activo", nullable = false)             // false = envío cancelado o eliminado lógicamente
     private boolean activo;
 
     public Envio() {
-    }
+    } // constructor vacío requerido por JPA
 
+    // Constructor completo para crear un envío con todos sus datos
     public Envio(int idEnvio, Pedido pedido, LocalDateTime fechaEnvio, LocalDateTime fechaEstimadaEntrega, EstadoEntrega estadoEntrega, LocalDateTime createdAt, LocalDateTime updatedAt, String direccionEnvio, String transportadora, String numeroGuia, boolean activo) {
         this.idEnvio = idEnvio;
         this.pedido = pedido;
@@ -77,17 +84,26 @@ public class Envio {
         this.activo = activo;
     }
     
-    
-    
+    // Método de negocio: marca el envío como despachado y sincroniza el estado del pedido
+    // Registra la guía, la fecha actual de despacho y cambia el estado a EN_TRANSITO
+    // También actualiza el pedido asociado a ENVIADO automáticamente
     public void despachar(String numeroGuia) {
-        this.numeroGuia = numeroGuia; this.fechaEnvio = LocalDateTime.now();
-        this.estadoEntrega = EstadoEntrega.EN_TRANSITO; this.updatedAt = LocalDateTime.now();
-        if (pedido != null) pedido.setEstado(EstadoPedido.ENVIADO);
+        this.numeroGuia = numeroGuia;                          // guarda el número de guía de la transportadora
+        this.fechaEnvio = LocalDateTime.now();                // registra la fecha/hora exacta del despacho
+        this.estadoEntrega = EstadoEntrega.EN_TRANSITO;       // cambia estado del envío a EN_TRANSITO
+        this.updatedAt = LocalDateTime.now();                 // actualiza timestamp de modificación
+        if (pedido != null) pedido.setEstado(EstadoPedido.ENVIADO); // sincroniza el estado del pedido padre
     }
+
+    // Método de negocio: confirma que el cliente recibió el paquete
+    // Cambia el estado del envío a ENTREGADO y actualiza el pedido a ENTREGADO
     public void confirmarEntrega() {
-        this.estadoEntrega = EstadoEntrega.ENTREGADO; this.updatedAt = LocalDateTime.now();
-        if (pedido != null) pedido.setEstado(EstadoPedido.ENTREGADO);
+        this.estadoEntrega = EstadoEntrega.ENTREGADO;          // estado final exitoso del envío
+        this.updatedAt = LocalDateTime.now();                  // actualiza timestamp
+        if (pedido != null) pedido.setEstado(EstadoPedido.ENTREGADO); // sincroniza el pedido padre
     }
+
+    // Método de negocio: registra que el paquete fue devuelto por el cliente o no fue recibido
     public void registrarDevolucion() { this.estadoEntrega = EstadoEntrega.DEVUELTO; this.updatedAt = LocalDateTime.now(); }
 
     public int getIdEnvio() {

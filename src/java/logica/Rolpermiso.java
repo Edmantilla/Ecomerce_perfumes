@@ -12,38 +12,46 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
+ * Rolpermiso — Entidad JPA que mapea la tabla "rol_permiso" de la base de datos.
  *
- * @author eduar
+ * Es la tabla de unión entre Rol y Permiso (relación N:M).
+ * Cada fila representa la asignación de un permiso a un rol.
+ * Ejemplo: el rol ADMIN tiene asignados los permisos VER_DASHBOARD, EDITAR_PRODUCTOS, etc.
+ * Al asignar un permiso a un rol, todos los usuarios con ese rol ganan el permiso automáticamente.
+ * Es gestionada desde el panel admin mediante SvPermisos con accion=asignar / accion=revocar.
  */
-@Entity
-@Table(name = "rol_permiso")
+@Entity                       // esta clase es una entidad JPA (mapea una tabla)
+@Table(name = "rol_permiso")  // tabla de unión entre rol y permiso en MySQL
 public class Rolpermiso {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_rol_permiso")
+    @Id                                                    // clave primaria propia (más simple que clave compuesta)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)    // AUTO_INCREMENT en MySQL
+    @Column(name = "id_rol_permiso")                       // columna id_rol_permiso en la tabla
     private int idRolPermiso;
 
-    @ManyToOne
-    @JoinColumn(name = "id_rol", nullable = false)
+    @ManyToOne                                             // relación N:1 — muchas asignaciones pueden ser del mismo rol
+    @JoinColumn(name = "id_rol", nullable = false)         // FK al rol, no puede ser nula
     private Rol rol;
 
-    @ManyToOne
-    @JoinColumn(name = "id_permiso", nullable = false)
+    @ManyToOne                                             // relación N:1 — muchas asignaciones pueden ser del mismo permiso
+    @JoinColumn(name = "id_permiso", nullable = false)     // FK al permiso, no puede ser nula
     private Permiso permiso;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at")                           // fecha en que se asignó el permiso al rol
     private LocalDateTime createdAt;
 
     public Rolpermiso() {
-    }
+    } // constructor vacío requerido por JPA
     
+    // Constructor de negocio: crea la asignación rol-permiso con validación
+    // Usado por SvPermisos al ejecutar accion=asignar
+    // Lanza IllegalArgumentException si alguno de los dos es null (integridad de datos)
     public Rolpermiso(Rol rol, Permiso permiso){
-        if (rol == null || permiso == null)
+        if (rol == null || permiso == null)                 // ambos son obligatorios
             throw new IllegalArgumentException("Rol y permiso son obligatorios.");
         this.rol = rol;
         this.permiso = permiso;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();               // registrar cuándo se hizo la asignación
     }
     
 
