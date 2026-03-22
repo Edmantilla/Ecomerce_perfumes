@@ -172,6 +172,27 @@ public class SvEnvios extends HttpServlet {
                 return;
             }
 
+            if (guia == null || guia.isBlank() || guia.trim().length() < 10 || guia.trim().length() > 22) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"error\":\"El número de guía es obligatorio y debe tener entre 10 y 22 caracteres\"}");
+                return;
+            }
+
+            // Verificar que el número de guía no esté ya registrado en otro envío
+            EntityManager emGuia = JpaProvider.getEntityManagerFactory().createEntityManager();
+            try {
+                TypedQuery<Long> qGuia = emGuia.createQuery(
+                    "SELECT COUNT(e) FROM Envio e WHERE e.numeroGuia = :guia", Long.class);
+                qGuia.setParameter("guia", guia.trim());
+                if (qGuia.getSingleResult() > 0) {
+                    response.setStatus(HttpServletResponse.SC_CONFLICT);
+                    out.print("{\"error\":\"El número de guía ya fue registrado en otro envío\"}");
+                    return;
+                }
+            } finally {
+                emGuia.close();
+            }
+
             // Construir el objeto Envio con los datos recibidos
             Envio envio = new Envio();
             envio.setPedido(pedido);

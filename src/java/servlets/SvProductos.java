@@ -13,7 +13,10 @@ import javax.servlet.http.HttpServletResponse;
 import logica.Categoria;
 import logica.Marca;
 import logica.Producto;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import persistencias.CategoriaJpaController;
+import persistencias.JpaProvider;
 import persistencias.MarcaJpaController;
 import persistencias.ProductoJpaController;
 
@@ -107,7 +110,24 @@ public class SvProductos extends HttpServlet {
                     return;
                 }
                 int id = Integer.parseInt(request.getParameter("id"));
-                new ProductoJpaController().destroy(id); // eliminación física de la BD
+                // Verificar si el producto tiene pedidos asociados en detalle_pedido
+                // Si los tiene, no se puede eliminar físicamente porque rompería el historial de compras
+                EntityManager emCheck = JpaProvider.getEntityManagerFactory().createEntityManager();
+                try {
+                    TypedQuery<Long> qCheck = emCheck.createQuery(
+                        "SELECT COUNT(d) FROM Detallepedido d WHERE d.producto.idProducto = :id", Long.class);
+                    qCheck.setParameter("id", id);
+                    long pedidosVinculados = qCheck.getSingleResult();
+                    if (pedidosVinculados > 0) {
+                        // Hay pedidos que referencian este producto: solo se puede desactivar, no eliminar
+                        response.setStatus(HttpServletResponse.SC_CONFLICT);
+                        out.print("{\"error\":\"Imposible realizar esta accion por que el producto ya tiene una venta\"}");
+                        return;
+                    }
+                } finally {
+                    emCheck.close();
+                }
+                new ProductoJpaController().destroy(id); // eliminación física solo si no tiene pedidos
                 out.print("{\"ok\":true}");
                 return;
             }

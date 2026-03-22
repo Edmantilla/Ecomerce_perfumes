@@ -655,41 +655,18 @@
         </div>
     </div>
 
-    <!-- MODAL: REGISTRAR PAGO -->
+    <!-- MODAL: VER PAGO -->
     <div class="admin-modal-overlay" id="modal-pago">
         <div class="admin-modal" style="max-width:500px">
             <div class="admin-modal__header">
-                <h2 class="admin-modal__title">Registrar Pago</h2>
+                <h2 class="admin-modal__title">Pago del Pedido</h2>
                 <button class="admin-modal__close" onclick="adminApp.closePagoModal()">&#10005;</button>
             </div>
             <input type="hidden" id="pago-id-pedido">
             <div id="pago-resumen" style="background:rgba(201,168,76,.08);border:1px solid var(--admin-border);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;display:flex;gap:24px;flex-wrap:wrap"></div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">M&#233;todo de Pago *</label>
-                    <select class="form-select" id="pago-metodo">
-                        <option value="EFECTIVO">Efectivo</option>
-                        <option value="TARJETA_CREDITO">Tarjeta de Cr&#233;dito</option>
-                        <option value="TARJETA_DEBITO">Tarjeta de D&#233;bito</option>
-                        <option value="TRANSFERENCIA">Transferencia</option>
-                        <option value="PSE">PSE</option>
-                        <option value="NEQUI">Nequi</option>
-                        <option value="DAVIPLATA">Daviplata</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Monto (COP) *</label>
-                    <input class="form-input" id="pago-monto" type="number" min="1" placeholder="0">
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Referencia / N&#250;mero de transacci&#243;n</label>
-                <input class="form-input" id="pago-referencia" type="text" placeholder="Opcional">
-            </div>
             <div id="pago-lista" style="margin-top:12px"></div>
             <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:12px">
-                <button class="btn btn-secondary" onclick="adminApp.closePagoModal()">Cancelar</button>
-                <button class="btn btn-primary" id="save-pago-btn">Registrar Pago</button>
+                <button class="btn btn-secondary" onclick="adminApp.closePagoModal()">Cerrar</button>
             </div>
         </div>
     </div>
@@ -713,8 +690,8 @@
                     <input class="form-input" id="envio-transportadora" type="text" placeholder="Ej: Servientrega">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">N&#250;mero de Gu&#237;a</label>
-                    <input class="form-input" id="envio-guia" type="text" placeholder="Opcional">
+                    <label class="form-label">N&#250;mero de Gu&#237;a *</label>
+                    <input class="form-input" id="envio-guia" type="text" placeholder="10 a 22 caracteres" minlength="10" maxlength="22" required>
                 </div>
             </div>
             <div class="form-row">

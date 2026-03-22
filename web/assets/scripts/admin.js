@@ -23,7 +23,10 @@
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString()
-        }).then(r => r.json());
+        }).then(r => r.text()).then(txt => {
+            try { return JSON.parse(txt); }
+            catch (_) { return { error: txt || 'Respuesta inesperada del servidor' }; }
+        });
     }
 
     // ─── Caché en memoria ────────────────────────────────────────────────────
@@ -1082,8 +1085,6 @@
     // ─── Pagos (RF020-RF022) ─────────────────────────────────────────────────
     function abrirPago(idPedido) {
         document.getElementById('pago-id-pedido').value = idPedido;
-        document.getElementById('pago-monto').value = '';
-        document.getElementById('pago-referencia').value = '';
         document.getElementById('pago-lista').innerHTML = '<p style="color:var(--admin-muted);font-size:13px">Cargando pagos...</p>';
         document.getElementById('pago-resumen').innerHTML = '';
         document.getElementById('modal-pago').classList.add('open');
@@ -1094,11 +1095,10 @@
                 '<span><strong>Total pedido:</strong> ' + fmt(data.totalPedido) + '</span>' +
                 '<span><strong>Pagado:</strong> ' + fmt(data.sumaPagada) + '</span>' +
                 '<span style="color:' + (parseFloat(data.pendiente) > 0 ? 'var(--admin-warning)' : 'var(--admin-success)') + '"><strong>Pendiente:</strong> ' + fmt(data.pendiente) + '</span>';
-            document.getElementById('pago-monto').value = parseFloat(data.pendiente) > 0 ? parseFloat(data.pendiente).toFixed(0) : '';
             if (!data.pagos || data.pagos.length === 0) {
                 lista.innerHTML = '<p style="color:var(--admin-muted);font-size:13px">Sin pagos registrados</p>';
             } else {
-                lista.innerHTML = '<p style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--admin-muted);margin-bottom:6px">Pagos registrados</p>' +
+                lista.innerHTML = '<p style="font-size:12px;font-weight:600;text-transform:uppercase;color:var(--admin-muted);margin-bottom:6px">Pago realizado</p>' +
                     '<table class="admin-table" style="font-size:12px">' +
                     '<thead><tr><th>M&eacute;todo</th><th>Monto</th><th>Estado</th><th>Fecha</th><th>Ref.</th></tr></thead><tbody>' +
                     data.pagos.map(p =>
@@ -1111,34 +1111,29 @@
         }).catch(() => { document.getElementById('pago-lista').innerHTML = '<p style="color:#c62828;font-size:14px">No se pudo cargar la información de pagos. Intenta de nuevo.</p>'; });
     }
 
-    function savePago() {
-        const idPedido = document.getElementById('pago-id-pedido').value;
-        const metodo   = document.getElementById('pago-metodo').value;
-        const monto    = document.getElementById('pago-monto').value;
-        const ref      = document.getElementById('pago-referencia').value;
-        if (!monto || parseFloat(monto) <= 0) { showAdminAlert('Ingresa un monto válido para el pago.'); return; }
-        post('SvPagos', { idPedido, metodo, monto, referencia: ref })
-            .then(r => {
-                if (r.error) { showAdminAlert(r.error); return; }
-                showToast('Pago registrado correctamente' + (r.estadoActualizado ? ' — Pedido marcado como PAGO' : ''));
-                document.getElementById('modal-pago').classList.remove('open');
-                loadOrders();
-            }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
-    }
-
     function closePagoModal() { document.getElementById('modal-pago').classList.remove('open'); }
 
     // ─── Envíos (RF023-RF025) ────────────────────────────────────────────────
     function abrirEnvio(idPedido) {
         document.getElementById('envio-id-pedido').value = idPedido;
         document.getElementById('envio-id-envio').value = '';
-        document.getElementById('envio-direccion').value = '';
         document.getElementById('envio-transportadora').value = '';
         document.getElementById('envio-guia').value = '';
         document.getElementById('envio-fecha-est').value = '';
         document.getElementById('envio-estado-group').style.display = 'none';
         document.getElementById('modal-envio-title').textContent = 'Registrar Envío';
         document.getElementById('save-envio-btn').textContent = 'Crear Envío';
+
+        // Auto-rellenar la dirección con la dirección registrada del cliente
+        const pedido = _orders.find(o => o.id === idPedido);
+        document.getElementById('envio-direccion').value = (pedido && pedido.direccionCliente) ? pedido.direccionCliente : '';
+
+        // Restringir la fecha estimada: solo fechas a partir de mañana
+        const hoy = new Date();
+        hoy.setDate(hoy.getDate() + 1);
+        const minDate = hoy.toISOString().split('T')[0];
+        document.getElementById('envio-fecha-est').setAttribute('min', minDate);
+
         get('SvEnvios?idPedido=' + idPedido).then(data => {
             if (data.envio) {
                 const e = data.envio;
@@ -1165,6 +1160,11 @@
         const fechaEst   = document.getElementById('envio-fecha-est').value;
         const estado     = document.getElementById('envio-estado').value;
         if (!direccion) { showAdminAlert('La dirección de envío es obligatoria.'); return; }
+        if (!guia || guia.length < 10 || guia.length > 22) { showAdminAlert('El número de guía es obligatorio y debe tener entre 10 y 22 caracteres.'); return; }
+        if (fechaEst) {
+            const hoy = new Date().toISOString().split('T')[0];
+            if (fechaEst <= hoy) { showAdminAlert('La fecha estimada debe ser posterior a la fecha actual.'); return; }
+        }
         const params = { idPedido, direccion, transportadora: transport, guia, fechaEstimada: fechaEst };
         if (idEnvio) { params.accion = 'actualizar'; params.idEnvio = idEnvio; params.estado = estado; }
         post('SvEnvios', params)
@@ -1211,7 +1211,6 @@
             if (e.target === document.getElementById('modal-asignar-permisos')) document.getElementById('modal-asignar-permisos').classList.remove('open');
         });
 
-        document.getElementById('save-pago-btn')?.addEventListener('click', savePago);
         document.getElementById('modal-pago')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-pago')) closePagoModal();
         });
