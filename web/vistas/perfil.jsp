@@ -19,7 +19,13 @@
   <main class="main-perfil" style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:0;min-height:60vh">
     <%
       Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
-      if (usuarioSesion != null && Boolean.TRUE.equals(session.getAttribute("esAdmin"))) {
+      boolean __esAdminPuro = Boolean.TRUE.equals(session.getAttribute("esAdmin"));
+      // Verificar si el usuario tiene permiso VER_DASHBOARD
+      java.util.List<String> __perms = (java.util.List<String>) session.getAttribute("permisosUsuario");
+      boolean __puedeVerDashboard = __esAdminPuro ||
+          (__perms != null && __perms.stream().anyMatch(p -> p.equalsIgnoreCase("VER_DASHBOARD")));
+      // Admin puro siempre va directo al panel
+      if (usuarioSesion != null && __esAdminPuro) {
           response.sendRedirect(request.getContextPath() + "/vistas/admin.jsp");
           return;
       }
@@ -43,6 +49,10 @@
             <div style="font-size:12px;color:#999;margin-top:2px"><%= u.getRol() != null ? u.getRol().getNombreRol() : "" %></div>
           </div>
         </div>
+
+        <% if (__puedeVerDashboard) { %>
+        <a href="admin.jsp" style="display:block;text-align:center;padding:12px 16px;background:#1a1a1a;color:#fff;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none;letter-spacing:.5px;transition:opacity .2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Ir al Panel Admin</a>
+        <% } %>
 
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="display:flex;justify-content:space-between;padding:12px 16px;background:#f8f8f8;border-radius:6px">
