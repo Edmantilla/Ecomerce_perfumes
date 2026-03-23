@@ -13,21 +13,32 @@ import logica.Pedido;
 import logica.Producto;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * DetallepedidoJpaController — CRUD para la entidad Detallepedido (tabla 'detalle_pedido').
+ * Provee: create, edit, destroy, findDetallepedidoEntities, findDetallepedido, getDetallepedidoCount.
+ * Usado por SvCompra para crear las líneas de detalle al hacer checkout.
+ * Resuelve FK con Pedido y Producto mediante em.getReference().
+ */
 public class DetallepedidoJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public DetallepedidoJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public DetallepedidoJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO detalle_pedido (...) VALUES (...)
+    // Resuelve FK con Pedido y Producto mediante getReference()
     public void create(Detallepedido detallepedido) throws Exception {
         EntityManager em = null;
         try {
@@ -50,6 +61,7 @@ public class DetallepedidoJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE detalle_pedido SET ... WHERE id_detalle = ?
     public void edit(Detallepedido detallepedido) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -81,6 +93,7 @@ public class DetallepedidoJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM detalle_pedido WHERE id_detalle = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -100,6 +113,7 @@ public class DetallepedidoJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM detalle_pedido
     public List<Detallepedido> findDetallepedidoEntities() {
         return findDetallepedidoEntities(true, -1, -1);
     }
@@ -124,6 +138,7 @@ public class DetallepedidoJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM detalle_pedido WHERE id_detalle = ?
     public Detallepedido findDetallepedido(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -133,6 +148,7 @@ public class DetallepedidoJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM detalle_pedido
     public int getDetallepedidoCount() {
         EntityManager em = getEntityManager();
         try {

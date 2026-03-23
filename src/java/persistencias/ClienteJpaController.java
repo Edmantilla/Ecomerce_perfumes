@@ -11,21 +11,31 @@ import javax.persistence.criteria.Root;
 import logica.Cliente;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * ClienteJpaController — CRUD para la entidad Cliente (tabla 'cliente').
+ * Provee: create, edit, destroy, findClienteEntities, findCliente, getClienteCount.
+ * Usado por SvRegistro (crear cliente) y SvCompra (actualizar dirección).
+ * Sin FK complejas (Cliente no depende de otras tablas directamente).
+ */
 public class ClienteJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public ClienteJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public ClienteJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO cliente (...) VALUES (...)
     public void create(Cliente cliente) throws Exception {
         EntityManager em = null;
         try {
@@ -38,6 +48,7 @@ public class ClienteJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE cliente SET ... WHERE id_cliente = ?
     public void edit(Cliente cliente) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -59,6 +70,7 @@ public class ClienteJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM cliente WHERE id_cliente = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -78,6 +90,7 @@ public class ClienteJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM cliente
     public List<Cliente> findClienteEntities() {
         return findClienteEntities(true, -1, -1);
     }
@@ -102,6 +115,7 @@ public class ClienteJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM cliente WHERE id_cliente = ?
     public Cliente findCliente(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -111,6 +125,7 @@ public class ClienteJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM cliente
     public int getClienteCount() {
         EntityManager em = getEntityManager();
         try {

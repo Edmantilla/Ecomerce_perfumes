@@ -1,3 +1,16 @@
+<%-- ==========================================================================
+     Chance.jsp — Página LEGACY de detalle del perfume "Chance" (Chanel).
+
+     NOTA: Esta página usa navbar y footer HARDCODEADOS (estáticos),
+     NO utiliza los includes compartidos _navbar.jsp / _footer.jsp.
+     Las páginas de detalle dinámicas ahora usan detalle.jsp?nombre=...
+     Esta página se mantiene como referencia/legacy.
+
+     Contenido: imagen (CHANCE.avif), precio (460.000 COP), descripción,
+     tipo (EDP), familia olfativa (Chipre Floral), marca Chanel,
+     botón "Agregar al carrito" (estático, sin funcionalidad dinámica).
+     Ruta: web/vistas/Mujeres/Chanel/Chance.jsp
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">

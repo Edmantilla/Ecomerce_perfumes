@@ -1,4 +1,15 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     Colombia.jsp — Página de la boutique de ANDREYLPZ en Colombia.
+
+     Contenido estático con información de la tienda física:
+     - Hero con ciudades (Bogotá, Medellín, Cali).
+     - Info grid: ubicación, horarios, contacto, servicios exclusivos.
+     - Galería de imágenes de la boutique.
+     - CTA: botón "Reservar Cita".
+     Incluye _navbar.jsp, _footer.jsp, cart.js.
+     Usa boutique.css para estilos específicos.
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,10 +24,11 @@
 
 <body class="boutique-main">
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main>
-        <!-- 1 & 2: Hero Section -->
+        <%-- Hero Section con imagen de fondo de boutique --%>
         <section class="boutique-hero" style="background-image: url('../assets/imagenes/boutique.jpg');">
             <div class="boutique-hero__content">
                 <h1 class="boutique-hero__title">BOUTIQUE COLOMBIA</h1>
@@ -24,7 +36,7 @@
             </div>
         </section>
 
-        <!-- 3: Info Block -->
+        <%-- Bloque de información: ubicación, horarios, contacto, servicios --%>
         <section class="boutique-info">
             <div class="boutique-info__grid">
                 <div class="boutique-info__column">
@@ -54,7 +66,7 @@
             </div>
         </section>
 
-        <!-- 4: Gallery -->
+        <%-- Galería de imágenes de la boutique --%>
         <section class="boutique-gallery">
             <div class="boutique-gallery__grid">
                 <div class="boutique-gallery__item">
@@ -69,14 +81,16 @@
             </div>
         </section>
 
-        <!-- 5: CTA Button -->
+        <%-- CTA: Reservar cita --%>
         <div class="boutique-cta">
             <a href="#" class="boutique-cta__button">Reservar Cita</a>
         </div>
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 

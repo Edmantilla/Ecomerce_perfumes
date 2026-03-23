@@ -1,5 +1,17 @@
+<%-- ==========================================================================
+     Alexandria_II.jsp — Página LEGACY de detalle del perfume "Alexandria II" (Xerjoff).
+
+     NOTA: Esta página usa navbar y footer HARDCODEADOS (estáticos),
+     NO utiliza los includes compartidos _navbar.jsp / _footer.jsp.
+     Las páginas de detalle dinámicas ahora usan detalle.jsp?nombre=...
+     Esta página se mantiene como referencia/legacy.
+
+     Contenido: imagen, precio (1.100.000 COP), descripción, tipo (EDP),
+     familia olfativa (Amaderada Oriental), marca Xerjoff,
+     botón "Agregar al carrito" (estático, sin funcionalidad dinámica).
+     Ruta: web/vistas/Hombres/Xerjoff/Alexandria_II.jsp
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<!-- Página de detalle de la loción ALEXANDRIA II -->
 <!DOCTYPE html>
 <html lang="en">
 

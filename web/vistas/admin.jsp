@@ -1,4 +1,33 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     admin.jsp — Panel de administración del sitio ANDREYLPZ.
+
+     Acceso restringido: requiere sesión activa + permiso VER_DASHBOARD o
+     flag esAdmin. Si no cumple, redirige a perfil.jsp.
+
+     Estructura:
+     - SIDEBAR: Navegación lateral con secciones protegidas por permisos:
+       Dashboard, Productos, Pedidos, Usuarios, Categorías, Marcas,
+       Roles y Permisos, Configuración, Cerrar Sesión.
+     - MAIN AREA: Topbar + contenido dinámico por sección.
+     - SECCIONES:
+       * Dashboard: stats (ventas, productos, pedidos, usuarios),
+         pedidos recientes, stock bajo.
+       * Productos: tabla CRUD con modal agregar/editar.
+       * Pedidos: tabla con cambio de estado, modales pago/envío/detalle.
+       * Usuarios: tabla con detalle modal y cambio de rol.
+       * Categorías: tabla CRUD con modal.
+       * Marcas: tabla CRUD con modal (incluye género).
+       * Roles y Permisos: sub-tabs (Roles / Permisos), modales CRUD
+         y asignación de permisos a roles.
+       * Configuración: formulario estático de info de tienda.
+     - MODALES: Producto, Detalle Pedido, Detalle Usuario, Categoría,
+       Marca, Pago, Envío, Rol, Permiso, Asignar Permisos.
+
+     Lógica JS: toda la interactividad está en admin.js (AJAX, CRUD,
+     polling de notificaciones, navegación entre secciones).
+     Estilos: admin.css.
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.List" %>
 <%
     // Proteger acceso: solo usuarios con VER_DASHBOARD o esAdmin
@@ -38,9 +67,10 @@
 
 <body class="admin-body">
 
-    <!-- ======================================
-         SIDEBAR
-    ====================================== -->
+    <%-- ======================================
+         SIDEBAR: Navegación lateral con secciones protegidas por permisos.
+         Cada item tiene data-section para admin.js y se muestra según permisos.
+    ====================================== --%>
     <aside class="admin-sidebar" id="adminSidebar">
         <div class="admin-sidebar__logo">
             <div class="admin-sidebar__logo-text">ANDREYLPZ</div>
@@ -48,7 +78,7 @@
         </div>
 
         <nav class="admin-nav">
-            <!-- Dashboard -->
+            <%-- Dashboard: siempre visible para quien accede al panel --%>
             <div class="admin-nav__item" data-section="dashboard" data-label="Dashboard">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -59,7 +89,7 @@
                 Dashboard
             </div>
 
-            <!-- Productos -->
+            <%-- Productos: requiere permiso VER_PRODUCTOS --%>
             <% if (perm.test("VER_PRODUCTOS")) { %>
             <div class="admin-nav__item" data-section="productos" data-label="Productos">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -71,7 +101,7 @@
             </div>
             <% } %>
 
-            <!-- Pedidos -->
+            <%-- Pedidos: requiere permiso VER_PEDIDOS --%>
             <% if (perm.test("VER_PEDIDOS")) { %>
             <div class="admin-nav__item" data-section="pedidos" data-label="Pedidos">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -85,7 +115,7 @@
             </div>
             <% } %>
 
-            <!-- Usuarios -->
+            <%-- Usuarios: requiere permiso VER_USUARIOS --%>
             <% if (perm.test("VER_USUARIOS")) { %>
             <div class="admin-nav__item" data-section="usuarios" data-label="Usuarios">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -98,7 +128,7 @@
             </div>
             <% } %>
 
-            <!-- Categorías -->
+            <%-- Categorías: requiere permiso GESTIONAR_CATEGORIAS --%>
             <% if (perm.test("GESTIONAR_CATEGORIAS")) { %>
             <div class="admin-nav__item" data-section="categorias" data-label="Categor&#237;as">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -109,7 +139,7 @@
             </div>
             <% } %>
 
-            <!-- Marcas -->
+            <%-- Marcas: requiere permiso GESTIONAR_MARCAS --%>
             <% if (perm.test("GESTIONAR_MARCAS")) { %>
             <div class="admin-nav__item" data-section="marcas" data-label="Marcas">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -119,7 +149,7 @@
             </div>
             <% } %>
 
-            <!-- Roles y Permisos -->
+            <%-- Roles y Permisos: requiere permiso GESTIONAR_ROLES --%>
             <% if (perm.test("GESTIONAR_ROLES")) { %>
             <div class="admin-nav__item" data-section="permisos" data-label="Roles y Permisos">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -132,7 +162,7 @@
 
             <div class="admin-nav__separator"></div>
 
-            <!-- Configuraci&#243;n -->
+            <%-- Configuración: siempre visible --%>
             <div class="admin-nav__item" data-section="configuracion" data-label="Configuraci&#243;n">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="3" />
@@ -142,7 +172,7 @@
                 Configuraci&#243;n
             </div>
 
-            <!-- Cerrar sesion -->
+            <%-- Cerrar sesión: redirige a SvLogout --%>
             <div class="admin-nav__item" data-section="logout" data-label="Cerrar Sesi&#243;n"
                 onclick="window.location='<%=request.getContextPath()%>/SvLogout'">
                 <svg class="admin-nav__icon" viewBox="0 0 24 24">
@@ -165,12 +195,13 @@
         </div>
     </aside>
 
-    <!-- ======================================
-         MAIN AREA
-    ====================================== -->
+    <%-- ======================================
+         MAIN AREA: Topbar + secciones de contenido dinámico.
+         admin.js muestra/oculta secciones según navegación del sidebar.
+    ====================================== --%>
     <div class="admin-main">
 
-        <!-- Topbar -->
+        <%-- Topbar: título dinámico + hamburger para responsive + enlace a tienda --%>
         <header class="admin-topbar">
             <div style="display:flex;align-items:center;gap:16px">
                 <button class="admin-hamburger" id="adminHamburger" aria-label="Men&#250;">
@@ -189,10 +220,10 @@
 
         <div class="admin-content">
 
-            <!-- SECTION: DASHBOARD -->
+            <%-- SECTION: DASHBOARD — Stats, pedidos recientes, stock bajo --%>
             <section class="admin-section" id="section-dashboard">
 
-                <!-- Stats -->
+                <%-- Grid de 4 tarjetas de estadísticas (llenadas por admin.js) --%>
                 <div class="admin-stats-grid">
                     <div class="stat-card">
                         <div class="stat-card__icon stat-card__icon--gold">
@@ -253,7 +284,7 @@
                     </div>
                 </div>
 
-                <!-- Bottom Grid -->
+                <%-- Grid inferior: pedidos recientes + alerta de stock bajo --%>
                 <div class="recent-orders-grid">
                     <div class="admin-card">
                         <div class="admin-card__title">Pedidos Recientes</div>
@@ -279,8 +310,7 @@
                 </div>
             </section>
 
-            <!-- ==============================
-                 SECTION: PRODUCTOS ============================== -->
+            <%-- SECTION: PRODUCTOS — Tabla CRUD con botón "Agregar Producto" --%>
             <section class="admin-section" id="section-productos">
                 <div class="admin-section__header">
                     <h2>Gesti&#243;n de Productos</h2>
@@ -312,8 +342,7 @@
                 </div>
             </section>
 
-            <!-- ==============================
-                 SECTION: PEDIDOS ============================== -->
+            <%-- SECTION: PEDIDOS — Tabla con cambio de estado, pago, envío, detalle --%>
             <section class="admin-section" id="section-pedidos">
                 <div class="admin-section__header">
                     <h2>Gesti&#243;n de Pedidos</h2>
@@ -338,8 +367,7 @@
                 </div>
             </section>
 
-            <!-- ==============================
-                 SECTION: USUARIOS ============================== -->
+            <%-- SECTION: USUARIOS — Tabla de usuarios registrados --%>
             <section class="admin-section" id="section-usuarios">
                 <div class="admin-section__header">
                     <h2>Usuarios Registrados</h2>
@@ -364,7 +392,7 @@
                 </div>
             </section>
 
-            <!-- SECTION: CATEGORIAS -->
+            <%-- SECTION: CATEGORIAS — Tabla CRUD con botón "Nueva Categoría" --%>
             <section class="admin-section" id="section-categorias">
                 <div class="admin-section__header">
                     <h2>Gesti&#243;n de Categor&#237;as</h2>
@@ -392,7 +420,7 @@
                 </div>
             </section>
 
-            <!-- SECTION: MARCAS -->
+            <%-- SECTION: MARCAS — Tabla CRUD con botón "Nueva Marca" --%>
             <section class="admin-section" id="section-marcas">
                 <div class="admin-section__header">
                     <h2>Gesti&#243;n de Marcas</h2>
@@ -420,19 +448,19 @@
                 </div>
             </section>
 
-            <!-- SECTION: ROLES Y PERMISOS -->
+            <%-- SECTION: ROLES Y PERMISOS — Sub-tabs: Roles / Permisos --%>
             <section class="admin-section" id="section-permisos">
                 <div class="admin-section__header">
                     <h2>Roles y Permisos</h2>
                 </div>
 
-                <!-- Sub-tabs -->
+                <%-- Sub-tabs para alternar entre panel de Roles y panel de Permisos --%>
                 <div style="display:flex;gap:8px;margin-bottom:20px">
                     <button class="btn btn-primary" id="permisos-tab-roles" onclick="adminApp.permisosTab('roles')">Roles</button>
                     <button class="btn btn-secondary" id="permisos-tab-permisos" onclick="adminApp.permisosTab('permisosList')">Permisos</button>
                 </div>
 
-                <!-- Panel: Roles -->
+                <%-- Panel: Roles del sistema con tabla y botón "Nuevo Rol" --%>
                 <div id="permisos-panel-roles">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                         <h3 style="font-size:15px;font-weight:600;color:var(--admin-text)">Roles del Sistema</h3>
@@ -455,7 +483,7 @@
                     </div>
                 </div>
 
-                <!-- Panel: Permisos -->
+                <%-- Panel: Catálogo de permisos con tabla y botón "Nuevo Permiso" --%>
                 <div id="permisos-panel-permisosList" style="display:none">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                         <h3 style="font-size:15px;font-weight:600;color:var(--admin-text)">Cat&#225;logo de Permisos</h3>
@@ -479,8 +507,7 @@
                 </div>
             </section>
 
-            <!-- ==============================
-                 SECTION: CONFIGURACIÓN ============================== -->
+            <%-- SECTION: CONFIGURACIÓN — Formulario estático de info de tienda --%>
             <section class="admin-section" id="section-configuracion">
                 <div class="admin-section__header">
                     <h2>Configuraci&#243;n</h2>
@@ -509,8 +536,12 @@
         </div>
     </div>
 
-            <!-- ==============================
-         MODAL: AGREGAR / EDITAR PRODUCTO ============================== -->
+    <%-- ==============================
+         MODAL: AGREGAR / EDITAR PRODUCTO
+         Campos: nombre, marca (select), categoría (select), precio, stock,
+         URL imagen, descripción. Botones: Cancelar / Guardar.
+         admin.js rellena los selects y maneja el submit.
+    ============================== --%>
     <div class="admin-modal-overlay" id="modal-product">
         <div class="admin-modal">
             <div class="admin-modal__header">
@@ -555,8 +586,12 @@
         </div>
     </div>
 
-            <!-- ==============================
-         MODAL: DETALLE DE PEDIDO ============================== -->
+    <%-- ==============================
+         MODAL: DETALLE DE PEDIDO
+         Muestra info del pedido, datos de contacto del cliente,
+         tabla de items (producto, cantidad, precio, subtotal),
+         total, e información de envío si existe.
+    ============================== --%>
     <div class="admin-modal-overlay" id="modal-order-detail">
         <div class="admin-modal" style="max-width:580px;width:95%">
             <div class="admin-modal__header">
@@ -586,7 +621,7 @@
         </div>
     </div>
 
-    <!-- MODAL: DETALLE DE USUARIO -->
+    <%-- MODAL: DETALLE DE USUARIO — Info completa + cambio de rol --%>
     <div class="admin-modal-overlay" id="modal-user-detail">
         <div class="admin-modal" style="max-width:520px;width:95%">
             <div class="admin-modal__header">
@@ -600,7 +635,7 @@
         </div>
     </div>
 
-    <!-- MODAL: CATEGORIA -->
+    <%-- MODAL: CATEGORÍA — Crear/editar categoría (nombre + descripción) --%>
     <div class="admin-modal-overlay" id="modal-categoria">
         <div class="admin-modal" style="max-width:440px">
             <div class="admin-modal__header">
@@ -624,7 +659,7 @@
         </div>
     </div>
 
-    <!-- MODAL: MARCA -->
+    <%-- MODAL: MARCA — Crear/editar marca (nombre, descripción, género) --%>
     <div class="admin-modal-overlay" id="modal-marca">
         <div class="admin-modal" style="max-width:440px">
             <div class="admin-modal__header">
@@ -655,7 +690,7 @@
         </div>
     </div>
 
-    <!-- MODAL: VER PAGO -->
+    <%-- MODAL: VER PAGO — Resumen del pago del pedido + lista de pagos --%>
     <div class="admin-modal-overlay" id="modal-pago">
         <div class="admin-modal" style="max-width:500px">
             <div class="admin-modal__header">
@@ -671,7 +706,7 @@
         </div>
     </div>
 
-    <!-- MODAL: REGISTRAR ENV&#205;O -->
+    <%-- MODAL: REGISTRAR ENVÍO — Dirección, transportadora, guía, fecha, estado --%>
     <div class="admin-modal-overlay" id="modal-envio">
         <div class="admin-modal" style="max-width:520px">
             <div class="admin-modal__header">
@@ -716,7 +751,7 @@
         </div>
     </div>
 
-    <!-- MODAL: ROL -->
+    <%-- MODAL: ROL — Crear/editar rol (nombre + descripción) --%>
     <div class="admin-modal-overlay" id="modal-rol">
         <div class="admin-modal" style="max-width:440px">
             <div class="admin-modal__header">
@@ -739,7 +774,7 @@
         </div>
     </div>
 
-    <!-- MODAL: PERMISO -->
+    <%-- MODAL: PERMISO — Crear/editar permiso (nombre, módulo, descripción) --%>
     <div class="admin-modal-overlay" id="modal-permiso">
         <div class="admin-modal" style="max-width:480px">
             <div class="admin-modal__header">
@@ -768,7 +803,7 @@
         </div>
     </div>
 
-    <!-- MODAL: ASIGNAR PERMISOS A ROL -->
+    <%-- MODAL: ASIGNAR PERMISOS A ROL — Lista de permisos actuales + select para agregar --%>
     <div class="admin-modal-overlay" id="modal-asignar-permisos">
         <div class="admin-modal" style="max-width:560px">
             <div class="admin-modal__header">
@@ -790,6 +825,7 @@
         </div>
     </div>
 
+    <%-- admin.js: toda la lógica del panel (AJAX CRUD, navegación, polling, modales) --%>
     <script src="../assets/scripts/admin.js"></script>
 </body>
 

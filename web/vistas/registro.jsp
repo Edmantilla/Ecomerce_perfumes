@@ -1,4 +1,21 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     registro.jsp — Página de registro de nuevos usuarios.
+
+     Funcionalidad:
+     1. Redirige a index.jsp si el usuario ya está logueado (sesión activa).
+     2. Formulario con campos: nombre, apellido, correo, contraseña (con
+        indicador de fortaleza), confirmar contraseña, fecha de nacimiento
+        (mínimo 18 años), dirección, y checkboxes de términos/datos.
+     3. Validación client-side en tiempo real (blur/input) con feedback visual:
+        - Borde rojo/verde en inputs.
+        - Mensajes de error bajo cada campo.
+        - Barra de fortaleza de contraseña (4 niveles).
+     4. Al hacer submit, valida todos los campos y envía POST a SvRegistro.
+     5. Muestra errores del servidor si SvRegistro devuelve un error.
+
+     Atributo body: data-no-cart evita que cart.js inicialice el carrito.
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="logica.Usuario" %>
 <!DOCTYPE html>
 <html lang="es">
@@ -8,7 +25,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/estilos/style.css">
     <title>Crear Cuenta - ANDREYLPZ</title>
+    <%-- Estilos inline para validación de formulario (errores, bordes, barra de fortaleza) --%>
     <style>
+        /* Mensaje de error bajo cada campo (oculto por defecto) */
         .field-error {
             display: none;
             color: #c62828;
@@ -25,6 +44,7 @@
             border-color: #2e7d32 !important;
             box-shadow: 0 0 0 2px rgba(46,125,50,.12) !important;
         }
+        /* Barra de fortaleza de contraseña: 4 segmentos coloreados */
         .pass-strength {
             display: flex;
             gap: 4px;
@@ -46,6 +66,7 @@
             margin-top: 3px;
             color: #888;
         }
+        /* Caja de error del servidor (cuando SvRegistro devuelve error) */
         .registro-server-error {
             background: #fdecea;
             border: 1px solid #e57373;
@@ -60,10 +81,12 @@
 </head>
 
 <body data-no-cart>
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main class="main-perfil">
         <%
+          // Si ya hay sesión activa, redirigir al home (no se puede registrar estando logueado)
           Usuario uSesion = (Usuario) session.getAttribute("usuario");
           if (uSesion != null) {
               response.sendRedirect(request.getContextPath() + "/index.jsp");
@@ -73,11 +96,13 @@
         <section class="formulario">
             <h2 class="formulario-title">CREAR CUENTA</h2>
 
+            <%-- Mostrar error del servidor si SvRegistro lo estableció como atributo --%>
             <% String errorReg = (String) request.getAttribute("error"); %>
             <% if (errorReg != null) { %>
               <div class="registro-server-error"><%= errorReg %></div>
             <% } %>
 
+            <%-- Formulario de registro: envía POST a SvRegistro. novalidate = validación propia JS --%>
             <form id="form-registro" method="post" action="<%= request.getContextPath() %>/SvRegistro" novalidate>
 
                 <div class="formulario-username">
@@ -152,12 +177,16 @@
         </section>
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para funcionalidad del navbar (búsqueda) --%>
     <script src="<%= request.getContextPath() %>/assets/scripts/cart.js"></script>
+
+    <%-- Script de validación client-side del formulario de registro --%>
     <script>
     (function() {
-        // Fecha máxima: hace exactamente 18 años desde hoy
+        // === Restricción de fecha: máximo hace 18 años desde hoy ===
         var hoy = new Date();
         var maxFecha = new Date(hoy.getFullYear() - 18, hoy.getMonth(), hoy.getDate());
         var yyyy = maxFecha.getFullYear();
@@ -165,9 +194,11 @@
         var dd   = String(maxFecha.getDate()).padStart(2, '0');
         document.getElementById('fecha_nacimiento').setAttribute('max', yyyy + '-' + mm + '-' + dd);
 
-        var SOLO_LETRAS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]{2,50}$/;
-        var CORREO_RE   = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+        // === Expresiones regulares de validación ===
+        var SOLO_LETRAS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ ]{2,50}$/; // Solo letras y espacios, 2-50 chars
+        var CORREO_RE   = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/; // Email estándar
 
+        /** Aplica/quita error visual en un input: borde rojo + mensaje, o borde verde si ok. */
         function setError(inputId, errorId, msg) {
             var inp = document.getElementById(inputId);
             var err = document.getElementById(errorId);
@@ -186,6 +217,7 @@
             }
         }
 
+        /** Aplica/quita error en checkboxes (sin borde, solo texto). */
         function setCheckError(errorId, msg) {
             var err = document.getElementById(errorId);
             if (msg) { err.textContent = msg; err.classList.add('visible'); return false; }
@@ -213,6 +245,7 @@
             return setError('correo', 'err-correo', '');
         }
 
+        /** Calcula fortaleza de contraseña (1-4) según longitud, mayúsculas, números, especiales. */
         function getPasswordStrength(p) {
             var score = 0;
             if (p.length >= 8)  score++;
@@ -277,7 +310,7 @@
             return setError('direccion', 'err-direccion', '');
         }
 
-        // Bind blur/input para feedback inmediato
+        // === Bind de eventos blur/input para feedback de validación en tiempo real ===
         document.getElementById('nombre').addEventListener('blur', validateNombre);
         document.getElementById('nombre').addEventListener('input', validateNombre);
         document.getElementById('apellido').addEventListener('blur', validateApellido);
@@ -293,6 +326,7 @@
         document.getElementById('direccion').addEventListener('blur', validateDireccion);
         document.getElementById('direccion').addEventListener('input', validateDireccion);
 
+        // === Validación final al hacer submit ===
         document.getElementById('form-registro').addEventListener('submit', function(e) {
             var ok = true;
             if (!validateNombre())    ok = false;

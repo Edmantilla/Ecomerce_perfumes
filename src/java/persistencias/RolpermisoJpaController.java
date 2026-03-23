@@ -13,21 +13,32 @@ import logica.Rol;
 import logica.Rolpermiso;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * RolpermisoJpaController — CRUD para la entidad Rolpermiso (tabla 'rol_permiso').
+ * Provee: create, edit, destroy, findRolpermisoEntities, findRolpermiso, getRolpermisoCount.
+ * Usado por SvPermisos para asignar/revocar permisos a roles desde el panel admin.
+ * Resuelve FK con Rol y Permiso mediante em.getReference().
+ */
 public class RolpermisoJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public RolpermisoJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public RolpermisoJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO rol_permiso (...) VALUES (...)
+    // Resuelve FK con Rol y Permiso mediante getReference()
     public void create(Rolpermiso rolpermiso) throws Exception {
         EntityManager em = null;
         try {
@@ -50,6 +61,7 @@ public class RolpermisoJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE rol_permiso SET ... WHERE id_rol_permiso = ?
     public void edit(Rolpermiso rolpermiso) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -81,6 +93,7 @@ public class RolpermisoJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM rol_permiso WHERE id_rol_permiso = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -100,6 +113,7 @@ public class RolpermisoJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM rol_permiso
     public List<Rolpermiso> findRolpermisoEntities() {
         return findRolpermisoEntities(true, -1, -1);
     }
@@ -124,6 +138,7 @@ public class RolpermisoJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM rol_permiso WHERE id_rol_permiso = ?
     public Rolpermiso findRolpermiso(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -133,6 +148,7 @@ public class RolpermisoJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM rol_permiso
     public int getRolpermisoCount() {
         EntityManager em = getEntityManager();
         try {

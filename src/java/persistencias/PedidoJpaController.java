@@ -12,21 +12,32 @@ import logica.Cliente;
 import logica.Pedido;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * PedidoJpaController — CRUD para la entidad Pedido (tabla 'pedido').
+ * Provee: create, edit, destroy, findPedidoEntities, findPedido, getPedidoCount.
+ * Usado por SvCompra (crear pedido), SvPedidos (cambiar estado) y SvPagos/SvEnvios.
+ * Resuelve FK con Cliente mediante em.getReference().
+ */
 public class PedidoJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public PedidoJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public PedidoJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO pedido (...) VALUES (...)
+    // Resuelve FK con Cliente mediante getReference()
     public void create(Pedido pedido) throws Exception {
         EntityManager em = null;
         try {
@@ -44,6 +55,7 @@ public class PedidoJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE pedido SET ... WHERE id_pedido = ?
     public void edit(Pedido pedido) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -70,6 +82,7 @@ public class PedidoJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM pedido WHERE id_pedido = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -89,6 +102,7 @@ public class PedidoJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM pedido
     public List<Pedido> findPedidoEntities() {
         return findPedidoEntities(true, -1, -1);
     }
@@ -113,6 +127,7 @@ public class PedidoJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM pedido WHERE id_pedido = ?
     public Pedido findPedido(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -122,6 +137,7 @@ public class PedidoJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM pedido
     public int getPedidoCount() {
         EntityManager em = getEntityManager();
         try {

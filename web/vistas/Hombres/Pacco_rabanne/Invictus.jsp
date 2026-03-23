@@ -1,5 +1,16 @@
+<%-- ==========================================================================
+     Invictus.jsp — Página LEGACY de detalle del perfume "Invictus" (Paco Rabanne).
+
+     NOTA: Esta página usa navbar y footer HARDCODEADOS (estáticos),
+     NO utiliza los includes compartidos _navbar.jsp / _footer.jsp.
+     Las páginas de detalle dinámicas ahora usan detalle.jsp?nombre=...
+     Esta página se mantiene como referencia/legacy.
+
+     Contenido: imagen, precio, descripción, tipo (EDT), familia olfativa,
+     marca, botón "Agregar al carrito" (estático, sin funcionalidad dinámica).
+     Ruta: web/vistas/Hombres/Pacco_rabanne/Invictus.jsp
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<!-- Pagina de detalle de locion -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +27,7 @@
     <div class="discount">
         <h2 class="discount__title">RECIBA UN KIT DE MUESTRA LITRO POR LA COMPRA DE UNA LOSION</h2>
     </div>
-    <!-- Encabezado y Barra de Navegacion -->
+    <%-- Navbar HARDCODEADO (legacy) — no usa _navbar.jsp --%>
     <header>
         <div class="navbar">
             <!-- Checkbox para el menu hamburguesa (Version Movil) -->
@@ -147,7 +158,7 @@
         </div>
     </header>
 
-    <!-- Contenido Principal -->
+    <%-- Contenido Principal: detalle estático del perfume Invictus --%>
     <main class="main-losion">
 
         <section class="section-losion-perfumes">
@@ -203,7 +214,7 @@
         </section>
     </main>
 
-    <!-- Pie de Pagina -->
+    <%-- Footer HARDCODEADO (legacy) — no usa _footer.jsp --%>
     <footer>
         <div class="footer__section--newsletter">
             <h2 class="footer__title">Reciba un 10% de descuento en su proximo pedido superior a 300 cop al

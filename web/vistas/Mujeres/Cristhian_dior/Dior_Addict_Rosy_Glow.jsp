@@ -1,3 +1,17 @@
+<%-- ==========================================================================
+     Dior_Addict_Rosy_Glow.jsp — Página LEGACY de detalle del perfume
+     "Dior Addict Rosy Glow" (Christian Dior).
+
+     NOTA: Esta página usa navbar y footer HARDCODEADOS (estáticos),
+     NO utiliza los includes compartidos _navbar.jsp / _footer.jsp.
+     Las páginas de detalle dinámicas ahora usan detalle.jsp?nombre=...
+     Esta página se mantiene como referencia/legacy.
+
+     Contenido: imagen (.webp), precio (480.000 COP), descripción,
+     tipo (EDT), familia olfativa (Floral Frutal), marca Cristian Dior,
+     botón "Agregar al carrito" (estático, sin funcionalidad dinámica).
+     Ruta: web/vistas/Mujeres/Cristhian_dior/Dior_Addict_Rosy_Glow.jsp
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">

@@ -12,21 +12,32 @@ import logica.Pago;
 import logica.Pedido;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * PagoJpaController — CRUD para la entidad Pago (tabla 'pago').
+ * Provee: create, edit, destroy, findPagoEntities, findPago, getPagoCount.
+ * Usado por SvPagos para registrar y actualizar pagos desde el panel admin.
+ * Resuelve FK con Pedido (1:1) mediante em.getReference().
+ */
 public class PagoJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public PagoJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public PagoJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO pago (...) VALUES (...)
+    // Resuelve FK con Pedido mediante getReference()
     public void create(Pago pago) throws Exception {
         EntityManager em = null;
         try {
@@ -44,6 +55,7 @@ public class PagoJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE pago SET ... WHERE id_pago = ?
     public void edit(Pago pago) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -70,6 +82,7 @@ public class PagoJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM pago WHERE id_pago = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -89,6 +102,7 @@ public class PagoJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM pago
     public List<Pago> findPagoEntities() {
         return findPagoEntities(true, -1, -1);
     }
@@ -113,6 +127,7 @@ public class PagoJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM pago WHERE id_pago = ?
     public Pago findPago(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -122,6 +137,7 @@ public class PagoJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM pago
     public int getPagoCount() {
         EntityManager em = getEntityManager();
         try {

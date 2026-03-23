@@ -1,6 +1,29 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     perfil.jsp — Página dual: perfil de usuario (logueado) o login (no logueado).
+
+     Vista LOGUEADA (session.usuario != null):
+     1. Datos del perfil: avatar, nombre, correo, rol, estado.
+     2. Enlace al panel admin (si tiene permiso VER_DASHBOARD o es admin puro).
+     3. Editar dirección inline vía SvContactoCliente (tipo=direccion).
+     4. Cerrar sesión → SvLogout.
+     5. Sección MIS PEDIDOS: carga desde SvMisPedidos con polling cada 15s.
+        - Acordeón con detalles de items y envío por pedido.
+        - Notificaciones toast al cambiar estado de un pedido.
+     6. CAMBIAR CONTRASEÑA: validación client-side + POST a SvContactoCliente.
+     7. MIS TELÉFONOS (RF02): CRUD vía SvContactoCliente (tipo=telefono).
+     8. CORREOS ADICIONALES (RF03): CRUD vía SvContactoCliente (tipo=correo).
+
+     Vista NO LOGUEADA:
+     - Formulario de LOGIN → POST a SvLogin.
+     - Mensaje de éxito tras registro (session.registroExitoso).
+     - Mensaje de error de login.
+     - Enlace a registro.jsp y olvide_contrasena.jsp.
+
+     Nota: Admin puro se redirige automáticamente a admin.jsp.
+     Atributo body: data-no-cart evita inicialización completa del carrito.
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="logica.Usuario" %>
-<!-- Página de perfil de usuario e inicio de sesión -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,16 +38,17 @@
 <body data-no-cart>
     <%@ include file="_navbar.jsp" %>
 
-  <!-- Contenido Principal -->
+  <%-- Contenido Principal: se muestra perfil o login según sesión --%>
   <main class="main-perfil" style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:0;min-height:60vh">
     <%
+      // Obtener usuario de sesión y verificar permisos de administrador
       Usuario usuarioSesion = (Usuario) session.getAttribute("usuario");
       boolean __esAdminPuro = Boolean.TRUE.equals(session.getAttribute("esAdmin"));
-      // Verificar si el usuario tiene permiso VER_DASHBOARD
+      // Verificar si el usuario tiene el permiso VER_DASHBOARD
       java.util.List<String> __perms = (java.util.List<String>) session.getAttribute("permisosUsuario");
       boolean __puedeVerDashboard = __esAdminPuro ||
           (__perms != null && __perms.stream().anyMatch(p -> p.equalsIgnoreCase("VER_DASHBOARD")));
-      // Admin puro siempre va directo al panel
+      // Si es admin puro, redirigir directamente al panel admin
       if (usuarioSesion != null && __esAdminPuro) {
           response.sendRedirect(request.getContextPath() + "/vistas/admin.jsp");
           return;
@@ -35,7 +59,7 @@
         Usuario u = (Usuario) session.getAttribute("usuario");
         String nombreMostrar = (u.getCliente() != null) ? u.getCliente().getNombreCompleto() : "Usuario";
     %>
-    <!-- Vista de perfil cuando el usuario está logueado -->
+    <%-- === VISTA LOGUEADA: Perfil completo del usuario === --%>
     <section class="formulario" style="max-width:480px">
       <h2 class="formulario-title">MI PERFIL</h2>
       <div style="display:flex;flex-direction:column;gap:18px;padding:8px 0 24px">
@@ -95,7 +119,7 @@
       </div>
     </section>
 
-    <!-- ── Mis Pedidos ── -->
+    <%-- ── Sección MIS PEDIDOS: carga dinámica desde SvMisPedidos con polling ── --%>
     <section style="max-width:720px;width:100%;margin:0 auto 60px">
       <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">MIS PEDIDOS</h2>
       <div id="mis-pedidos-container">
@@ -103,7 +127,7 @@
       </div>
     </section>
 
-    <!-- ── Cambiar Contraseña ── -->
+    <%-- ── Sección CAMBIAR CONTRASEÑA: validación + POST a SvContactoCliente ── --%>
     <section style="max-width:480px;width:100%;margin:0 auto 40px">
       <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">CAMBIAR CONTRASE&Ntilde;A</h2>
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -137,7 +161,7 @@
       </div>
     </section>
 
-    <!-- ── Mis Teléfonos (RF02) ── -->
+    <%-- ── Sección MIS TELÉFONOS (RF02): CRUD vía SvContactoCliente ── --%>
     <section style="max-width:720px;width:100%;margin:0 auto 40px">
       <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">MIS TEL&Eacute;FONOS</h2>
       <div id="tel-lista" style="margin-bottom:16px"></div>
@@ -159,7 +183,7 @@
       <div id="tel-msg" style="font-size:13px;margin-top:8px;min-height:18px"></div>
     </section>
 
-    <!-- ── Mis Correos Adicionales (RF03) ── -->
+    <%-- ── Sección CORREOS ADICIONALES (RF03): CRUD vía SvContactoCliente ── --%>
     <section style="max-width:720px;width:100%;margin:0 auto 60px">
       <h2 style="font-size:18px;font-weight:700;letter-spacing:2px;color:#1a1a1a;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a">CORREOS ADICIONALES</h2>
       <div id="correo-lista" style="margin-bottom:16px"></div>
@@ -173,13 +197,16 @@
       <div id="correo-msg" style="font-size:13px;margin-top:8px;min-height:18px"></div>
     </section>
 
+    <%-- Script principal del perfil: pedidos, contacto, contraseña --%>
     <script>
     (function() {
+      // Context path dinámico
       var ctx = (function() {
         var p = window.location.pathname.split('/');
         return '/' + p[1];
       })();
 
+      // Mapa de estados de pedido → etiqueta y colores para badges
       var ESTADO_LABEL = {
         'PENDIENTE':   { label: 'Pendiente',   color: '#e65100', bg: '#fff3e0' },
         'PROCESANDO':  { label: 'Procesando',  color: '#1565c0', bg: '#e3f2fd' },
@@ -197,6 +224,7 @@
         return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;color:' + e.color + ';background:' + e.bg + '">' + e.label + '</span>';
       }
 
+      // Mapa de estados de envío → etiqueta y colores para badges
       var ESTADO_ENVIO_LABEL = {
         'PREPARANDO':  { label: 'Preparando',   color: '#f57c00', bg: '#fff3e0' },
         'EN_TRANSITO': { label: 'En tránsito',  color: '#1565c0', bg: '#e3f2fd' },
@@ -209,6 +237,7 @@
         return '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;color:' + e.color + ';background:' + e.bg + '">' + e.label + '</span>';
       }
 
+      /** Renderiza la tarjeta de información de envío dentro de un pedido. */
       function renderEnvio(envio) {
         if (!envio) return '';
         var html = '<div style="margin-top:14px;padding:12px 14px;background:#f8f8f8;border-radius:6px;border-left:3px solid #1a1a1a">';
@@ -238,6 +267,7 @@
         return html;
       }
 
+      /** Renderiza la tabla de items (detalles) de un pedido. */
       function renderDetalles(detalles) {
         if (!detalles || detalles.length === 0) return '<p style="color:#999;font-size:13px;padding:8px 0">Sin detalles disponibles.</p>';
         var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">'
@@ -259,6 +289,7 @@
         return html;
       }
 
+      /** Renderiza la lista completa de pedidos como acordeón expandible. */
       function renderPedidos(pedidos) {
         var container = document.getElementById('mis-pedidos-container');
         if (!pedidos || pedidos.length === 0) {
@@ -302,8 +333,9 @@
         if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
       };
 
-      var _cachedPedidos = [];
+      var _cachedPedidos = []; // Cache para detectar cambios de estado en polling
 
+      /** Carga pedidos desde SvMisPedidos. En modo silencioso detecta cambios de estado. */
       function cargarPedidos(silencioso) {
         fetch(ctx + '/SvMisPedidos', { credentials: 'same-origin' })
           .then(function(r) { return r.json(); })
@@ -335,6 +367,7 @@
           });
       }
 
+      /** Muestra notificación toast cuando un pedido cambia de estado. */
       function mostrarNotifEstado(idPedido, estado) {
         var ESTADO_LABEL = {
           'PENDIENTE': 'Pendiente', 'PROCESANDO': 'Procesando',
@@ -368,10 +401,11 @@
         document.head.appendChild(st);
       }
 
+      // Carga inicial de pedidos + polling cada 15 segundos
       cargarPedidos(false);
       setInterval(function() { cargarPedidos(true); }, 15000);
 
-      // ── Teléfonos y Correos (RF02/RF03) ─────────────────────────────────
+      // ── Teléfonos y Correos adicionales (RF02/RF03) ─────────────────────
       var TIPO_LABEL = { CELULAR: 'Celular', FIJO: 'Fijo', TRABAJO: 'Trabajo' };
 
       function renderTelefonos(lista) {
@@ -481,6 +515,7 @@
           }).catch(function(e) { msg.textContent = 'Error al guardar.'; msg.style.color = '#c62828'; });
       }
 
+      /** Modal de confirmación destructiva reutilizable dentro del perfil. */
       function showConfirmPerfil(mensaje, onConfirm) {
         var existing = document.getElementById('perfil-confirm-modal');
         if (existing) existing.remove();
@@ -544,7 +579,7 @@
 
       cargarContactos();
 
-      // ── Cambiar Contraseña ─────────────────────────────────────────────────
+      // ── Cambiar Contraseña: validación client-side + POST a SvContactoCliente ──
       (function() {
         var STRENGTH_COLORS = ['', '#c62828', '#f57c00', '#f9a825', '#2e7d32'];
         var STRENGTH_LABELS = ['', 'Muy d\u00e9bil', 'D\u00e9bil', 'Aceptable', 'Fuerte'];
@@ -632,7 +667,7 @@
     </script>
 
     <% } else { %>
-    <!-- Formulario de Login -->
+    <%-- === VISTA NO LOGUEADA: Formulario de Login === --%>
     <section class="formulario">
       <h2 class="formulario-title">LOGIN</h2>
       <%
@@ -671,7 +706,7 @@
 
   </main>
 
-  <!-- Pie de Página -->
+  <%-- Pie de Página (inline, no usa _footer.jsp include) --%>
   <footer>
     <div class="footer__section--newsletter">
       <h2 class="footer__title">Reciba un 10% de descuento en su próximo pedido superior a 300 cop al
@@ -707,6 +742,7 @@
     </div>
   </footer>
 
+  <%-- cart.js para funcionalidad del navbar (búsqueda) --%>
   <script src="../assets/scripts/cart.js"></script>
 </body>
 

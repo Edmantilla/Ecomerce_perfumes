@@ -12,21 +12,32 @@ import logica.Envio;
 import logica.Pedido;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * EnvioJpaController — CRUD para la entidad Envio (tabla 'envio').
+ * Provee: create, edit, destroy, findEnvioEntities, findEnvio, getEnvioCount.
+ * Usado por SvEnvios para crear y actualizar envíos desde el panel admin.
+ * Resuelve FK con Pedido (1:1) mediante em.getReference().
+ */
 public class EnvioJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public EnvioJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public EnvioJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO envio (...) VALUES (...)
+    // Resuelve FK con Pedido mediante getReference()
     public void create(Envio envio) throws Exception {
         EntityManager em = null;
         try {
@@ -44,6 +55,7 @@ public class EnvioJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE envio SET ... WHERE id_envio = ?
     public void edit(Envio envio) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -70,6 +82,7 @@ public class EnvioJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM envio WHERE id_envio = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -89,6 +102,7 @@ public class EnvioJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM envio
     public List<Envio> findEnvioEntities() {
         return findEnvioEntities(true, -1, -1);
     }
@@ -113,6 +127,7 @@ public class EnvioJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM envio WHERE id_envio = ?
     public Envio findEnvio(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -122,6 +137,7 @@ public class EnvioJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM envio
     public int getEnvioCount() {
         EntityManager em = getEntityManager();
         try {

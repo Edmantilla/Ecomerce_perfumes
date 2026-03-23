@@ -11,21 +11,31 @@ import javax.persistence.criteria.Root;
 import logica.Rol;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * RolJpaController — CRUD para la entidad Rol (tabla 'rol').
+ * Provee: create, edit, destroy, findRolEntities, findRol, getRolCount.
+ * Usado por SvPermisos para gestionar roles desde el panel admin.
+ * Sin FK complejas (Rol no depende de otras tablas).
+ */
 public class RolJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public RolJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public RolJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO rol (...) VALUES (...)
     public void create(Rol rol) throws Exception {
         EntityManager em = null;
         try {
@@ -38,6 +48,7 @@ public class RolJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE rol SET ... WHERE id_rol = ?
     public void edit(Rol rol) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -59,6 +70,7 @@ public class RolJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM rol WHERE id_rol = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -78,6 +90,7 @@ public class RolJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM rol
     public List<Rol> findRolEntities() {
         return findRolEntities(true, -1, -1);
     }
@@ -102,6 +115,7 @@ public class RolJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM rol WHERE id_rol = ?
     public Rol findRol(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -111,6 +125,7 @@ public class RolJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM rol
     public int getRolCount() {
         EntityManager em = getEntityManager();
         try {

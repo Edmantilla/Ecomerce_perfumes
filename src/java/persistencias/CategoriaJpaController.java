@@ -11,22 +11,31 @@ import javax.persistence.criteria.Root;
 import logica.Categoria;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * CategoriaJpaController — CRUD para la entidad Categoria (tabla 'categoria').
+ * Provee: create, edit, destroy, findCategoriaEntities, findCategoria, getCategoriaCount.
+ * Usado por SvCategorias para gestionar categorías desde el panel admin.
+ * Sin relaciones FK complejas (Categoria no depende de otras tablas).
+ */
 public class CategoriaJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public CategoriaJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public CategoriaJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
-    
 
+    // CREATE: INSERT INTO categoria (...) VALUES (...)
     public void create(Categoria categoria) throws Exception {
         EntityManager em = null;
         try {
@@ -39,6 +48,7 @@ public class CategoriaJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE categoria SET ... WHERE id_categoria = ?
     public void edit(Categoria categoria) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -60,6 +70,7 @@ public class CategoriaJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM categoria WHERE id_categoria = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -79,6 +90,7 @@ public class CategoriaJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM categoria
     public List<Categoria> findCategoriaEntities() {
         return findCategoriaEntities(true, -1, -1);
     }
@@ -103,6 +115,7 @@ public class CategoriaJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM categoria WHERE id_categoria = ?
     public Categoria findCategoria(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -112,6 +125,7 @@ public class CategoriaJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM categoria
     public int getCategoriaCount() {
         EntityManager em = getEntityManager();
         try {

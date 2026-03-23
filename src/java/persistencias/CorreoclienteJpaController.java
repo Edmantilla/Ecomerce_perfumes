@@ -12,20 +12,32 @@ import logica.Cliente;
 import logica.Correocliente;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * CorreoclienteJpaController — CRUD para la entidad Correocliente (tabla 'correo_cliente').
+ * Provee: create, edit, destroy, findCorreoclienteEntities, findCorreocliente, getCorreoclienteCount.
+ * Usado por SvContactoCliente para gestionar correos adicionales del cliente desde perfil.jsp.
+ * Resuelve FK con Cliente mediante em.getReference().
+ */
 public class CorreoclienteJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public CorreoclienteJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public CorreoclienteJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
+
+    // CREATE: INSERT INTO correo_cliente (...) VALUES (...)
+    // Resuelve FK con Cliente mediante getReference()
     public void create(Correocliente correocliente) throws Exception {
         EntityManager em = null;
         try {
@@ -43,6 +55,7 @@ public class CorreoclienteJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE correo_cliente SET ... WHERE id_correo = ?
     public void edit(Correocliente correocliente) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -69,6 +82,7 @@ public class CorreoclienteJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM correo_cliente WHERE id_correo = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -88,6 +102,7 @@ public class CorreoclienteJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM correo_cliente
     public List<Correocliente> findCorreoclienteEntities() {
         return findCorreoclienteEntities(true, -1, -1);
     }
@@ -112,6 +127,7 @@ public class CorreoclienteJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM correo_cliente WHERE id_correo = ?
     public Correocliente findCorreocliente(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -121,6 +137,7 @@ public class CorreoclienteJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM correo_cliente
     public int getCorreoclienteCount() {
         EntityManager em = getEntityManager();
         try {

@@ -11,21 +11,31 @@ import javax.persistence.criteria.Root;
 import logica.Permiso;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * PermisoJpaController — CRUD para la entidad Permiso (tabla 'permiso').
+ * Provee: create, edit, destroy, findPermisoEntities, findPermiso, getPermisoCount.
+ * Usado por SvPermisos para gestionar permisos desde el panel admin.
+ * Sin FK complejas (Permiso no depende de otras tablas).
+ */
 public class PermisoJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public PermisoJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public PermisoJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO permiso (...) VALUES (...)
     public void create(Permiso permiso) throws Exception {
         EntityManager em = null;
         try {
@@ -38,6 +48,7 @@ public class PermisoJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE permiso SET ... WHERE id_permiso = ?
     public void edit(Permiso permiso) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -59,6 +70,7 @@ public class PermisoJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM permiso WHERE id_permiso = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -78,6 +90,7 @@ public class PermisoJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM permiso
     public List<Permiso> findPermisoEntities() {
         return findPermisoEntities(true, -1, -1);
     }
@@ -102,6 +115,7 @@ public class PermisoJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM permiso WHERE id_permiso = ?
     public Permiso findPermiso(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -111,6 +125,7 @@ public class PermisoJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM permiso
     public int getPermisoCount() {
         EntityManager em = getEntityManager();
         try {

@@ -1,21 +1,33 @@
-/* admin.js - Admin Panel Logic for ANDREYLPZ — conectado al backend */
+/* admin.js — Lógica completa del Panel de Administración ANDREYLPZ.
+ * IIFE que encapsula toda la funcionalidad del admin: navegación entre secciones,
+ * carga y renderizado de Dashboard, Productos, Pedidos, Usuarios, Categorías,
+ * Marcas, Roles y Permisos, Pagos y Envíos.
+ * Cada sección se comunica con su servlet correspondiente vía fetch (GET/POST).
+ * Los datos se cachean en memoria (_products, _orders, _users, etc.) para
+ * evitar requests redundantes al navegar entre modales y tablas.
+ * Expone window.adminApp con métodos públicos llamados desde onclick en el HTML.
+ */
 (function () {
     'use strict';
 
     // ─── Base URL de servlets (relativa al contexto de la app) ───────────────
+    // Extrae el context path de la URL actual (ej: "/Proyecto")
     const BASE = (function () {
         const p = window.location.pathname.split('/');
         return '/' + p[1];
     })();
 
+    /** Construye la URL completa de un servlet: "/Proyecto/SvProductos" */
     function apiUrl(servlet) { return BASE + '/' + servlet; }
 
     // ─── Helpers HTTP ────────────────────────────────────────────────────────
+    // GET genérico: hace fetch al servlet y parsea la respuesta como JSON.
     function get(servlet) {
         return fetch(apiUrl(servlet), { credentials: 'same-origin' })
             .then(r => r.json());
     }
 
+    // POST genérico: envía parámetros como x-www-form-urlencoded y parsea JSON.
     function post(servlet, params) {
         const body = new URLSearchParams(params);
         return fetch(apiUrl(servlet), {
@@ -30,15 +42,23 @@
     }
 
     // ─── Caché en memoria ────────────────────────────────────────────────────
-    let _products        = [];
-    let _orders          = [];
-    let _users           = [];
-    let _categorias      = [];
-    let _marcas          = [];
-    let _roles           = [];
-    let _permisosCatalogo = [];
+    // Arrays que almacenan los datos cargados desde el servidor para evitar
+    // requests repetidos al cambiar entre modales, tabs y filtros.
+    let _products        = [];  // Productos (SvProductos?admin=true)
+    let _orders          = [];  // Pedidos (SvPedidos)
+    let _users           = [];  // Usuarios (SvUsuarios)
+    let _categorias      = [];  // Categorías (SvCategorias)
+    let _marcas          = [];  // Marcas (SvMarcas)
+    let _roles           = [];  // Roles con permisos anidados (SvPermisos)
+    let _permisosCatalogo = []; // Catálogo plano de permisos (SvPermisos?recurso=permisos)
 
     // ─── Section Navigation ──────────────────────────────────────────────────
+    /**
+     * Navega a una sección del panel admin.
+     * Oculta todas las secciones, muestra la seleccionada, actualiza el título
+     * del topbar, y llama a la función de carga correspondiente (loadDashboard,
+     * loadProducts, etc.). Cierra el sidebar móvil si está abierto.
+     */
     function navigate(sectionId) {
         document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.admin-nav__item').forEach(i => i.classList.remove('active'));
@@ -63,16 +83,19 @@
     }
 
     // ─── Format helpers ──────────────────────────────────────────────────────
+    /** Formatea un número como precio colombiano: "450.000 COP" */
     function fmt(n) {
         const num = parseFloat(n) || 0;
         return num.toLocaleString('es-CO') + ' COP';
     }
 
+    /** Escapa caracteres HTML para prevenir XSS al inyectar en innerHTML. */
     function esc(s) {
         if (!s) return '';
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    /** Genera un <span class="badge"> coloreado según el estado del pedido/entidad. */
     function statusBadge(status) {
         const map = {
             'ENTREGADO': 'badge-success', 'Entregado': 'badge-success',
@@ -88,11 +111,17 @@
     }
 
     // ─── Dashboard ───────────────────────────────────────────────────────────
+    /** Muestra un mensaje de error dentro de un <tbody> de tabla. */
     function showSectionError(tbodyId, colspan, msg) {
         const el = document.getElementById(tbodyId);
         if (el) el.innerHTML = '<tr><td colspan="' + colspan + '" style="text-align:center;color:#c62828;padding:20px;font-size:14px">' + msg + '</td></tr>';
     }
 
+    /**
+     * Carga el dashboard: obtiene métricas de SvDashboard (ventas, productos,
+     * pedidos, usuarios, pedidos recientes) y productos con stock bajo de
+     * SvProductos?admin=true. Actualiza los contadores y tablas del HTML.
+     */
     function loadDashboard() {
         get('SvDashboard').then(data => {
             if (data.error) {
@@ -142,6 +171,7 @@
     }
 
     // ─── Products ────────────────────────────────────────────────────────────
+    // Carga todos los productos (incluidos inactivos) desde SvProductos?admin=true.
     function loadProducts() {
         get('SvProductos?admin=true').then(products => {
             if (!Array.isArray(products)) {
@@ -153,6 +183,7 @@
         }).catch(() => showSectionError('products-tbody', 7, 'Sin conexión con el servidor. Intenta recargar la página.'));
     }
 
+    // Renderiza la tabla de productos con botones Editar, Activar/Desactivar, Eliminar.
     function renderProducts(products) {
         const tbody = document.getElementById('products-tbody');
         if (!tbody) return;
@@ -178,6 +209,7 @@
         ).join('');
     }
 
+    // Alterna el estado activo/inactivo de un producto vía SvProductos accion=toggleActivo.
     function toggleProduct(id) {
         post('SvProductos', { accion: 'toggleActivo', id })
             .then(r => {
@@ -192,6 +224,7 @@
     // ─── Product Modal ───────────────────────────────────────────────────────
     let editingProductId = null;
 
+    // Rellena los <select> de marca y categoría en el modal de producto.
     function _fillProductSelects(product) {
         const selMarca = document.getElementById('prod-brand');
         const selCat   = document.getElementById('prod-category');
@@ -211,6 +244,8 @@
         }
     }
 
+    // Abre el modal de crear/editar producto. Carga marcas y categorías
+    // del caché (o del servidor si aún no se han cargado) para los selects.
     function openProductModal(product) {
         editingProductId = product ? product.id : null;
         document.getElementById('modal-product-title').textContent = product ? 'Editar Producto' : 'Agregar Producto';
@@ -235,11 +270,14 @@
         }
     }
 
+    // Cierra el modal de producto y resetea el ID de edición.
     function closeProductModal() {
         document.getElementById('modal-product').classList.remove('open');
         editingProductId = null;
     }
 
+    // Guarda un producto (crear o editar). Valida campos requeridos,
+    // envía POST a SvProductos y recarga la tabla y el dashboard.
     function saveProduct() {
         const nombre      = document.getElementById('prod-name').value.trim();
         const idMarca     = document.getElementById('prod-brand').value;
@@ -281,6 +319,7 @@
         }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    // Elimina físicamente un producto tras confirmación del usuario.
     function deleteProduct(id) {
         showConfirmModal('¿Eliminar este producto?', function() {
         post('SvProductos', { accion: 'eliminar', id: id }).then(r => {
@@ -291,6 +330,7 @@
         }); // fin showConfirmModal
     }
 
+    // Abre el modal de edición con los datos del producto seleccionado.
     function editProduct(id) {
         const product = _products.find(p => p.id === id);
         if (product) openProductModal(product);
@@ -299,6 +339,7 @@
     // ─── Orders ──────────────────────────────────────────────────────────────
     const ESTADOS = ['PENDIENTE', 'PROCESANDO', 'ENVIADO', 'ENTREGADO', 'CANCELADO'];
 
+    // Carga todos los pedidos desde SvPedidos y los renderiza en la tabla.
     function loadOrders() {
         get('SvPedidos').then(orders => {
             if (!Array.isArray(orders)) {
@@ -310,6 +351,8 @@
         }).catch(() => showSectionError('orders-tbody', 8, 'Sin conexión con el servidor. Intenta recargar la página.'));
     }
 
+    // Renderiza la tabla de pedidos con: ID, cliente, total, fecha, estado,
+    // select para cambiar estado, botones de Pago, Envío y Detalle.
     function renderOrders(orders) {
         const tbody = document.getElementById('orders-tbody');
         if (!tbody) return;
@@ -342,6 +385,7 @@
         }).join('');
     }
 
+    // Cambia el estado de un pedido vía SvPedidos accion=cambiarEstado y actualiza el badge en la fila.
     function cambiarEstado(idPedido) {
         const sel = document.getElementById('est-' + idPedido);
         if (!sel) return;
@@ -365,6 +409,9 @@
     }
 
     // ─── Order Detail Modal ──────────────────────────────────────────────────
+    // Abre el modal de detalle de pedido. Muestra datos del cliente, dirección,
+    // teléfonos. Luego hace fetch a SvDetallesPedido para cargar los ítems
+    // (productos comprados) e información de envío.
     function verDetalle(idPedido) {
         const modal = document.getElementById('modal-order-detail');
         if (!modal) return;
@@ -473,6 +520,7 @@
             });
     }
 
+    /** Cierra el modal de detalle de pedido y limpia la sección de envío. */
     function closeOrderDetail() {
         const modal = document.getElementById('modal-order-detail');
         if (modal) modal.classList.remove('open');
@@ -481,6 +529,7 @@
     }
 
     // ─── Users ───────────────────────────────────────────────────────────────
+    /** Carga todos los usuarios desde SvUsuarios y los renderiza en la tabla. */
     function loadUsers() {
         get('SvUsuarios').then(users => {
             if (!Array.isArray(users)) {
@@ -492,6 +541,10 @@
         }).catch(() => showSectionError('users-tbody', 9, 'Sin conexión con el servidor. Intenta recargar la página.'));
     }
 
+    /**
+     * Renderiza la tabla de usuarios con: ID, nombre, correo, teléfonos,
+     * dirección, núm. pedidos, fecha registro, estado y botón Ver.
+     */
     function renderUsers(users) {
         const tbody = document.getElementById('users-tbody');
         if (!tbody) return;
@@ -518,6 +571,12 @@
         }).join('');
     }
 
+    /**
+     * Abre el modal de detalle de usuario. Muestra todos sus datos:
+     * ID, nombre, correo, rol (con select para cambiarlo), dirección,
+     * teléfonos, correos adicionales, pedidos, registro y estado.
+     * Si los roles no están cargados, los solicita y refresca el modal.
+     */
     function verUsuario(idUsuario) {
         const u = _users.find(x => x.id === idUsuario);
         if (!u) return;
@@ -573,6 +632,7 @@
         modal.classList.add('open');
     }
 
+    /** Cambia el rol de un usuario vía SvUsuarios accion=cambiarRol. */
     function cambiarRolUsuario(idUsuario) {
         const sel = document.getElementById('user-rol-select');
         if (!sel) return;
@@ -595,15 +655,20 @@
             .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Cierra el modal de detalle de usuario. */
     function closeUserDetail() {
         const modal = document.getElementById('modal-user-detail');
         if (modal) modal.classList.remove('open');
     }
 
     // ─── Notificaciones en tiempo real (polling) ─────────────────────────────
-    let _lastPedidoCount = -1;
-    let _pollingInterval = null;
+    let _lastPedidoCount = -1;  // Contador de pedidos en el último chequeo (-1 = sin inicializar)
+    let _pollingInterval = null; // ID del setInterval para poder detenerlo
 
+    /**
+     * Muestra una notificación toast en la esquina superior derecha.
+     * Se auto-elimina tras 5 segundos con fade out.
+     */
     function showToast(msg) {
         let container = document.getElementById('admin-toast-container');
         if (!container) {
@@ -619,6 +684,11 @@
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .4s'; setTimeout(() => toast.remove(), 400); }, 5000);
     }
 
+    /**
+     * Polling: consulta SvDashboard periódicamente para detectar nuevos pedidos.
+     * Si el conteo de pedidos aumentó desde la última verificación, muestra
+     * un toast y recarga la sección activa (dashboard o pedidos).
+     */
     function checkNewOrders() {
         get('SvDashboard').then(data => {
             if (data.error || data.pedidos === undefined) return;
@@ -643,6 +713,7 @@
         }).catch(() => {});
     }
 
+    /** Inicia el polling de nuevos pedidos: verifica cada 30 segundos. */
     function startPolling() {
         checkNewOrders();
         _pollingInterval = setInterval(checkNewOrders, 30000);
@@ -650,6 +721,7 @@
 
     // ─── Categorías ──────────────────────────────────────────────────────────
 
+    /** Carga categorías desde SvCategorias y renderiza tabla con botones CRUD. */
     function loadCategorias() {
         get('SvCategorias').then(data => {
             if (!Array.isArray(data)) return;
@@ -677,6 +749,7 @@
         }).catch(() => showSectionError('categorias-tbody', 6, 'No se pudieron cargar las categorías. Intenta de nuevo.'));
     }
 
+    /** Abre modal de crear/editar categoría. Si id es truthy, precarga datos. */
     function openCategoriaModal(id) {
         const title = document.getElementById('modal-categoria-title');
         document.getElementById('cat-id').value = '';
@@ -698,6 +771,7 @@
         document.getElementById('modal-categoria').classList.add('open');
     }
 
+    /** Guarda categoría (crear o editar) vía SvCategorias. */
     function saveCategoria() {
         const id     = document.getElementById('cat-id').value;
         const nombre = document.getElementById('cat-nombre').value.trim();
@@ -714,14 +788,17 @@
         }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Abre modal de edición para la categoría dada. */
     function editCategoria(id)   { openCategoriaModal(id); }
 
+    /** Activa/desactiva una categoría vía SvCategorias accion=desactivar. */
     function toggleCategoria(id) {
         post('SvCategorias', { accion: 'desactivar', id, nombre: _categorias.find(c=>c.id===id)?.nombre || '' })
             .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadCategorias(); })
             .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Elimina una categoría tras confirmación, solo si no tiene productos. */
     function deleteCategoria(id) {
         showConfirmModal('\u00bfEliminar esta categor\u00eda?', function() {
             post('SvCategorias', { accion: 'eliminar', id })
@@ -732,6 +809,7 @@
 
     // ─── Marcas ──────────────────────────────────────────────────────────────
 
+    /** Carga marcas desde SvMarcas y renderiza tabla con botones CRUD. */
     function loadMarcas() {
         get('SvMarcas').then(data => {
             if (!Array.isArray(data)) return;
@@ -759,6 +837,10 @@
         }).catch(() => showSectionError('marcas-tbody', 6, 'No se pudieron cargar las marcas. Intenta de nuevo.'));
     }
 
+    /**
+     * Abre modal de crear/editar marca. En creación muestra selector de género.
+     * En edición oculta el género (no se puede cambiar).
+     */
     function openMarcaModal(id) {
         const title = document.getElementById('modal-marca-title');
         document.getElementById('marca-id').value = '';
@@ -784,6 +866,7 @@
         document.getElementById('modal-marca').classList.add('open');
     }
 
+    /** Guarda marca (crear o editar) vía SvMarcas. Al crear incluye género. */
     function saveMarca() {
         const id     = document.getElementById('marca-id').value;
         const nombre = document.getElementById('marca-nombre').value.trim();
@@ -802,14 +885,17 @@
         }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Abre modal de edición para la marca dada. */
     function editMarca(id)   { openMarcaModal(id); }
 
+    /** Activa/desactiva una marca vía SvMarcas accion=desactivar. */
     function toggleMarca(id) {
         post('SvMarcas', { accion: 'desactivar', id, nombre: _marcas.find(m => m.id === id)?.nombre || '' })
             .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadMarcas(); })
             .catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Elimina una marca tras confirmación, solo si no tiene productos. */
     function deleteMarca(id) {
         showConfirmModal('\u00bfEliminar esta marca?', function() {
             post('SvMarcas', { accion: 'eliminar', id })
@@ -818,6 +904,10 @@
         });
     }
 
+    /**
+     * Modal de alerta genérico del admin. Muestra un mensaje de advertencia
+     * con botón "ENTENDIDO". Se cierra al hacer click fuera o en el botón.
+     */
     function showAdminAlert(msg) {
         var existing = document.getElementById('admin-alert-modal');
         if (existing) existing.remove();
@@ -835,6 +925,10 @@
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
+    /**
+     * Modal de confirmación destructiva. Muestra mensaje con botones
+     * "ELIMINAR" y "Cancelar". Ejecuta onConfirm() al confirmar.
+     */
     function showConfirmModal(mensaje, onConfirm) {
         var existing = document.getElementById('admin-confirm-modal');
         if (existing) existing.remove();
@@ -861,8 +955,12 @@
     }
 
     // ─── Roles y Permisos (RF07/RF08) ─────────────────────────────────────────
-    let _permisosActivoTab = 'roles';
+    let _permisosActivoTab = 'roles'; // Tab activo: 'roles' o 'permisosList'
 
+    /**
+     * Cambia entre las pestañas "Roles" y "Permisos" dentro de la sección.
+     * Muestra/oculta los paneles correspondientes y recarga los datos.
+     */
     function permisosTab(tab) {
         _permisosActivoTab = tab;
         document.getElementById('permisos-panel-roles').style.display        = tab === 'roles'        ? '' : 'none';
@@ -873,10 +971,12 @@
         else loadRoles();
     }
 
+    /** Punto de entrada al navegar a la sección Permisos. Carga la pestaña de Roles. */
     function loadPermisos() {
         loadRoles();
     }
 
+    /** Carga todos los roles con sus permisos anidados desde SvPermisos y renderiza la tabla. */
     function loadRoles() {
         get('SvPermisos').then(data => {
             if (!Array.isArray(data)) return;
@@ -904,6 +1004,7 @@
         }).catch(() => showSectionError('roles-tbody', 6, 'No se pudieron cargar los roles. Intenta de nuevo.'));
     }
 
+    /** Carga el catálogo plano de permisos desde SvPermisos?recurso=permisos y renderiza tabla. */
     function loadPermisosCatalogo() {
         get('SvPermisos?recurso=permisos').then(data => {
             if (!Array.isArray(data)) return;
@@ -931,6 +1032,7 @@
     }
 
     // -- Rol CRUD --
+    /** Abre modal de crear/editar rol. Si id es truthy, precarga datos del rol. */
     function openRolModal(id) {
         document.getElementById('rol-id').value = '';
         document.getElementById('rol-nombre').value = '';
@@ -949,6 +1051,7 @@
         document.getElementById('modal-rol').classList.add('open');
     }
 
+    /** Guarda un rol (crear o editar) vía SvPermisos accion=crearRol|editarRol. */
     function saveRol() {
         const id     = document.getElementById('rol-id').value;
         const nombre = document.getElementById('rol-nombre').value.trim();
@@ -965,8 +1068,10 @@
         }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Abre modal de edición para el rol dado. */
     function editRol(id)   { openRolModal(id); }
 
+    /** Activa/desactiva un rol vía SvPermisos accion=toggleRol. */
     function toggleRol(id) {
         post('SvPermisos', { accion: 'toggleRol', id })
             .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadRoles(); })
@@ -974,6 +1079,7 @@
     }
 
     // -- Permiso CRUD --
+    /** Abre modal de crear/editar permiso. Si id es truthy, precarga datos. */
     function openPermisoModal(id) {
         document.getElementById('permiso-id').value = '';
         document.getElementById('permiso-nombre').value = '';
@@ -994,6 +1100,7 @@
         document.getElementById('modal-permiso').classList.add('open');
     }
 
+    /** Guarda un permiso (crear o editar) vía SvPermisos accion=crearPermiso|editarPermiso. */
     function savePermiso() {
         const id     = document.getElementById('permiso-id').value;
         const nombre = document.getElementById('permiso-nombre').value.trim();
@@ -1011,8 +1118,10 @@
         }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Abre modal de edición para el permiso dado. */
     function editPermiso(id)   { openPermisoModal(id); }
 
+    /** Activa/desactiva un permiso vía SvPermisos accion=togglePermiso. */
     function togglePermiso(id) {
         post('SvPermisos', { accion: 'togglePermiso', id })
             .then(r => { if (r.error) { showAdminAlert(r.error); return; } loadPermisosCatalogo(); })
@@ -1020,6 +1129,11 @@
     }
 
     // -- Asignar permisos a rol --
+    /**
+     * Abre modal para gestionar los permisos asignados a un rol.
+     * Carga permisos disponibles (no asignados) en un <select> y
+     * muestra los permisos actuales del rol con botón de revocar.
+     */
     function abrirAsignar(idRol) {
         document.getElementById('asignar-id-rol').value = idRol;
         const rol = _roles.find(r => r.id === idRol);
@@ -1040,6 +1154,7 @@
         document.getElementById('modal-asignar-permisos').classList.add('open');
     }
 
+    /** Renderiza la lista de permisos actualmente asignados al rol, con botón revocar. */
     function _renderPermisoActuales(idRol) {
         const rol = _roles.find(r => r.id === idRol);
         const el  = document.getElementById('asignar-permisos-actuales');
@@ -1056,6 +1171,7 @@
             ).join('');
     }
 
+    /** Asigna un permiso al rol seleccionado vía SvPermisos accion=asignar. */
     function asignarPermiso() {
         const idRol     = parseInt(document.getElementById('asignar-id-rol').value);
         const idPermiso = parseInt(document.getElementById('asignar-permiso-sel').value);
@@ -1070,6 +1186,7 @@
             }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Revoca un permiso de un rol vía SvPermisos accion=revocar, tras confirmación. */
     function revocarPermiso(idRolPermiso, idRol) {
         showConfirmModal('¿Revocar este permiso?', function() {
             post('SvPermisos', { accion: 'revocar', idRolPermiso })
@@ -1083,6 +1200,11 @@
     }
 
     // ─── Pagos (RF020-RF022) ─────────────────────────────────────────────────
+    /**
+     * Abre el modal de pagos para un pedido. Consulta SvPagos para obtener:
+     * total del pedido, suma pagada, pendiente y lista de pagos registrados.
+     * Muestra una tabla con método, monto, estado, fecha y referencia.
+     */
     function abrirPago(idPedido) {
         document.getElementById('pago-id-pedido').value = idPedido;
         document.getElementById('pago-lista').innerHTML = '<p style="color:var(--admin-muted);font-size:13px">Cargando pagos...</p>';
@@ -1111,9 +1233,16 @@
         }).catch(() => { document.getElementById('pago-lista').innerHTML = '<p style="color:#c62828;font-size:14px">No se pudo cargar la información de pagos. Intenta de nuevo.</p>'; });
     }
 
+    /** Cierra el modal de pagos. */
     function closePagoModal() { document.getElementById('modal-pago').classList.remove('open'); }
 
     // ─── Envíos (RF023-RF025) ────────────────────────────────────────────────
+    /**
+     * Abre el modal de envío para un pedido. Si ya existe envío, precarga
+     * los datos (dirección, transportadora, guía, estado). Si no, muestra
+     * formulario vacío con la dirección del cliente pre-rellenada.
+     * Restringe la fecha estimada a mínimo mañana.
+     */
     function abrirEnvio(idPedido) {
         document.getElementById('envio-id-pedido').value = idPedido;
         document.getElementById('envio-id-envio').value = '';
@@ -1151,6 +1280,11 @@
         document.getElementById('modal-envio').classList.add('open');
     }
 
+    /**
+     * Guarda un envío (crear o actualizar) vía SvEnvios.
+     * Valida dirección, guía (10-22 chars) y fecha estimada.
+     * Al crear, el servidor cambia automáticamente el estado del pedido a ENVIADO.
+     */
     function saveEnvio() {
         const idPedido   = document.getElementById('envio-id-pedido').value;
         const idEnvio    = document.getElementById('envio-id-envio').value;
@@ -1176,18 +1310,29 @@
             }).catch(() => showAdminAlert('No se pudo conectar con el servidor. Intenta de nuevo.'));
     }
 
+    /** Cierra el modal de envío. */
     function closeEnvioModal() { document.getElementById('modal-envio').classList.remove('open'); }
 
     // ─── Event binding ───────────────────────────────────────────────────────
+    /**
+     * Función principal de inicialización del panel admin.
+     * Registra event listeners para: navegación del sidebar, hamburger móvil,
+     * botones de agregar/guardar/cerrar en cada modal (productos, roles,
+     * permisos, categorías, marcas, pagos, envíos, usuarios, pedidos).
+     * Navega al dashboard por defecto e inicia el polling de nuevos pedidos.
+     */
     function init() {
+        // Listeners de navegación del sidebar
         document.querySelectorAll('.admin-nav__item').forEach(item => {
             item.addEventListener('click', () => navigate(item.dataset.section));
         });
 
+        // Hamburger para sidebar móvil
         document.getElementById('adminHamburger')?.addEventListener('click', () => {
             document.getElementById('adminSidebar')?.classList.toggle('open');
         });
 
+        // Modal de productos: abrir, cerrar, guardar, click fuera cierra
         document.getElementById('btn-add-product')?.addEventListener('click', () => openProductModal(null));
         document.getElementById('close-product-modal')?.addEventListener('click', closeProductModal);
         document.getElementById('modal-product')?.addEventListener('click', e => {
@@ -1195,7 +1340,7 @@
         });
         document.getElementById('save-product-btn')?.addEventListener('click', saveProduct);
 
-        // Roles y Permisos
+        // Roles y Permisos: modales de rol, permiso y asignación
         document.getElementById('btn-add-rol')?.addEventListener('click', () => openRolModal(null));
         document.getElementById('save-rol-btn')?.addEventListener('click', saveRol);
         document.getElementById('modal-rol')?.addEventListener('click', e => {
@@ -1211,41 +1356,50 @@
             if (e.target === document.getElementById('modal-asignar-permisos')) document.getElementById('modal-asignar-permisos').classList.remove('open');
         });
 
+        // Modal de pagos: click fuera cierra
         document.getElementById('modal-pago')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-pago')) closePagoModal();
         });
+        // Modal de envíos: guardar y click fuera cierra
         document.getElementById('save-envio-btn')?.addEventListener('click', saveEnvio);
         document.getElementById('modal-envio')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-envio')) closeEnvioModal();
         });
 
+        // Modal de detalle de usuario: click fuera cierra
         document.getElementById('modal-user-detail')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-user-detail')) closeUserDetail();
         });
 
+        // Modal de detalle de pedido: click fuera cierra
         document.getElementById('modal-order-detail')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-order-detail')) closeOrderDetail();
         });
 
+        // Modal de categorías: abrir, guardar, click fuera cierra
         document.getElementById('btn-add-categoria')?.addEventListener('click', () => openCategoriaModal(null));
         document.getElementById('save-categoria-btn')?.addEventListener('click', saveCategoria);
         document.getElementById('modal-categoria')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-categoria')) document.getElementById('modal-categoria').classList.remove('open');
         });
 
+        // Modal de marcas: abrir, guardar, click fuera cierra
         document.getElementById('btn-add-marca')?.addEventListener('click', () => openMarcaModal(null));
         document.getElementById('save-marca-btn')?.addEventListener('click', saveMarca);
         document.getElementById('modal-marca')?.addEventListener('click', e => {
             if (e.target === document.getElementById('modal-marca')) document.getElementById('modal-marca').classList.remove('open');
         });
 
+        // Navegar al dashboard por defecto e iniciar polling de nuevos pedidos
         navigate('dashboard');
         startPolling();
     }
 
     // ─── Public API ──────────────────────────────────────────────────────────
+    // Expone métodos al scope global para ser llamados desde onclick en admin.jsp
     window.adminApp = { editProduct, deleteProduct, toggleProduct, cambiarEstado, verDetalle, closeOrderDetail, verUsuario, closeUserDetail, cambiarRolUsuario, editCategoria, toggleCategoria, deleteCategoria, editMarca, toggleMarca, deleteMarca, abrirPago, closePagoModal, abrirEnvio, closeEnvioModal, permisosTab, editRol, toggleRol, editPermiso, togglePermiso, abrirAsignar, revocarPermiso };
 
+    // Ejecutar init() cuando el DOM esté listo (o inmediatamente si ya lo está)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

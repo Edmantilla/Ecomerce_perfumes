@@ -11,21 +11,31 @@ import javax.persistence.criteria.Root;
 import logica.Marca;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * MarcaJpaController — CRUD para la entidad Marca (tabla 'marca').
+ * Provee: create, edit, destroy, findMarcaEntities, findMarca, getMarcaCount.
+ * Usado por SvMarcas (crear/editar marcas) y SvProductos (buscarOCrearMarca).
+ * Sin FK complejas (Marca no depende de otras tablas).
+ */
 public class MarcaJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public MarcaJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public MarcaJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
 
+    // CREATE: INSERT INTO marca (...) VALUES (...)
     public void create(Marca marca) throws Exception {
         EntityManager em = null;
         try {
@@ -38,6 +48,7 @@ public class MarcaJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE marca SET ... WHERE id_marca = ?
     public void edit(Marca marca) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -59,6 +70,7 @@ public class MarcaJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM marca WHERE id_marca = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -78,6 +90,7 @@ public class MarcaJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM marca
     public List<Marca> findMarcaEntities() {
         return findMarcaEntities(true, -1, -1);
     }
@@ -102,6 +115,7 @@ public class MarcaJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM marca WHERE id_marca = ?
     public Marca findMarca(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -111,6 +125,7 @@ public class MarcaJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM marca
     public int getMarcaCount() {
         EntityManager em = getEntityManager();
         try {

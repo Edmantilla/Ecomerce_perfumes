@@ -12,21 +12,32 @@ import logica.Cliente;
 import logica.Telefonocliente;
 import persistencias.exceptions.NonexistentEntityException;
 
+/**
+ * TelefonoclienteJpaController — CRUD para la entidad Telefonocliente (tabla 'telefono_cliente').
+ * Provee: create, edit, destroy, findTelefonoclienteEntities, findTelefonocliente, getTelefonoclienteCount.
+ * Usado por SvContactoCliente para gestionar teléfonos del cliente desde perfil.jsp.
+ * Resuelve FK con Cliente mediante em.getReference().
+ */
 public class TelefonoclienteJpaController implements Serializable {
 
+    // Constructor con EMF explícito
     public TelefonoclienteJpaController(EntityManagerFactory emf) {
         this.emf = emf;
     }
     private EntityManagerFactory emf = null;
 
+    // Crea un nuevo EntityManager (conexión activa a BD)
     public EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
     
+    // Constructor sin parámetros: usa EMF del Singleton JpaProvider
     public TelefonoclienteJpaController() {
         this(JpaProvider.getEntityManagerFactory());
     }
-    
+
+    // CREATE: INSERT INTO telefono_cliente (...) VALUES (...)
+    // Resuelve FK con Cliente mediante getReference()
     public void create(Telefonocliente telefonocliente) throws Exception {
         EntityManager em = null;
         try {
@@ -44,6 +55,7 @@ public class TelefonoclienteJpaController implements Serializable {
         }
     }
 
+    // UPDATE: UPDATE telefono_cliente SET ... WHERE id_telefono = ?
     public void edit(Telefonocliente telefonocliente) throws NonexistentEntityException, Exception {
         EntityManager em = null;
         try {
@@ -70,6 +82,7 @@ public class TelefonoclienteJpaController implements Serializable {
         }
     }
 
+    // DELETE: DELETE FROM telefono_cliente WHERE id_telefono = ?
     public void destroy(int id) throws NonexistentEntityException {
         EntityManager em = null;
         try {
@@ -89,6 +102,7 @@ public class TelefonoclienteJpaController implements Serializable {
         }
     }
 
+    // READ ALL: SELECT * FROM telefono_cliente
     public List<Telefonocliente> findTelefonoclienteEntities() {
         return findTelefonoclienteEntities(true, -1, -1);
     }
@@ -113,6 +127,7 @@ public class TelefonoclienteJpaController implements Serializable {
         }
     }
 
+    // READ by ID: SELECT * FROM telefono_cliente WHERE id_telefono = ?
     public Telefonocliente findTelefonocliente(int id) {
         EntityManager em = getEntityManager();
         try {
@@ -122,6 +137,7 @@ public class TelefonoclienteJpaController implements Serializable {
         }
     }
 
+    // COUNT: SELECT COUNT(*) FROM telefono_cliente
     public int getTelefonoclienteCount() {
         EntityManager em = getEntityManager();
         try {

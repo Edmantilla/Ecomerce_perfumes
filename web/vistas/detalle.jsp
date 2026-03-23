@@ -1,4 +1,23 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     detalle.jsp — Página de detalle de un producto individual.
+
+     Funcionalidad:
+     1. Recibe el parámetro ?nombre=... en la URL para identificar el producto.
+     2. Hace fetch paralelo a SvProductos (lista de productos activos) y
+        SvMarcas (para obtener la URL de la página de cada marca).
+     3. Busca el producto por nombre (case-insensitive) y renderiza:
+        - Imagen (con fallback a imagen por defecto si falla).
+        - Nombre, marca (con enlace a su página), precio, descripción,
+          categoría, stock.
+     4. Botón "AGREGAR AL CARRITO" que:
+        - Guarda en localStorage (clave 'andreylpz_cart').
+        - Actualiza badge del carrito y abre el panel lateral.
+        - Re-renderiza el contenido del panel con los items actualizados.
+     5. Si no hay parámetro o el producto no existe, muestra error.
+
+     Incluye: _navbar.jsp, _footer.jsp, cart.js.
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,16 +29,21 @@
 </head>
 <body>
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main class="main-losion">
+        <%-- Sección principal del detalle: loading, error, o contenido --%>
         <section class="section-losion-perfumes" id="detalle-section">
+            <%-- Estado de carga: visible mientras se obtienen datos --%>
             <div id="detalle-loading" style="text-align:center;padding:60px;color:#888;font-size:1.1rem;">
                 Cargando producto...
             </div>
+            <%-- Estado de error: visible si el producto no existe --%>
             <div id="detalle-error" style="display:none;text-align:center;padding:60px;color:#c62828;font-size:1.1rem;">
                 Producto no encontrado.
             </div>
+            <%-- Contenido del producto: se muestra tras carga exitosa --%>
             <div id="detalle-contenido" style="display:none;">
                 <div class="section-losion__contenedor">
                     <div class="section-losion__contenedor2">
@@ -54,20 +78,27 @@
         </section>
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para el carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
+
+    <%-- Script de carga dinámica del producto y lógica del botón "Agregar al carrito" --%>
     <script>
     (function () {
+        // Obtener context path dinámicamente (ej: /Proyecto)
         var ctx = (function () {
             var p = window.location.pathname.split('/');
             return '/' + p[1];
         })();
 
+        /** Extrae un parámetro de la query string */
         function getParam(name) {
             return new URLSearchParams(window.location.search).get(name);
         }
 
+        // Leer el nombre del producto desde ?nombre=...
         var nombreParam = getParam('nombre');
 
         if (!nombreParam) {
@@ -80,6 +111,7 @@
             return parseInt(String(str).replace(/\./g, '').replace(/[^0-9]/g, ''), 10) || 0;
         }
 
+        // Fetch paralelo: productos activos y marcas (para obtener URLs de páginas de marca)
         Promise.all([
             fetch(ctx + '/SvProductos', { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
             fetch(ctx + '/SvMarcas',    { credentials: 'same-origin' }).then(function(r) { return r.json(); })
@@ -87,7 +119,7 @@
                 var productos = results[0];
                 var marcas    = results[1];
 
-                // Construir mapa nombre_marca -> pagina_url
+                // Mapa nombre_marca → pagina_url para enlazar la marca del producto
                 var marcaUrls = {};
                 if (Array.isArray(marcas)) {
                     marcas.forEach(function(m) {
@@ -144,7 +176,7 @@
                     return;
                 }
 
-                // Conectar botón directamente usando la API de cart.js (addProduct)
+                // === Conectar botón "AGREGAR AL CARRITO" con localStorage ===
                 var name  = prod.nombre;
                 var brand = prod.marca || '';
                 var price = precio;
@@ -152,7 +184,7 @@
                 var id    = (brand + '_' + name).toLowerCase().replace(/[^a-z0-9]/g, '_');
 
                 btn.addEventListener('click', function () {
-                    var STORAGE_KEY = 'andreylpz_cart';
+                    var STORAGE_KEY = 'andreylpz_cart'; // Clave de localStorage compartida con cart.js
                     var cart = [];
                     try { cart = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) {}
                     var existing = cart.find(function(item) { return item.id === id; });
@@ -163,7 +195,7 @@
                     }
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
 
-                    // Actualizar badge y panel del cart.js
+                    // Actualizar badge del carrito en el navbar
                     document.querySelectorAll('.cart-badge__count').forEach(function(el) {
                         var total = cart.reduce(function(s, i) { return s + i.qty; }, 0);
                         el.textContent = total;
@@ -177,14 +209,14 @@
                         btn.classList.remove('added');
                     }, 2000);
 
-                    // Abrir panel del carrito
+                    // Abrir panel lateral del carrito (elementos creados por cart.js)
                     var panel = document.getElementById('cartPanel');
                     var overlay = document.getElementById('cartOverlay');
                     if (panel) panel.classList.add('open');
                     if (overlay) overlay.classList.add('open');
                     document.body.style.overflow = 'hidden';
 
-                    // Forzar re-render del panel
+                    // Re-renderizar items dentro del panel lateral del carrito
                     var cartBody = document.getElementById('cartBody');
                     var subtotalEl = document.getElementById('cartSubtotal');
                     if (cartBody) {

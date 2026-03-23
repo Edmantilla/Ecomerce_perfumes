@@ -1,27 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  persistence.xml - Configuración de JPA (Java Persistence API)
+  Define la unidad de persistencia "ProyectoPU" que conecta las entidades Java
+  con la base de datos MySQL "Perfumeria_andreylpz".
+  Este archivo es leído por EclipseLink (proveedor JPA) al crear el EntityManagerFactory.
+-->
 <persistence version="2.2" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence           http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
+  <!-- Unidad de persistencia: agrupa las entidades JPA y la conexión a BD -->
+  <!-- RESOURCE_LOCAL = las transacciones se manejan manualmente en código (begin/commit/rollback) -->
   <persistence-unit name="ProyectoPU" transaction-type="RESOURCE_LOCAL">
+    <!-- Proveedor JPA: EclipseLink (implementación de referencia de JPA) -->
     <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-    <class>logica.Categoria</class>
-    <class>logica.Cliente</class>
-    <class>logica.Correocliente</class>
-    <class>logica.Detallepedido</class>
-    <class>logica.Envio</class>
-    <class>logica.Marca</class>
-    <class>logica.Pago</class>
-    <class>logica.Pedido</class>
-    <class>logica.Permiso</class>
-    <class>logica.Producto</class>
-    <class>logica.Rol</class>
-    <class>logica.Rolpermiso</class>
-    <class>logica.Telefonocliente</class>
-    <class>logica.Usuario</class>
+    <!-- Lista explícita de todas las entidades JPA del proyecto -->
+    <!-- Cada <class> mapea una clase Java a una tabla en MySQL -->
+    <class>logica.Categoria</class>         <!-- tabla: categoria -->
+    <class>logica.Cliente</class>           <!-- tabla: cliente -->
+    <class>logica.Correocliente</class>     <!-- tabla: correo_cliente -->
+    <class>logica.Detallepedido</class>     <!-- tabla: detalle_pedido -->
+    <class>logica.Envio</class>             <!-- tabla: envio -->
+    <class>logica.Marca</class>             <!-- tabla: marca -->
+    <class>logica.Pago</class>              <!-- tabla: pago -->
+    <class>logica.Pedido</class>            <!-- tabla: pedido -->
+    <class>logica.Permiso</class>           <!-- tabla: permiso -->
+    <class>logica.Producto</class>          <!-- tabla: producto -->
+    <class>logica.Rol</class>               <!-- tabla: rol -->
+    <class>logica.Rolpermiso</class>        <!-- tabla: rol_permiso -->
+    <class>logica.Telefonocliente</class>   <!-- tabla: telefono_cliente -->
+    <class>logica.Usuario</class>           <!-- tabla: usuario -->
+    <!-- false = también escanea automáticamente clases con @Entity no listadas arriba -->
     <exclude-unlisted-classes>false</exclude-unlisted-classes>
     <properties>
+      <!-- URL JDBC: conecta a MySQL en localhost:3306, base de datos Perfumeria_andreylpz -->
+      <!-- serverTimezone=UTC evita errores de zona horaria con MySQL 8+ -->
       <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/Perfumeria_andreylpz?serverTimezone=UTC"/>
+      <!-- Usuario de MySQL para la conexión -->
       <property name="javax.persistence.jdbc.user" value="root"/>
+      <!-- Driver JDBC de MySQL (Connector/J versión 8+) -->
       <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+      <!-- Contraseña del usuario MySQL -->
       <property name="javax.persistence.jdbc.password" value="123456789"/>
+      <!-- "none" = JPA NO modifica el esquema de la BD (las tablas se crean con el SQL manual) -->
+      <!-- Otras opciones: "create", "drop-and-create", "drop" -->
       <property name="javax.persistence.schema-generation.database.action" value="none"/>
     </properties>
   </persistence-unit>

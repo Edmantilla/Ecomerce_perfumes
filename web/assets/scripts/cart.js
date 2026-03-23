@@ -1,15 +1,22 @@
 /* ===========================
    CART SYSTEM - ANDREYLPZ
-   Handles: localStorage, counter badge,
-   side panel, add/remove/qty controls
+   Sistema completo de carrito de compras del lado del cliente.
+   Maneja: persistencia en localStorage, badge contador en el ícono,
+   panel lateral deslizable, controles de cantidad (+/−/input),
+   eliminación de ítems, checkout vía SvCompra, flujo de pago vía SvPagos,
+   modales de confirmación/error/login requerido, y búsqueda en tiempo real
+   de productos desde el navbar vía SvProductos.
+   Se ejecuta como IIFE para no contaminar el scope global.
    =========================== */
 
 (function () {
     'use strict';
 
     // ─── State ───────────────────────────────────────────────────────────────
+    // Clave de localStorage donde se persiste el carrito como JSON array
     const STORAGE_KEY = 'andreylpz_cart';
 
+    /** Lee el carrito desde localStorage. Retorna [] si está vacío o corrupto. */
     function getCart() {
         try {
             return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -18,11 +25,18 @@
         }
     }
 
+    /** Guarda el array del carrito en localStorage como JSON string. */
     function saveCart(cart) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
     }
 
     // ─── Cart HTML Injection ──────────────────────────────────────────────────
+    /**
+     * Inyecta el HTML del panel lateral del carrito y su overlay oscuro al final del <body>.
+     * Se ejecuta una sola vez en init(). Crea: overlay (#cartOverlay),
+     * panel aside (#cartPanel), header con título y botón cerrar,
+     * body donde se renderizan los ítems, y footer con subtotal + botón checkout.
+     */
     function injectCartHTML() {
         const html = `
         <!-- Cart Overlay -->
@@ -52,11 +66,16 @@
     }
 
     // ─── Badge Counter ────────────────────────────────────────────────────────
+    /**
+     * Actualiza el número que aparece sobre el ícono del carrito (badge).
+     * Suma las cantidades de todos los ítems y muestra/oculta el badge
+     * según si hay productos o no.
+     */
     function updateBadge() {
         const cart = getCart();
         const total = cart.reduce((sum, item) => sum + item.qty, 0);
 
-        // Find all badge count elements (there might be multiple navbars conceptually)
+        // Busca todos los badges (puede haber varios por distintos navbars en distintas páginas)
         document.querySelectorAll('.cart-badge__count').forEach(el => {
             el.textContent = total;
             el.classList.toggle('visible', total > 0);
@@ -64,8 +83,14 @@
     }
 
     // ─── Wrap the shopping icon with the badge wrapper ────────────────────────
+    /**
+     * Transforma el enlace del ícono de carrito (<a href="#compras">) en un
+     * botón que abre el panel lateral. Le agrega la clase cart-badge,
+     * cambia el href a "#" para prevenir navegación, y añade un <span>
+     * para el contador numérico (badge).
+     */
     function wrapShoppingIcon() {
-        // The shopping icon link: <a href="#compras"><img src="shopping.png"></a>
+        // Busca todos los enlaces al ícono del carrito en el navbar
         const shoppingLinks = document.querySelectorAll('a[href="#compras"]');
         shoppingLinks.forEach(link => {
             if (link.querySelector('.cart-badge__count')) return; // already wrapped
@@ -83,15 +108,23 @@
     }
 
     // ─── Render Cart Items ────────────────────────────────────────────────────
+    /** Formatea un número como precio colombiano: "450.000 COP" */
     function formatPrice(value) {
         return value.toLocaleString('es-CO') + ' COP';
     }
 
+    /** Convierte un string de precio ("450.000 COP") a entero (450000) */
     function parsePrice(str) {
-        // "450.000 COP" → 450000
         return parseInt(str.replace(/\./g, '').replace(/[^0-9]/g, ''), 10) || 0;
     }
 
+    /**
+     * Renderiza los ítems del carrito dentro del panel lateral (#cartBody).
+     * Si el carrito está vacío muestra un mensaje centrado.
+     * Para cada ítem genera un card con: imagen, marca, nombre, precio de línea,
+     * controles de cantidad (−/input/+) y botón eliminar (✕).
+     * Calcula y muestra el subtotal acumulado.
+     */
     function renderCart() {
         const cart = getCart();
         const body = document.getElementById('cartBody');
@@ -133,6 +166,7 @@
     }
 
     // ─── Panel Open/Close ─────────────────────────────────────────────────────
+    /** Abre el panel lateral del carrito y el overlay. Bloquea el scroll del body. */
     function openCart() {
         document.getElementById('cartPanel')?.classList.add('open');
         document.getElementById('cartOverlay')?.classList.add('open');
@@ -140,6 +174,7 @@
         renderCart();
     }
 
+    /** Cierra el panel lateral y el overlay. Restaura el scroll del body. */
     function closeCart() {
         document.getElementById('cartPanel')?.classList.remove('open');
         document.getElementById('cartOverlay')?.classList.remove('open');
@@ -147,6 +182,12 @@
     }
 
     // ─── Add Product ──────────────────────────────────────────────────────────
+    /**
+     * Agrega un producto al carrito. Si ya existe (mismo id), incrementa qty.
+     * Si es nuevo, lo agrega con qty=1. Guarda, actualiza badge, renderiza
+     * y abre el panel lateral automáticamente.
+     * @param {Object} product - {id, name, brand, price, image}
+     */
     function addProduct(product) {
         const cart = getCart();
         const existing = cart.find(item => item.id === product.id);
@@ -162,6 +203,12 @@
     }
 
     // ─── Hook into "AGREGAR AL CARRITO" buttons ───────────────────────────────
+    /**
+     * Busca el botón "AGREGAR AL CARRITO" en detalle.jsp y le añade
+     * un listener de click que extrae los datos del producto de la página
+     * (nombre, precio, imagen, marca) y llama a addProduct().
+     * Muestra feedback visual ("✓ AÑADIDO") durante 2 segundos.
+     */
     function hookAddToCartButtons() {
         const btn = document.querySelector('.section-losion__divicion__description__button');
         if (!btn) return;
@@ -196,6 +243,11 @@
     }
 
     // ─── Cart Item Controls (qty / remove) ───────────────────────────────────
+    /**
+     * Delegación de eventos para los botones dentro del panel del carrito.
+     * Detecta data-action en el elemento clickeado: remove, increase, decrease.
+     * Actualiza el array del carrito en localStorage y re-renderiza.
+     */
     function handleCartBodyClick(e) {
         const btn = e.target.closest('[data-action]');
         if (!btn || btn.tagName === 'INPUT') return;
@@ -218,6 +270,10 @@
         renderCart();
     }
 
+    /**
+     * Maneja el cambio manual del input numérico de cantidad.
+     * Si el valor es ≤ 0 o NaN, elimina el ítem del carrito.
+     */
     function handleCartBodyChange(e) {
         const input = e.target.closest('input[data-action="setqty"]');
         if (!input) return;
@@ -235,6 +291,13 @@
     }
 
     // ─── Checkout Button ──────────────────────────────────────────────────────
+    /**
+     * Envía el contenido del carrito al servidor vía POST a SvCompra.
+     * Serializa cada ítem como item_name_N, item_price_N, item_qty_N, item_brand_N.
+     * Si el usuario no tiene sesión activa, muestra modal de login requerido.
+     * Si la compra es exitosa, vacía el carrito y muestra el modal de pago.
+     * Si hay error (ej. stock insuficiente), muestra modal de error.
+     */
     function handleCheckout() {
         const cart = getCart();
         if (cart.length === 0) {
@@ -298,6 +361,10 @@
         });
     }
 
+    /**
+     * Modal que se muestra cuando el usuario intenta comprar sin sesión.
+     * Ofrece botones para "INICIAR SESIÓN" (perfil.jsp) o "CREAR CUENTA" (registro.jsp).
+     */
     function showLoginRequiredModal(ctx) {
         var existing = document.getElementById('login-required-modal');
         if (existing) existing.remove();
@@ -319,6 +386,10 @@
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
+    /**
+     * Modal genérico de error del carrito. Muestra un ícono de advertencia
+     * y el mensaje de error recibido del servidor o generado localmente.
+     */
     function showCartError(msg) {
         var existing = document.getElementById('cart-error-modal');
         if (existing) existing.remove();
@@ -336,6 +407,12 @@
         modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
     }
 
+    /**
+     * Modal de selección de método de pago mostrado tras crear el pedido exitosamente.
+     * Opciones: Tarjeta, Transferencia, Efectivo/Contraentrega.
+     * Si es transferencia, muestra campo de referencia.
+     * El botón "CONFIRMAR PAGO" llama a window.confirmarPago().
+     */
     function showOrderConfirmation(idPedido, total) {
         const existing = document.getElementById('order-confirm-modal');
         if (existing) existing.remove();
@@ -404,6 +481,12 @@
         window._pagoCtx = ctx2;
     }
 
+    /**
+     * Función global llamada desde el modal de pago.
+     * Envía POST a SvPagos con: idPedido, metodo, monto, referencia.
+     * Si el pago cubre el total, el servidor cambia el estado del pedido a PAGO.
+     * Muestra modal de confirmación final con resumen del pedido.
+     */
     window.confirmarPago = function(idPedido, total) {
         var metodoEl = document.querySelector('input[name="pago-metodo"]:checked');
         var errEl = document.getElementById('pago-err');
@@ -476,6 +559,13 @@
     };
 
     // ─── Init ─────────────────────────────────────────────────────────────────
+    /**
+     * Función principal de inicialización. Ejecutada al cargar el DOM.
+     * 1. Inyecta el HTML del panel lateral y wrappea el ícono del carrito.
+     * 2. Actualiza el badge y hookea el botón "Agregar al carrito".
+     * 3. Registra event listeners globales (abrir/cerrar panel, Escape).
+     * 4. Inicializa la búsqueda en tiempo real del navbar.
+     */
     function init() {
         if (!document.body.hasAttribute('data-no-cart')) {
             injectCartHTML();
@@ -512,13 +602,20 @@
     }
 
     // ─── Search ───────────────────────────────────────────────────────────────
+    // Caché local de productos para evitar múltiples requests al servidor
     var _allProducts = null;
 
+    /** Obtiene el context path de la app (ej: "/Proyecto") desde la URL actual. */
     function getCtx() {
         var p = window.location.pathname.split('/');
         return '/' + p[1];
     }
 
+    /**
+     * Carga todos los productos activos desde SvProductos (GET) y los cachea
+     * en _allProducts. En llamadas posteriores retorna el caché sin fetch.
+     * @param {Function} cb - callback que recibe el array de productos
+     */
     function loadAllProducts(cb) {
         if (_allProducts) { cb(_allProducts); return; }
         fetch(getCtx() + '/SvProductos', { credentials: 'same-origin' })
@@ -530,6 +627,13 @@
             .catch(function() { cb([]); });
     }
 
+    /**
+     * Inicializa la búsqueda en tiempo real del navbar.
+     * Se activa con el input #search-input y muestra resultados en #search-results.
+     * Filtra productos por nombre, marca o descripción (mínimo 2 caracteres).
+     * Muestra hasta 8 resultados con enlace a detalle.jsp?nombre=...
+     * Escape limpia el input y cierra los resultados.
+     */
     function initSearch() {
         var input = document.getElementById('search-input');
         var results = document.getElementById('search-results');
@@ -588,7 +692,7 @@
         });
     }
 
-    // Run after DOM is ready
+    // Ejecutar init() cuando el DOM esté listo (o inmediatamente si ya lo está)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

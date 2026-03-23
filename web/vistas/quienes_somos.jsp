@@ -1,4 +1,13 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     quienes_somos.jsp — Página estática "Quiénes Somos".
+
+     Contenido informativo sobre la identidad y diferenciación de ANDREYLPZ.
+     Secciones: hero, "Nuestra Identidad", "Lo Que Nos Diferencia",
+     cita destacada, CTA → perfil.jsp (contáctanos).
+     Incluye _navbar.jsp, _footer.jsp, cart.js.
+     Usa about.css para estilos específicos de páginas "Nosotros".
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,10 +22,11 @@
 
 <body class="about-main">
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main>
-        <!-- Hero Section -->
+        <%-- Hero Section con imagen de fondo --%>
         <section class="about-hero" style="background-image: url('../assets/imagenes/boutique.jpg');">
             <div class="about-hero__content">
                 <h1 class="about-hero__title">Quiénes Somos</h1>
@@ -24,7 +34,7 @@
             </div>
         </section>
 
-        <!-- Content -->
+        <%-- Contenido principal: identidad de la marca --%>
         <div class="about-content">
 
             <section class="about-section">
@@ -56,7 +66,7 @@
 
         </div>
 
-        <!-- CTA -->
+        <%-- CTA: enlace a contáctanos (perfil.jsp) --%>
         <div class="about-cta">
             <p class="about-cta__text">¿Listo para encontrar tu esencia?</p>
             <a href="perfil.jsp" class="about-cta__button">CONTÁCTANOS</a>
@@ -64,8 +74,10 @@
 
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 

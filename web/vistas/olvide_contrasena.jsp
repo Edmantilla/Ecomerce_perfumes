@@ -1,4 +1,18 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     olvide_contrasena.jsp — Página de recuperación de contraseña.
+
+     Flujo de 3 pasos (todo client-side con fetch):
+     Paso 1: Ingresar correo → POST a SvRecuperarContrasena (accion=verificar).
+             Si el correo existe, muestra el nombre del usuario y pasa al paso 2.
+     Paso 2: Ingresar nueva contraseña + confirmar → POST a SvRecuperarContrasena
+             (accion=cambiar). Validación client-side con barra de fortaleza.
+     Paso 3: Mensaje de éxito con enlace al login.
+
+     Estilos inline para: errores, spinners de carga, barra de fortaleza.
+     Atributo body: data-no-cart evita inicialización del carrito.
+     Incluye _navbar.jsp, _footer.jsp, cart.js.
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,6 +20,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../assets/estilos/style.css">
     <title>Recuperar Contraseña - ANDREYLPZ</title>
+    <%-- Estilos inline para el flujo de recuperación de contraseña --%>
     <style>
         .rc-error   { color: #c0392b; font-size: 13px; margin-top: 8px; text-align: center; }
         .rc-success { color: #27ae60; font-size: 13px; margin-top: 8px; text-align: center; }
@@ -19,13 +34,14 @@
     </style>
 </head>
 <body data-no-cart>
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main class="main-perfil">
         <section class="formulario">
             <h2 class="formulario-title">RECUPERAR CONTRASEÑA</h2>
 
-            <!-- PASO 1: Verificar correo -->
+            <%-- PASO 1: Verificar que el correo existe en la BD --%>
             <div id="paso-correo">
                 <p class="formulario-descripcion">
                     Ingresa tu correo electrónico para cambiar tu contraseña.
@@ -44,7 +60,7 @@
                 </form>
             </div>
 
-            <!-- PASO 2: Nueva contraseña -->
+            <%-- PASO 2: Ingresar y confirmar nueva contraseña --%>
             <div id="paso-nueva" style="display:none">
                 <p class="formulario-descripcion">
                     Hola, <span id="nombre-usuario" class="rc-nombre"></span>. Ingresa tu nueva contraseña.
@@ -77,7 +93,7 @@
                 </form>
             </div>
 
-            <!-- PASO 3: Éxito -->
+            <%-- PASO 3: Confirmación de cambio exitoso --%>
             <div id="paso-exito" style="display:none; text-align:center">
                 <div class="formulario-icono-ok">✓</div>
                 <p class="formulario-descripcion">
@@ -91,15 +107,18 @@
         </section>
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- Script de recuperación: flujo de 3 pasos con fetch a SvRecuperarContrasena --%>
     <script>
     (function () {
+        // Context path dinámico
         var BASE = (function () {
             var p = window.location.pathname.split('/');
             return '/' + p[1];
         })();
-        var correoVerificado = '';
+        var correoVerificado = ''; // Almacena el correo verificado del paso 1
 
         function setLoading(btn, loading) {
             if (loading) {
@@ -111,6 +130,7 @@
             }
         }
 
+        /** Paso 1: Verifica que el correo existe en BD vía SvRecuperarContrasena */
         window.verificarCorreo = function (e) {
             e.preventDefault();
             var correo = document.getElementById('correo-input').value.trim();
@@ -148,7 +168,7 @@
             });
         };
 
-        // ── Fortaleza y validación cliente ──
+        // ── Barra de fortaleza y validación client-side para paso 2 ──
         var RC_STRENGTH_COLORS = ['', '#c62828', '#f57c00', '#f9a825', '#2e7d32'];
         var RC_STRENGTH_LABELS = ['', 'Muy débil', 'Débil', 'Aceptable', 'Fuerte'];
 
@@ -198,6 +218,7 @@
         document.getElementById('nueva-input').addEventListener('input', function() { rcValidateNueva(); rcValidateConfirmar(); });
         document.getElementById('confirmar-input').addEventListener('input', rcValidateConfirmar);
 
+        /** Paso 2: Envía nueva contraseña a SvRecuperarContrasena (accion=cambiar) */
         window.cambiarContrasena = function (e) {
             e.preventDefault();
             var nueva     = document.getElementById('nueva-input').value;
@@ -245,6 +266,7 @@
             });
         };
 
+        /** Volver al paso 1: resetea formularios y muestra el campo de correo */
         window.volverPaso1 = function (e) {
             e.preventDefault();
             correoVerificado = '';
@@ -259,6 +281,7 @@
     })();
     </script>
 
+    <%-- cart.js para funcionalidad del navbar (búsqueda) --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 </html>

@@ -1,4 +1,13 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     filosofia.jsp — Página estática "Filosofía".
+
+     Contenido informativo sobre visión, principios y enfoque al cliente.
+     Secciones: hero, "Nuestra Visión", "Principios Fundamentales"
+     (grid de 3 tarjetas), cita destacada, "Enfoque al Cliente".
+     Incluye _navbar.jsp, _footer.jsp, cart.js.
+     Usa about.css para estilos específicos de páginas "Nosotros".
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,10 +22,11 @@
 
 <body class="about-main">
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main>
-        <!-- Hero Section -->
+        <%-- Hero Section con imagen de fondo --%>
         <section class="about-hero"
             style="background-image: url('../assets/imagenes/1759572947949-bottombanner-fr-mobile_3200x3000.jpg');">
             <div class="about-hero__content">
@@ -25,7 +35,7 @@
             </div>
         </section>
 
-        <!-- Content -->
+        <%-- Contenido principal: filosofía de la marca --%>
         <div class="about-content">
 
             <section class="about-section">
@@ -80,8 +90,10 @@
 
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 

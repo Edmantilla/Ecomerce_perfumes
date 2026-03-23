@@ -1,4 +1,12 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%-- ==========================================================================
+     historia.jsp — Página estática "Nuestra Historia".
+
+     Contenido informativo sobre el origen y evolución de ANDREYLPZ.
+     Secciones: hero, "El Origen", timeline (2015, 2018, 2023), CTA.
+     Incluye _navbar.jsp, _footer.jsp, cart.js.
+     Usa about.css para estilos específicos de páginas "Nosotros".
+     ========================================================================== --%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,10 +21,11 @@
 
 <body class="about-main">
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
     <main>
-        <!-- Hero Section -->
+        <%-- Hero Section con imagen de fondo --%>
         <section class="about-hero" style="background-image: url('../assets/imagenes/yves\ saint\ laurent.webp');">
             <div class="about-hero__content">
                 <h1 class="about-hero__title">Nuestra Historia</h1>
@@ -24,7 +33,7 @@
             </div>
         </section>
 
-        <!-- Content -->
+        <%-- Contenido principal: historia de la marca --%>
         <div class="about-content">
 
             <section class="about-section">
@@ -70,7 +79,7 @@
 
         </div>
 
-        <!-- CTA -->
+        <%-- CTA: enlace a colecciones --%>
         <div class="about-cta">
             <p class="about-cta__text">Forma parte de nuestra historia.</p>
             <a href="cartas.jsp" class="about-cta__button">DESCUBRE NUESTRAS COLECCIONES</a>
@@ -78,8 +87,10 @@
 
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 

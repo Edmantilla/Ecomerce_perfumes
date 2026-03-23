@@ -1,3 +1,13 @@
+<%-- ==========================================================================
+     ejemplo.jsp — JSP de marca de ejemplo generado automáticamente.
+
+     Este archivo es un template creado por SvMarcas al registrar una nueva
+     marca desde el panel admin. Sigue la misma estructura de las páginas
+     de marca (Chanel.jsp, cartas.jsp, etc.):
+     - Hero con título y descripción placeholder.
+     - Cards dinámicas cargadas desde SvProductos filtrando por MARCA_NOMBRE.
+     - Incluye _navbar.jsp, _footer.jsp, cart.js.
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html lang="en">
@@ -9,6 +19,7 @@
     <title>Ejemplo</title>
 </head>
 <body>
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
     <main class="main-losion">
         <section class="section-losion">
@@ -21,9 +32,10 @@
         <section class="cards-lociones" id="marca-cards">
         </section>
     </main>
+    <%-- Script de carga dinámica: productos de la marca desde SvProductos --%>
     <script>
     (function() {
-        var MARCA_NOMBRE = 'ejemplo';
+        var MARCA_NOMBRE = 'ejemplo'; // Nombre de la marca (reemplazado por SvMarcas al generar)
         var ctx = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
         function fmt(n) { return parseFloat(n).toLocaleString('es-CO') + ' COP'; }
         fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
@@ -56,7 +68,9 @@
             .catch(function() {});
     })();
     </script>
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 </html>

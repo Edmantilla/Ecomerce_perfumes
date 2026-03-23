@@ -1,5 +1,14 @@
+<%-- ==========================================================================
+     pacco_rabanne.jsp — Página de catálogo de la marca PACO RABANNE.
+
+     Estructura idéntica a cartas.jsp (Xerjoff):
+     - Hero con imagen y descripción de la marca.
+     - Cards dinámicas cargadas desde SvProductos filtrando por marca
+       "Paco Rabanne".
+     - Cada card enlaza a detalle.jsp?nombre=...
+     - Incluye _navbar.jsp, _footer.jsp, cart.js.
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<!-- Página de catálogo de productos (Cartas/Tarjetas) -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,9 +22,10 @@
 
 <body>
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
-    <!-- Contenido Principal: Catálogo de Lociones -->
+    <%-- Contenido Principal: Hero de marca + cards de productos --%>
     <main class="main-losion">
 
         <section class="section-losion">
@@ -36,18 +46,24 @@
         </section>
     </main>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
+
+    <%-- Script de carga dinámica: productos de Paco Rabanne desde SvProductos --%>
     <script>
     (function() {
-        var MARCA = 'Paco Rabanne';
+        var MARCA = 'Paco Rabanne'; // Nombre exacto de la marca en BD
         var IMG_DEFAULT = '../assets/imagenes/PACCO RABANNE.jpg';
         var ctx = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
+        // Fetch productos activos y filtrar por marca
         fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(productos) {
                 if (!Array.isArray(productos)) return;
+                // Filtrar solo productos activos de esta marca
                 var filtrados = productos.filter(function(p) {
                     return p.activo && p.marca && p.marca.toLowerCase() === MARCA.toLowerCase();
                 });

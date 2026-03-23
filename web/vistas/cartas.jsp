@@ -1,5 +1,17 @@
+<%-- ==========================================================================
+     cartas.jsp — Página de catálogo de la marca XERJOFF.
+
+     Estructura:
+     - Sección hero con imagen, título y descripción de la marca.
+     - Sección de cards dinámicas: carga productos activos de la marca
+       "Xerjoff" desde SvProductos vía fetch y los renderiza como cards
+       con enlace a detalle.jsp?nombre=...
+     - Incluye _navbar.jsp, _footer.jsp, cart.js.
+
+     Patrón: Todas las páginas de marca (Chanel.jsp, Cristian_dior.jsp,
+     pacco_rabanne.jsp) siguen esta misma estructura.
+     ========================================================================== --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<!-- Página de catálogo de productos (Cartas/Tarjetas) -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,9 +25,10 @@
 
 <body>
 
+    <%-- Navbar compartido --%>
     <%@ include file="_navbar.jsp" %>
 
-    <!-- Contenido Principal: Catálogo de Lociones -->
+    <%-- Contenido Principal: Hero de marca + cards de productos --%>
     <main class="main-losion">
 
         <section class="section-losion">
@@ -36,15 +49,18 @@
         </section>
     </main>
 
+    <%-- Script de carga dinámica: obtiene productos de Xerjoff desde SvProductos --%>
     <script>
     (function() {
-        var MARCA = 'Xerjoff';
+        var MARCA = 'Xerjoff'; // Nombre exacto de la marca en BD
         var IMG_DEFAULT = '../assets/imagenes/Imagen de la losion.webp';
         var ctx = (function() { var p = window.location.pathname.split('/'); return '/' + p[1]; })();
+        // Fetch productos activos y filtrar por marca
         fetch(ctx + '/SvProductos', { credentials: 'same-origin' })
             .then(function(r) { return r.json(); })
             .then(function(productos) {
                 if (!Array.isArray(productos)) return;
+                // Filtrar solo productos activos de esta marca
                 var filtrados = productos.filter(function(p) {
                     return p.activo && p.marca && p.marca.toLowerCase() === MARCA.toLowerCase();
                 });
@@ -54,6 +70,7 @@
                     section.innerHTML = '<p style="text-align:center;color:#888;padding:40px">No hay productos disponibles.</p>';
                     return;
                 }
+                // Crear card por cada producto: imagen, nombre, descripción, precio
                 filtrados.forEach(function(p) {
                     var precio = parseFloat(p.precio) || 0;
                     var precioStr = precio.toLocaleString('es-CO') + ' COP';
@@ -76,8 +93,10 @@
     })();
     </script>
 
+    <%-- Footer compartido --%>
     <%@ include file="_footer.jsp" %>
 
+    <%-- cart.js para carrito y búsqueda en navbar --%>
     <script src="../assets/scripts/cart.js"></script>
 </body>
 
