@@ -103,6 +103,7 @@
             <% } %>
 
             <%-- Formulario de registro: envía POST a SvRegistro. novalidate = validación propia JS --%>
+            
             <form id="form-registro" method="post" action="<%= request.getContextPath() %>/SvRegistro" novalidate>
 
                 <div class="formulario-username">

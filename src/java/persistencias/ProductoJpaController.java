@@ -1,179 +1,210 @@
-package persistencias;
+package persistencias; // declara que esta clase pertenece al paquete "persistencias"
 
-import java.io.Serializable;                      // permite serializar el controlador (requerido por JPA)
-import java.util.List;                             // lista de resultados
-import javax.persistence.EntityManager;            // gestor de entidades JPA (conexión activa a BD)
-import javax.persistence.EntityManagerFactory;     // fábrica que crea EntityManagers
-import javax.persistence.EntityNotFoundException;  // excepción cuando no se encuentra la entidad por ID
-import javax.persistence.Query;                    // consulta JPA
-import javax.persistence.criteria.CriteriaQuery;  // API de consultas tipo-seguro (Criteria API)
-import javax.persistence.criteria.Root;            // raíz de la consulta (tabla principal)
-import logica.Categoria;                           // entidad Categoria (relación N:1)
-import logica.Marca;                               // entidad Marca (relación N:1)
-import logica.Producto;                            // entidad Producto que este controller gestiona
-import persistencias.exceptions.NonexistentEntityException; // excepción si el registro no existe
+import java.io.Serializable;                     // permite que esta clase pueda convertirse en bytes (requerido por JPA)
+import java.sql.Timestamp;                        // tipo de Java que representa fecha+hora; MySQL lo necesita para columnas DATETIME
+import java.util.List;                            // permite usar listas (List<Producto>) como tipo de retorno
+import javax.persistence.EntityManager;           // clase de JPA que representa la sesión activa con la base de datos
+import javax.persistence.EntityManagerFactory;    // fábrica que crea EntityManagers; se crea una sola vez en toda la app
+import logica.Producto;                           // importa la entidad Producto que este controlador gestiona
+import persistencias.exceptions.NonexistentEntityException; // excepción personalizada que se lanza cuando el registro no existe en BD
 
-/**
- * ProductoJpaController — Controlador de persistencia para la entidad Producto.
- * Provee operaciones CRUD (Create, Read, Update, Delete) contra la tabla 'producto'.
- * Cada método abre su propio EntityManager, ejecuta la operación y lo cierra.
- * Las relaciones con Categoria y Marca se resuelven con em.getReference() para
- * evitar cargar el objeto completo al hacer INSERT o UPDATE.
- * Generado parcialmente por NetBeans y extendido manualmente.
- */
-public class ProductoJpaController implements Serializable {
+public class ProductoJpaController implements Serializable { // la clase implementa Serializable por requerimiento de JPA
 
-    // Constructor que recibe la fábrica de EntityManagers (inyección manual)
-    public ProductoJpaController(EntityManagerFactory emf) {
-        this.emf = emf;
-    }
-    private EntityManagerFactory emf = null; // referencia a la fábrica de conexiones
+    // ── CONSTRUCTORES ──────────────────────────────────────────────────────
 
-    // Crea y retorna un nuevo EntityManager (conexión activa a BD)
-    // Cada operación CRUD crea su propio EM y lo cierra al finalizar
-    public EntityManager getEntityManager() {
-        return emf.createEntityManager();
-    }
-    
-    // Constructor sin parámetros: usa el EMF del Singleton JpaProvider
-    // Permite crear el controller sin pasar la fábrica explícitamente
-    public ProductoJpaController() {
-        this(JpaProvider.getEntityManagerFactory());
+    public ProductoJpaController(EntityManagerFactory emf) { // constructor que recibe la fábrica de conexiones desde afuera
+        this.emf = emf;                                      // guarda la fábrica recibida en el atributo de la clase
     }
 
-    // CREATE: inserta un nuevo producto en la tabla 'producto'
-    // Resuelve las FK de Categoria y Marca con getReference() (proxy sin cargar toda la entidad)
-    // em.persist() hace el INSERT en MySQL
-    public void create(Producto producto) throws Exception {
-        EntityManager em = null;
-        try {
-            em = getEntityManager();             // abre conexión
-            em.getTransaction().begin();         // inicia transacción
-            Categoria categoria = producto.getCategoria();
-            if (categoria != null) {
-                // getReference() obtiene un proxy de la categoría sin hacer SELECT completo
-                categoria = em.getReference(categoria.getClass(), categoria.getIdCategoria());
-                producto.setCategoria(categoria); // vincula el proxy al producto
-            }
-            Marca marca = producto.getMarca();
-            if (marca != null) {
-                marca = em.getReference(marca.getClass(), marca.getIdMarca());
-                producto.setMarca(marca);        // vincula el proxy al producto
-            }
-            em.persist(producto);                 // INSERT INTO producto (...) VALUES (...)
-            em.getTransaction().commit();         // confirma la transacción
-        } finally {
-            if (em != null) { em.close(); }      // cierra la conexión siempre
+    private EntityManagerFactory emf = null; // atributo que almacena la fábrica de EntityManagers; null hasta que se asigne
+
+    public EntityManager getEntityManager() {    // método que abre y retorna una sesión nueva con la BD
+        return emf.createEntityManager();        // le pide a la fábrica que cree un EntityManager (abre la conexión)
+    }
+
+    public ProductoJpaController() {                         // constructor vacío que usan los servlets (new ProductoJpaController())
+        this(JpaProvider.getEntityManagerFactory());         // llama al otro constructor pasando la fábrica del Singleton compartido
+    }
+
+    // ── CREATE ─────────────────────────────────────────────────────────────
+
+    public void create(Producto producto) throws Exception { // método público que inserta un nuevo producto; puede lanzar Exception
+        String sql = "INSERT INTO producto "                 // inicia el SQL INSERT sobre la tabla producto
+                   + "(id_categoria, id_marca, nombre_producto, descripcion, " // columnas a insertar: las dos FK y los datos básicos
+                   + " precio, stock, activo, imagen_url, created_at, updated_at) " // resto de columnas incluyendo fechas
+                   + "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)"; // valores como parámetros posicionales del ?1 al ?10
+        // no se incluye id_producto porque MySQL lo genera automáticamente con AUTO_INCREMENT
+
+        EntityManager em = null;                             // declara em en null para verificarlo en el finally
+        try {                                                // bloque protegido
+            em = getEntityManager();                         // abre la sesión con la BD
+            em.getTransaction().begin();                     // inicia la transacción; obligatorio antes de cualquier escritura
+
+            if (producto.getCategoria() == null) throw new Exception("El producto debe tener una categoría."); // valida que la categoría no sea null porque id_categoria es NOT NULL en la BD
+            if (producto.getMarca()     == null) throw new Exception("El producto debe tener una marca.");     // valida que la marca no sea null porque id_marca es NOT NULL en la BD
+
+            Timestamp createdAt = producto.getCreatedAt() != null    // verifica si createdAt tiene valor en el objeto
+                                  ? Timestamp.valueOf(producto.getCreatedAt()) // si sí: convierte LocalDateTime → Timestamp (formato que entiende MySQL DATETIME)
+                                  : null;                            // si no: pasa null (MySQL guarda NULL en la columna)
+
+            Timestamp updatedAt = producto.getUpdatedAt() != null    // verifica si updatedAt tiene valor en el objeto
+                                  ? Timestamp.valueOf(producto.getUpdatedAt()) // si sí: convierte LocalDateTime → Timestamp
+                                  : null;                            // si no: pasa null
+
+            em.createNativeQuery(sql)                                // crea la consulta SQL nativa con el String sql definido arriba
+              .setParameter(1,  producto.getCategoria().getIdCategoria()) // ?1 = id_categoria: lee el ID del objeto Categoria que tiene el producto
+              .setParameter(2,  producto.getMarca().getIdMarca())         // ?2 = id_marca: lee el ID del objeto Marca que tiene el producto
+              .setParameter(3,  producto.getNombreProducto())             // ?3 = nombre_producto: nombre del perfume
+              .setParameter(4,  producto.getDescripcion())                // ?4 = descripcion: puede ser null si el producto no tiene descripción
+              .setParameter(5,  producto.getPrecio())                     // ?5 = precio: BigDecimal; MySQL lo guarda como DECIMAL(10,2)
+              .setParameter(6,  producto.getStock())                      // ?6 = stock: número de unidades disponibles en inventario
+              .setParameter(7,  producto.isActivo())                      // ?7 = activo: true/false; MySQL lo guarda como 1 o 0 (TINYINT)
+              .setParameter(8,  producto.getImagenUrl())                  // ?8 = imagen_url: ruta de la imagen; puede ser null
+              .setParameter(9,  createdAt)                                // ?9 = created_at: fecha de creación; puede ser null
+              .setParameter(10, updatedAt)                                // ?10 = updated_at: fecha de última modificación; puede ser null
+              .executeUpdate();                                           // envía el INSERT a MySQL
+
+            em.getTransaction().commit();                    // confirma la transacción: los datos quedan guardados en MySQL
+        } finally {                                          // este bloque se ejecuta siempre, haya error o no
+            if (em != null) { em.close(); }                 // cierra la sesión para devolver la conexión al pool
         }
     }
 
-    // UPDATE: actualiza un producto existente en la tabla 'producto'
-    // em.merge() sincroniza el estado del objeto Java con la BD (UPDATE SET ...)
-    // Si el producto ya no existe, lanza NonexistentEntityException
-    public void edit(Producto producto) throws NonexistentEntityException, Exception {
-        EntityManager em = null;
-        try {
-            em = getEntityManager();             // abre conexión
-            em.getTransaction().begin();         // inicia transacción
-            Categoria categoriaNew = producto.getCategoria();
-            Marca marcaNew = producto.getMarca();
-            if (categoriaNew != null) {
-                categoriaNew = em.getReference(categoriaNew.getClass(), categoriaNew.getIdCategoria());
-                producto.setCategoria(categoriaNew); // resuelve FK
+    // ── EDIT (UPDATE) ──────────────────────────────────────────────────────
+
+    public void edit(Producto producto) throws NonexistentEntityException, Exception { // actualiza un producto existente
+        String sql = "UPDATE producto "                      // inicia el SQL UPDATE sobre la tabla producto
+                   + "SET id_categoria    = ?1, "            // actualiza la FK de categoría con el valor de ?1
+                   + "    id_marca        = ?2, "            // actualiza la FK de marca con el valor de ?2
+                   + "    nombre_producto = ?3, "            // actualiza el nombre del producto con el valor de ?3
+                   + "    descripcion     = ?4, "            // actualiza la descripción con el valor de ?4
+                   + "    precio          = ?5, "            // actualiza el precio con el valor de ?5
+                   + "    stock           = ?6, "            // actualiza el stock con el valor de ?6
+                   + "    activo          = ?7, "            // actualiza el estado activo con el valor de ?7
+                   + "    imagen_url      = ?8, "            // actualiza la URL de la imagen con el valor de ?8
+                   + "    updated_at      = ?9 "             // actualiza la fecha de modificación con el valor de ?9
+                   + "WHERE id_producto   = ?10";            // condición: solo modifica la fila cuyo id_producto coincida con ?10
+
+        EntityManager em = null;                             // declara em en null
+        try {                                                // bloque protegido
+            em = getEntityManager();                         // abre la sesión
+            em.getTransaction().begin();                     // inicia la transacción
+
+            if (producto.getCategoria() == null) throw new Exception("El producto debe tener una categoría."); // valida que la categoría no sea null
+            if (producto.getMarca()     == null) throw new Exception("El producto debe tener una marca.");     // valida que la marca no sea null
+
+            Timestamp ahora = Timestamp.valueOf(java.time.LocalDateTime.now()); // obtiene la fecha y hora actuales y las convierte a Timestamp para MySQL
+
+            int filasAfectadas = (int) em.createNativeQuery(sql)             // crea la consulta UPDATE y guarda cuántas filas modificó
+                .setParameter(1,  producto.getCategoria().getIdCategoria())  // ?1 = nuevo id_categoria
+                .setParameter(2,  producto.getMarca().getIdMarca())          // ?2 = nuevo id_marca
+                .setParameter(3,  producto.getNombreProducto())              // ?3 = nuevo nombre
+                .setParameter(4,  producto.getDescripcion())                 // ?4 = nueva descripción
+                .setParameter(5,  producto.getPrecio())                      // ?5 = nuevo precio DECIMAL(10,2)
+                .setParameter(6,  producto.getStock())                       // ?6 = nuevo stock
+                .setParameter(7,  producto.isActivo())                       // ?7 = nuevo estado activo
+                .setParameter(8,  producto.getImagenUrl())                   // ?8 = nueva URL de imagen
+                .setParameter(9,  ahora)                                     // ?9 = updated_at = fecha y hora de ahora
+                .setParameter(10, producto.getIdProducto())                  // ?10 = clave primaria en el WHERE
+                .executeUpdate();                                            // ejecuta el UPDATE en MySQL
+
+            em.getTransaction().commit();                    // confirma los cambios en MySQL
+
+            if (filasAfectadas == 0) {                       // si MySQL no encontró ninguna fila con ese id_producto...
+                throw new NonexistentEntityException(        // ...lanza la excepción indicando que no existe
+                    "The producto with id " + producto.getIdProducto() + " no longer exists.");
             }
-            if (marcaNew != null) {
-                marcaNew = em.getReference(marcaNew.getClass(), marcaNew.getIdMarca());
-                producto.setMarca(marcaNew);     // resuelve FK
-            }
-            producto = em.merge(producto);        // UPDATE producto SET ... WHERE id_producto = ?
-            em.getTransaction().commit();         // confirma cambios
-        } catch (Exception ex) {
-            String msg = ex.getLocalizedMessage();
-            if (msg == null || msg.length() == 0) {
-                int id = producto.getIdProducto();
-                if (findProducto(id) == null) {  // verifica si el producto aún existe
-                    throw new NonexistentEntityException("The producto with id " + id + " no longer exists.");
-                }
-            }
-            throw ex;                            // relanza la excepción original
-        } finally {
-            if (em != null) { em.close(); }      // cierra conexión siempre
+        } catch (Exception ex) {                             // captura cualquier excepción dentro del try
+            if (em != null && em.getTransaction().isActive()) em.getTransaction().rollback(); // deshace la transacción para no dejar datos a medias
+            throw ex;                                        // relanza la excepción para que el servlet la gestione
+        } finally {                                          // siempre se ejecuta
+            if (em != null) { em.close(); }                 // cierra la sesión
         }
     }
 
-    // DELETE: elimina físicamente un producto de la tabla 'producto'
-    // Usa getReference() para obtener un proxy y luego em.remove() para el DELETE
-    // Si el producto no existe, lanza NonexistentEntityException
-    public void destroy(int id) throws NonexistentEntityException {
-        EntityManager em = null;
-        try {
-            em = getEntityManager();             // abre conexión
-            em.getTransaction().begin();         // inicia transacción
-            Producto producto;
-            try {
-                producto = em.getReference(Producto.class, id); // proxy del producto
-                producto.getIdProducto();        // fuerza la carga del proxy (dispara EntityNotFoundException si no existe)
-            } catch (EntityNotFoundException enfe) {
-                throw new NonexistentEntityException("The producto with id " + id + " no longer exists.", enfe);
+    // ── DESTROY (DELETE) ───────────────────────────────────────────────────
+
+    public void destroy(int id) throws NonexistentEntityException { // elimina un producto por ID; lanza excepción si no existe
+        String sql = "DELETE FROM producto WHERE id_producto = ?1"; // SQL que borra la fila cuyo id_producto coincida con ?1
+
+        EntityManager em = null;                             // declara em en null
+        try {                                                // bloque protegido
+            em = getEntityManager();                         // abre la sesión
+            em.getTransaction().begin();                     // inicia transacción antes del DELETE
+
+            int filasAfectadas = (int) em.createNativeQuery(sql)  // crea la consulta DELETE y guarda cuántas filas eliminó
+                                         .setParameter(1, id)     // ?1 = ID del producto a eliminar
+                                         .executeUpdate();         // ejecuta el DELETE en MySQL
+
+            em.getTransaction().commit();                    // confirma: la fila queda eliminada definitivamente en MySQL
+
+            if (filasAfectadas == 0) {                       // si MySQL no encontró la fila con ese ID...
+                throw new NonexistentEntityException(        // ...lanza la excepción indicando que ese ID no existía
+                    "The producto with id " + id + " no longer exists.");
             }
-            em.remove(producto);                 // DELETE FROM producto WHERE id_producto = ?
-            em.getTransaction().commit();         // confirma eliminación
-        } finally {
-            if (em != null) { em.close(); }      // cierra conexión siempre
+        } catch (NonexistentEntityException ex) {            // captura solo la excepción de "no existe"
+            if (em != null && em.getTransaction().isActive()) em.getTransaction().rollback(); // deshace la transacción
+            throw ex;                                        // relanza para que el servlet lo gestione
+        } finally {                                          // siempre se ejecuta
+            if (em != null) { em.close(); }                 // cierra la sesión
         }
     }
 
-    // READ ALL: retorna TODOS los productos (SELECT * FROM producto)
-    public List<Producto> findProductoEntities() {
-        return findProductoEntities(true, -1, -1);
+    // ── FIND ALL (SELECT *) ────────────────────────────────────────────────
+
+    public List<Producto> findProductoEntities() {           // método público que retorna TODOS los productos sin filtro
+        return findProductoEntities(true, -1, -1);           // llama al método privado con all=true (sin paginación; -1 ignora LIMIT y OFFSET)
     }
 
-    // READ con paginación: retorna un subconjunto de productos (LIMIT/OFFSET)
-    public List<Producto> findProductoEntities(int maxResults, int firstResult) {
-        return findProductoEntities(false, maxResults, firstResult);
+    public List<Producto> findProductoEntities(int maxResults, int firstResult) { // versión con paginación
+        return findProductoEntities(false, maxResults, firstResult);               // llama al privado con all=false
     }
 
-    // Método interno: construye la consulta con Criteria API
-    // Si all=true retorna todos; si all=false aplica paginación
-    private List<Producto> findProductoEntities(boolean all, int maxResults, int firstResult) {
-        EntityManager em = getEntityManager();
-        try {
-            CriteriaQuery cq = em.getCriteriaBuilder().createQuery(); // crea query builder
-            cq.select(cq.from(Producto.class));                      // SELECT * FROM producto
-            Query q = em.createQuery(cq);
-            if (!all) {
-                q.setMaxResults(maxResults);    // LIMIT
-                q.setFirstResult(firstResult);  // OFFSET
+    @SuppressWarnings("unchecked")                           // suprime la advertencia del compilador por el cast sin verificar a List<Producto>
+    private List<Producto> findProductoEntities(boolean all, int maxResults, int firstResult) { // método privado que construye y ejecuta el SELECT
+        String sql = "SELECT * FROM producto ORDER BY id_producto ASC"; // SQL que trae todas las columnas de la tabla producto ordenadas por ID
+
+        EntityManager em = getEntityManager();               // abre la sesión (lectura no necesita transacción)
+        try {                                                // bloque protegido
+            javax.persistence.Query q = em.createNativeQuery(sql, Producto.class); // crea la consulta nativa; Producto.class indica cómo mapear cada fila a un objeto Producto
+            if (!all) {                                      // si se pidió paginación...
+                q.setMaxResults(maxResults);                 // establece el LIMIT: cuántas filas como máximo traer
+                q.setFirstResult(firstResult);               // establece el OFFSET: desde qué posición de la lista empezar
             }
-            return q.getResultList();           // ejecuta y retorna la lista
-        } finally {
-            em.close();                         // cierra conexión
+            return q.getResultList();                        // ejecuta el SELECT y retorna la lista de objetos Producto mapeados
+        } finally {                                          // siempre se ejecuta
+            em.close();                                      // cierra la sesión
         }
     }
 
-    // READ by ID: busca un producto por su clave primaria
-    // Retorna null si no existe (em.find no lanza excepción)
-    public Producto findProducto(int id) {
-        EntityManager em = getEntityManager();
-        try {
-            return em.find(Producto.class, id); // SELECT * FROM producto WHERE id_producto = ?
-        } finally {
-            em.close();
+    // ── FIND BY ID ─────────────────────────────────────────────────────────
+
+    @SuppressWarnings("unchecked")                           // suprime la advertencia del compilador
+    public Producto findProducto(int id) {                   // método que busca y retorna un producto por su clave primaria
+        String sql = "SELECT * FROM producto WHERE id_producto = ?1"; // SQL que busca la fila exacta con ese id_producto
+
+        EntityManager em = getEntityManager();               // abre la sesión
+        try {                                                // bloque protegido
+            List<Producto> resultado = em.createNativeQuery(sql, Producto.class) // ejecuta el SELECT con el filtro por ID
+                                         .setParameter(1, id)                    // ?1 = el ID que se busca
+                                         .getResultList();                        // obtiene la lista (tendrá 0 o 1 elemento)
+            return resultado.isEmpty() ? null : resultado.get(0); // si la lista está vacía retorna null; si tiene elemento retorna el primero
+        } finally {                                          // siempre se ejecuta
+            em.close();                                      // cierra la sesión
         }
     }
 
-    // COUNT: retorna el número total de productos en la tabla
-    // SELECT COUNT(*) FROM producto
-    public int getProductoCount() {
-        EntityManager em = getEntityManager();
-        try {
-            CriteriaQuery cq = em.getCriteriaBuilder().createQuery();
-            Root<Producto> rt = cq.from(Producto.class);             // raíz: tabla producto
-            cq.select(em.getCriteriaBuilder().count(rt));            // COUNT(*)
-            Query q = em.createQuery(cq);
-            return ((Long) q.getSingleResult()).intValue();           // convierte Long a int
-        } finally {
-            em.close();
+    // ── COUNT ──────────────────────────────────────────────────────────────
+
+    public int getProductoCount() {                          // método que retorna el número total de productos en la tabla
+        String sql = "SELECT COUNT(*) FROM producto";        // SQL que cuenta todas las filas de la tabla producto
+
+        EntityManager em = getEntityManager();               // abre la sesión
+        try {                                                // bloque protegido
+            Object resultado = em.createNativeQuery(sql).getSingleResult(); // ejecuta el COUNT(*) y obtiene el único valor retornado como Object
+            return ((Number) resultado).intValue();          // castea a Number (cubre Long y BigInteger) y convierte a int
+        } finally {                                          // siempre se ejecuta
+            em.close();                                      // cierra la sesión
         }
     }
 }
