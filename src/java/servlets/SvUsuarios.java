@@ -31,9 +31,9 @@ public class SvUsuarios extends HttpServlet {
             throws ServletException, IOException {
 
         response.setContentType("application/json;charset=UTF-8"); // La respuesta será JSON en UTF-8
-        PrintWriter out = response.getWriter(); // Obtiene el escritor para enviar texto al cliente
+        PrintWriter out = response.getWriter(); // Obtiene el escritor para enviar texto al cliente - respuesta que el usuario vera en el navegador
 
-        EntityManager em = null; // Se declara fuera del try para poder cerrarlo en el finally
+        EntityManager em = null; // Se declara fuera del try para poder cerrarlo en el finally - reservando un nombre y un espacio en la memorioa del programa
         try {
             // Verifica que el usuario de sesión tenga el permiso VER_USUARIOS
             if (!AuthHelper.tienePermiso(request, "VER_USUARIOS")) {

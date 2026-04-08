@@ -39,6 +39,17 @@
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/conf/persistence.xml</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/logica/Usuario.java</file>
             <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvRegistro.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/MarcaJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/UsuarioJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/web/WEB-INF/web.xml</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvLogin.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/ClienteJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/ControladoraPersistencia.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/PagoJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/PedidoJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/PermisoJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/persistencias/ProductoJpaController.java</file>
+            <file>file:/C:/Users/eduar/Documents/Proyecto/src/java/servlets/SvProductos.java</file>
         </group>
     </open-files>
 </project-private>

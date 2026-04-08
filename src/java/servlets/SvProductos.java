@@ -135,19 +135,69 @@ public class SvProductos extends HttpServlet {           // extiende HttpServlet
 
             // Activar o desactivar un producto sin cambiar ningún otro dato (toggle activo)
             if ("toggleActivo".equals(accion)) {
-                int id = Integer.parseInt(request.getParameter("id")); // ID del producto a toggle
-                ProductoJpaController prodCtrlT = new ProductoJpaController(); // controlador para la actualización
-                Producto p = prodCtrlT.findProducto(id); // SELECT * FROM producto WHERE id_producto = ?
-                if (p == null) {
-                    response.setStatus(HttpServletResponse.SC_NOT_FOUND); // HTTP 404
-                    out.print("{\"error\":\"Producto no encontrado\"}");
-                    return;
+                int id = Integer.parseInt(request.getParameter("id")); // convierte el parámetro "id" que llega como texto en la petición HTTP a entero para usarlo como clave primaria
+
+                // Se crea un EntityManager propio para esta operación en lugar de reutilizar uno existente.
+                // Esto es necesario porque el código original llamaba a prodCtrlT.edit(p), que exigía
+                // que el producto tuviera categoría y marca no nulas. Como findProducto() cierra su
+                // EntityManager antes de devolver el objeto, esas relaciones quedaban null y edit()
+                // lanzaba una excepción. Aquí trabajamos con SQL directo para evitar ese problema.
+                EntityManager emToggle = JpaProvider.getEntityManagerFactory().createEntityManager();
+                try {
+                    // Se consulta SOLO la columna "activo" del producto en lugar de cargar toda la entidad.
+                    // Esto evita tener que resolver las relaciones con Categoria y Marca, que eran la
+                    // causa original del fallo: al cargar el producto completo con el EM cerrado,
+                    // esas relaciones quedaban null y bloqueaban el guardado.
+                    List<?> resultado = emToggle.createNativeQuery(
+                        "SELECT activo FROM producto WHERE id_producto = ?1")
+                        .setParameter(1, id) // ?1 = el ID del producto que llega del front
+                        .getResultList();    // ejecuta el SELECT y devuelve la lista de resultados
+
+                    if (resultado.isEmpty()) {                           // si la lista está vacía el producto no existe en la BD
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND); // responde con HTTP 404
+                        out.print("{\"error\":\"Producto no encontrado\"}");   // mensaje de error en JSON para el front
+                        return;                                          // termina el procesamiento aquí
+                    }
+
+                    // MySQL Connector/J puede devolver TINYINT(1) como Boolean, Number o String
+                    // dependiendo de la versión del driver, por eso se manejan los tres casos.
+                    // El código original asumía siempre Number, lo que causaba ClassCastException
+                    // cuando el driver devolvía Boolean, impidiendo activar el producto de nuevo.
+                    Object val = resultado.get(0);  // valor crudo que devuelve el driver JDBC para la columna activo
+                    boolean activoActual;
+                    if (val instanceof Boolean)      activoActual = (Boolean) val;                        // driver devolvió true/false directamente
+                    else if (val instanceof Number)  activoActual = ((Number) val).intValue() != 0;       // driver devolvió 1/0 como número
+                    else                             activoActual = "1".equals(String.valueOf(val));      // driver devolvió "1"/"0" como texto
+
+                    boolean nuevoEstado = !activoActual; // invierte el estado: si estaba activo pasa a inactivo y viceversa
+
+                    emToggle.getTransaction().begin(); // inicia la transacción manualmente (RESOURCE_LOCAL requiere manejo explícito)
+
+                    // Se actualiza SOLO activo y updated_at en lugar de todos los campos del producto.
+                    // El método edit() original actualizaba toda la fila y validaba que categoría y marca
+                    // no fueran null, lo que fallaba porque las relaciones no se cargaban al cerrar el EM.
+                    // Con este UPDATE directo solo tocamos lo necesario y evitamos esa validación innecesaria.
+                    emToggle.createNativeQuery(
+                        "UPDATE producto SET activo = ?1, updated_at = ?2 WHERE id_producto = ?3")
+                        .setParameter(1, nuevoEstado)       // ?1 = el nuevo valor booleano (true o false)
+                        .setParameter(2, LocalDateTime.now()) // ?2 = fecha y hora actual para registrar cuándo se hizo el cambio
+                        .setParameter(3, id)                // ?3 = ID del producto a modificar
+                        .executeUpdate();                   // ejecuta el UPDATE en la BD
+
+                    emToggle.getTransaction().commit(); // confirma la transacción: el cambio queda guardado en MySQL
+
+                    // EclipseLink mantiene una caché compartida (L2) de entidades para evitar ir a la BD en cada lectura.
+                    // Los UPDATE con native query actualizan la BD pero NO actualizan esa caché, por lo que el
+                    // siguiente GET devolvía el estado anterior del producto y el admin veía la tabla sin cambios.
+                    // evict() elimina este producto específico de la caché, forzando que el próximo SELECT
+                    // vaya directamente a la BD y traiga el estado actualizado.
+                    JpaProvider.getEntityManagerFactory().getCache().evict(Producto.class, id);
+
+                    out.print("{\"ok\":true,\"activo\":" + nuevoEstado + "}"); // responde con el nuevo estado para que el front actualice el badge sin esperar
+                } finally {
+                    emToggle.close(); // SIEMPRE se cierra el EntityManager, haya error o no, para liberar la conexión al pool
                 }
-                p.setActivo(!p.isActivo());              // invertir el estado: activo→inactivo o inactivo→activo
-                p.setUpdatedAt(LocalDateTime.now());     // actualizar la fecha de modificación
-                prodCtrlT.edit(p);                       // UPDATE producto SET activo=?, updated_at=? WHERE id_producto=?
-                out.print("{\"ok\":true,\"activo\":" + p.isActivo() + "}"); // retorna el nuevo estado para actualizar la UI
-                return;
+                return; // termina doPost: no continúa hacia el bloque de crear/editar que está debajo
             }
 
             // Leer los campos del formulario para crear o editar un producto
