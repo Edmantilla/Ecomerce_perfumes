@@ -4,10 +4,11 @@ import enums.EstadoPago;                                 // enum con los estados
 import java.io.IOException;                              // excepción de entrada/salida
 import java.io.PrintWriter;                              // escribe texto en la respuesta HTTP
 import java.math.BigDecimal;                             // tipo exacto para cálculos monetarios (suma de pagos, diferencias)
+import java.sql.Timestamp;                               // convierte LocalDateTime al tipo compatible con JDBC para los UPDATE nativos
 import java.time.LocalDateTime;                          // fecha+hora actual para el registro del pago
 import java.util.List;                                   // lista de pagos
 import javax.persistence.EntityManager;                  // gestiona la sesión activa con la BD
-import javax.persistence.TypedQuery;                     // consulta JPQL con tipo de retorno definido
+import javax.persistence.Query;                          // consulta JPA nativa; reemplaza TypedQuery en este servlet
 import javax.servlet.ServletException;                   // excepción propia de los servlets
 import javax.servlet.http.HttpServlet;                   // clase base de todos los servlets HTTP
 import javax.servlet.http.HttpServletRequest;            // representa la petición HTTP entrante
@@ -25,6 +26,9 @@ import persistencias.PedidoJpaController;                // controlador para con
  *       cambia automáticamente el estado del pedido a PAGO.
  * POST accion=actualizar: modifica un pago existente (monto, método, estado).
  * Requiere permiso GESTIONAR_PAGOS o sesión activa.
+ *
+ * TODAS las consultas a BD usan createNativeQuery con SQL puro y parámetros posicionales (?).
+ * EclipseLink no soporta parámetros nombrados (:x) en native queries → siempre usamos ?.
  */
 @javax.servlet.annotation.WebServlet(name = "SvPagos", urlPatterns = {"/SvPagos"}) // cuando llegue a /SvPagos, Tomcat ejecuta esta clase
 public class SvPagos extends HttpServlet {               // extiende HttpServlet para manejar peticiones HTTP
@@ -50,19 +54,26 @@ public class SvPagos extends HttpServlet {               // extiende HttpServlet
 
             if (idPedidoStr != null) {                   // si se proporcionó un ID de pedido
                 int idPedido = Integer.parseInt(idPedidoStr); // parsear el ID como entero
-                // Traer todos los pagos registrados para este pedido
-                TypedQuery<Pago> q = em.createQuery(
-                    "SELECT p FROM Pago p WHERE p.pedido.idPedido = :id", Pago.class); // filtrar por id_pedido
-                q.setParameter("id", idPedido);
-                List<Pago> pagos = q.getResultList();    // lista de pagos del pedido (puede haber varios pagos parciales)
 
-                // Calcular el total del pedido y cuánto se ha pagado hasta ahora
-                Pedido pedido = new PedidoJpaController().findPedido(idPedido); // SELECT * FROM pedido WHERE id_pedido = ?
+                // Consulta nativa para traer todos los pagos registrados de este pedido.
+                // Reemplaza el JPQL: "SELECT p FROM Pago p WHERE p.pedido.idPedido = :id"
+                // Traduce a SQL directo sobre la tabla pago filtrando por la FK id_pedido.
+                // Pago.class instruye a EclipseLink para mapear cada fila al objeto Pago automáticamente.
+                Query qPagos = em.createNativeQuery(
+                    "SELECT * FROM pago WHERE id_pedido = ?", Pago.class);
+                qPagos.setParameter(1, idPedido);        // ? pos.1 = id del pedido cuyos pagos se quieren consultar
+                List<Pago> pagos = qPagos.getResultList(); // ejecuta SELECT y retorna lista de entidades Pago mapeadas
+
+                // PedidoJpaController.findPedido() ya usa createNativeQuery internamente:
+                // ejecuta: SELECT * FROM pedido WHERE id_pedido = ?
+                Pedido pedido = new PedidoJpaController().findPedido(idPedido); // busca el pedido por su id para obtener el total
                 BigDecimal totalPedido = pedido != null && pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO; // total del pedido en BD
+
+                // Suma los montos pagados en Java (sin JPQL); más claro y sin riesgo de nulls
                 BigDecimal sumaPagada = pagos.stream()
                     .filter(p -> p.getMontoPagado() != null) // solo pagos con monto registrado
                     .map(Pago::getMontoPagado)           // extraer el monto de cada pago
-                    .reduce(BigDecimal.ZERO, BigDecimal::add); // sumar todos los montos: sumaPagada = Σ montoPagado
+                    .reduce(BigDecimal.ZERO, BigDecimal::add); // sumar todos los montos
 
                 StringBuilder sb = new StringBuilder("{"); // inicia el objeto JSON de respuesta
                 sb.append("\"totalPedido\":").append(totalPedido).append(","); // cuánto debe el pedido en total
@@ -134,8 +145,10 @@ public class SvPagos extends HttpServlet {               // extiende HttpServlet
                 return;
             }
 
-            PedidoJpaController pedidoCtrl = new PedidoJpaController(); // controlador para buscar el pedido
-            Pedido pedido = pedidoCtrl.findPedido(idPedido); // SELECT * FROM pedido WHERE id_pedido = ?
+            // PedidoJpaController.findPedido() usa internamente createNativeQuery:
+            // SELECT * FROM pedido WHERE id_pedido = ?
+            PedidoJpaController pedidoCtrl = new PedidoJpaController();
+            Pedido pedido = pedidoCtrl.findPedido(idPedido); // busca el pedido; retorna null si no existe
             if (pedido == null) {                        // si el pedido no existe en BD
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND); // HTTP 404
                 out.print("{\"error\":\"Pedido no encontrado\"}");
@@ -161,14 +174,18 @@ public class SvPagos extends HttpServlet {               // extiende HttpServlet
                 return;
             }
 
-            // NUEVO PAGO: verificar que el monto no exceda el saldo pendiente del pedido
-            // Solo se suman los pagos APROBADOS (no los pendientes o rechazados)
-            TypedQuery<BigDecimal> qSum = em.createQuery(
-                "SELECT COALESCE(SUM(p.montoPagado),0) FROM Pago p WHERE p.pedido.idPedido = :id AND p.estadoPago = :estado",
-                BigDecimal.class);                       // suma de pagos aprobados del pedido
-            qSum.setParameter("id", idPedido);           // filtrar por el pedido
-            qSum.setParameter("estado", EstadoPago.APROBADO); // solo pagos aprobados
-            BigDecimal sumaPagada = qSum.getSingleResult(); // total ya pagado y aprobado
+            // NUEVO PAGO: calcular suma de pagos aprobados para verificar que no se exceda el total.
+            // Reemplaza el JPQL: "SELECT COALESCE(SUM(p.montoPagado),0) FROM Pago p WHERE p.pedido.idPedido = :id AND p.estadoPago = :estado"
+            // Traduce a SQL directo sobre la tabla pago filtrando por id_pedido y estado_pago.
+            // COALESCE(SUM(monto_pagado), 0): si no hay pagos, SUM retorna NULL; COALESCE lo convierte a 0.
+            // El resultado puede venir como BigDecimal o Integer según el driver; toString() + new BigDecimal() garantiza la conversión.
+            Query qSum = em.createNativeQuery(
+                "SELECT COALESCE(SUM(monto_pagado), 0) FROM pago WHERE id_pedido = ? AND estado_pago = ?");
+            qSum.setParameter(1, idPedido);                  // ? pos.1 = id del pedido
+            qSum.setParameter(2, EstadoPago.APROBADO.name()); // ? pos.2 = "APROBADO" (solo suma pagos aprobados)
+            // new BigDecimal(toString()) es el cast más seguro: convierte cualquier tipo numérico retornado por MySQL
+            BigDecimal sumaPagada = new BigDecimal(qSum.getSingleResult().toString());
+
             BigDecimal totalPedido = pedido.getTotal() != null ? pedido.getTotal() : BigDecimal.ZERO; // total del pedido
             BigDecimal pendiente = totalPedido.subtract(sumaPagada); // saldo pendiente = total - ya pagado
 
@@ -194,14 +211,17 @@ public class SvPagos extends HttpServlet {               // extiende HttpServlet
             // Verificar si con este nuevo pago ya se cubre el total del pedido
             BigDecimal nuevaSuma = sumaPagada.add(monto); // total pagado después de este nuevo pago
             if (nuevaSuma.compareTo(totalPedido) >= 0) { // si ya se cubrió el total (o se superó)
-                // Cambiar el estado del pedido a PAGO automáticamente
-                em.getTransaction().begin();             // inicia transacción para el UPDATE del pedido
-                Pedido pedidoMerge = em.find(Pedido.class, idPedido); // recargar el pedido dentro de la transacción
-                if (pedidoMerge != null) {
-                    pedidoMerge.setEstado(enums.EstadoPedido.PAGO); // actualizar el estado a PAGO
-                    pedidoMerge.setUpdatedAt(LocalDateTime.now()); // registrar la fecha del cambio
-                }
-                em.getTransaction().commit();            // confirmar el cambio de estado del pedido
+                // Cambiar el estado del pedido a PAGO con una consulta nativa UPDATE.
+                // Reemplaza: em.find(Pedido.class, idPedido) + setEstado() + em.merge(pedido)
+                // Ahora es un único UPDATE directo: más eficiente (no carga el objeto Pedido en memoria).
+                em.getTransaction().begin();             // inicia transacción para el UPDATE del estado del pedido
+                Query qUpdate = em.createNativeQuery(
+                    "UPDATE pedido SET estado = ?, updated_at = ? WHERE id_pedido = ?");
+                qUpdate.setParameter(1, enums.EstadoPedido.PAGO.name());      // ? pos.1 → estado = "PAGO"
+                qUpdate.setParameter(2, Timestamp.valueOf(LocalDateTime.now())); // ? pos.2 → updated_at = ahora
+                qUpdate.setParameter(3, idPedido);                             // ? pos.3 → WHERE id_pedido = X
+                qUpdate.executeUpdate();                 // ejecuta el UPDATE; cambia el estado del pedido a PAGO
+                em.getTransaction().commit();            // confirma el cambio de estado en la base de datos
                 out.print("{\"ok\":true,\"estadoActualizado\":\"PAGO\"}"); // notificar al frontend que el pedido pasó a PAGO
             } else {
                 out.print("{\"ok\":true}"); // pago registrado pero el pedido aún no está completamente pagado

@@ -5,7 +5,7 @@ import java.io.PrintWriter;                              // escribe texto en la 
 import java.math.BigDecimal;                             // tipo numérico exacto para sumas de dinero (sin errores de punto flotante)
 import java.util.List;                                   // lista de pedidos recientes
 import javax.persistence.EntityManager;                  // gestiona la sesión activa con la BD
-import javax.persistence.TypedQuery;                     // consulta JPQL con tipo de retorno definido
+import javax.persistence.Query;                          // consulta JPA nativa; reemplaza TypedQuery en este servlet
 import javax.servlet.ServletException;                   // excepción propia de los servlets
 import javax.servlet.annotation.WebServlet;              // anotación que mapea la URL al servlet
 import javax.servlet.http.HttpServlet;                   // clase base de todos los servlets HTTP
@@ -26,6 +26,9 @@ import persistencias.UsuarioJpaController;               // controlador para con
  *   - usuarios: cantidad total de usuarios
  *   - pedidosRecientes: los 5 pedidos más recientes con cliente, total y estado
  * Requiere el permiso VER_DASHBOARD.
+ *
+ * TODAS las consultas a BD usan createNativeQuery con SQL puro y parámetros posicionales (?).
+ * EclipseLink no soporta parámetros nombrados (:x) en native queries → siempre usamos ?.
  */
 @WebServlet(name = "SvDashboard", urlPatterns = {"/SvDashboard"}) // cuando llegue una petición a /SvDashboard, Tomcat ejecuta esta clase
 public class SvDashboard extends HttpServlet {           // extiende HttpServlet para manejar peticiones HTTP
@@ -48,44 +51,52 @@ public class SvDashboard extends HttpServlet {           // extiende HttpServlet
         try {                                            // bloque protegido: si algo falla se captura abajo
             em = JpaProvider.getEntityManagerFactory().createEntityManager(); // abre una sesión con la BD
 
-            // Obtener contadores rápidos usando los métodos count() de cada controlador JPA
-            // Cada llamada abre y cierra su propio EntityManager internamente (son lectura liviana)
+            // Obtener contadores usando los métodos count() de cada controlador.
+            // PedidoJpaController.getPedidoCount() usa internamente:
+            //   createNativeQuery("SELECT COUNT(*) FROM pedido")
             long totalProductos = new ProductoJpaController().getProductoCount(); // SELECT COUNT(*) FROM producto
             long totalUsuarios  = new UsuarioJpaController().getUsuarioCount();   // SELECT COUNT(*) FROM usuario
             long totalPedidos   = new PedidoJpaController().getPedidoCount();     // SELECT COUNT(*) FROM pedido
 
-            // Sumar los totales de todos los pedidos EXCEPTO los cancelados
-            // COALESCE convierte null a 0 si no hay pedidos (evita que getSingleResult() retorne null)
-            TypedQuery<BigDecimal> qVentas = em.createQuery( // crea una consulta JPQL tipada que retorna un BigDecimal
-                "SELECT COALESCE(SUM(p.total), 0) FROM Pedido p WHERE p.estado <> enums.EstadoPedido.CANCELADO", BigDecimal.class
-            );                                           // SUM de p.total: suma todos los totales excepto pedidos cancelados
-            BigDecimal ventas = qVentas.getSingleResult(); // obtiene el único resultado: la suma total
+            // Consulta nativa para sumar los totales de todos los pedidos EXCEPTO los cancelados.
+            // Reemplaza el JPQL: "SELECT COALESCE(SUM(p.total), 0) FROM Pedido p WHERE p.estado <> enums.EstadoPedido.CANCELADO"
+            // En SQL nativo el enum se compara directamente con su valor de texto en BD: estado <> 'CANCELADO'.
+            // COALESCE(SUM(total), 0): si no hay pedidos, SUM retorna NULL; COALESCE lo convierte a 0.
+            // El resultado puede llegar como BigDecimal, Double o Integer según el driver;
+            // new BigDecimal(toString()) garantiza la conversión sin importar el tipo retornado.
+            Query qVentas = em.createNativeQuery(
+                "SELECT COALESCE(SUM(total), 0) FROM pedido WHERE estado <> 'CANCELADO'");
+            BigDecimal ventas = new BigDecimal(qVentas.getSingleResult().toString()); // obtiene el único escalar y lo convierte a BigDecimal
 
-            // Traer los 5 pedidos más recientes para mostrar en la tabla del dashboard
-            // COALESCE en la fecha: usa fechaPedido si existe, si no usa createdAt como respaldo
-            TypedQuery<Pedido> qRecientes = em.createQuery( // consulta para obtener pedidos ordenados del más reciente
-                "SELECT p FROM Pedido p ORDER BY COALESCE(p.fechaPedido, p.createdAt) DESC", Pedido.class
-            );
-            qRecientes.setMaxResults(5);                 // LIMIT 5: solo los 5 pedidos más recientes
-            List<Pedido> recientes = qRecientes.getResultList(); // ejecuta el SELECT y retorna la lista de pedidos
+            // Consulta nativa para los 5 pedidos más recientes ordenados por fecha descendente.
+            // Reemplaza el JPQL: "SELECT p FROM Pedido p ORDER BY COALESCE(p.fechaPedido, p.createdAt) DESC"
+            // con setMaxResults(5) (que en JPQL agrega LIMIT al SQL generado).
+            // En SQL nativo el ORDER BY usa los nombres de columna reales: fecha_pedido y created_at.
+            // COALESCE(fecha_pedido, created_at): usa fecha_pedido si existe, si no usa created_at como respaldo.
+            // LIMIT 5 al final del SQL nativo reemplaza setMaxResults(5) que se usaba con TypedQuery.
+            // Pedido.class: EclipseLink mapea automáticamente cada fila al objeto Pedido.
+            Query qRecientes = em.createNativeQuery(
+                "SELECT * FROM pedido ORDER BY COALESCE(fecha_pedido, created_at) DESC LIMIT 5",
+                Pedido.class);                           // Pedido.class = mapeo automático de filas a entidades
+            List<Pedido> recientes = qRecientes.getResultList(); // ejecuta el SELECT y retorna la lista de los 5 pedidos más recientes
 
-            // Construir el objeto JSON de respuesta para el dashboard manualmente (sin Gson/Jackson)
+            // Construir el objeto JSON de respuesta para el dashboard
             StringBuilder sb = new StringBuilder("{");   // inicia el objeto JSON raíz con {
             sb.append("\"ventas\":").append(ventas != null ? ventas : BigDecimal.ZERO).append(",");   // total de ventas en dinero
             sb.append("\"productos\":").append(totalProductos).append(","); // cantidad total de productos en catálogo
             sb.append("\"pedidos\":").append(totalPedidos).append(",");     // cantidad total de pedidos registrados
             sb.append("\"usuarios\":").append(totalUsuarios).append(",");   // cantidad total de cuentas de usuario
             sb.append("\"pedidosRecientes\":[");         // inicia el array de pedidos recientes
-            for (int i = 0; i < recientes.size(); i++) { // iterar sobre cada pedido reciente
+            for (int i = 0; i < recientes.size(); i++) { // iterar sobre cada pedido reciente (máximo 5)
                 Pedido p = recientes.get(i);             // pedido actual
-                if (i > 0) sb.append(",");               // separador entre objetos JSON del array (no se pone antes del primero)
+                if (i > 0) sb.append(",");               // separador entre objetos JSON del array
                 sb.append("{");
                 sb.append("\"id\":").append(p.getIdPedido()).append(","); // ID del pedido
                 sb.append("\"cliente\":\"").append(
                     p.getCliente() != null ? escapeJson(p.getCliente().getNombreCompleto()) : "" // nombre del cliente o vacío si no tiene
                 ).append("\",");
                 sb.append("\"total\":").append(p.getTotal() != null ? p.getTotal() : 0).append(","); // monto total del pedido
-                // Usar fechaPedido si está disponible, si no usar createdAt como respaldo para la fecha
+                // Usar fechaPedido si está disponible, si no usar createdAt como respaldo
                 sb.append("\"fecha\":\"").append(
                     p.getFechaPedido() != null ? p.getFechaPedido().toString() :                   // fecha del pedido si existe
                     (p.getCreatedAt() != null ? p.getCreatedAt().toString() : "")                  // si no, fecha de creación en BD
@@ -105,10 +116,9 @@ public class SvDashboard extends HttpServlet {           // extiende HttpServlet
     }
 
     // Método auxiliar que escapa caracteres especiales en strings que irán dentro de un JSON
-    // Evita que comillas, barras o saltos de línea rompan la estructura del JSON retornado
     private String escapeJson(String s) {
-        if (s == null) return "";                        // si es null retorna cadena vacía para no escribir "null" en el JSON
+        if (s == null) return "";                        // si es null retorna cadena vacía
         return s.replace("\\", "\\\\").replace("\"", "\\\"") // escapa barras y comillas dobles
-                .replace("\n", "\\n").replace("\r", "\\r");  // escapa saltos de línea y retornos de carro
+                .replace("\n", "\\n").replace("\r", "\\r");  // escapa saltos de línea
     }
 }

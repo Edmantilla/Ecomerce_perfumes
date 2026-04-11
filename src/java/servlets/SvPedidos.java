@@ -3,10 +3,11 @@ package servlets;                                        // declara que esta cla
 import enums.EstadoPedido;                               // enum con los estados posibles: PENDIENTE, ENVIADO, ENTREGADO, CANCELADO, PAGO
 import java.io.IOException;                              // excepción de entrada/salida
 import java.io.PrintWriter;                              // escribe texto en la respuesta HTTP
-import java.time.LocalDateTime;                          // fecha+hora para updated_at al cambiar estado
+import java.sql.Timestamp;                               // convierte LocalDateTime al tipo compatible con JDBC para los UPDATE nativos
+import java.time.LocalDateTime;                          // fecha+hora actual para updated_at al cambiar estado
 import java.util.List;                                   // lista de pedidos y teléfonos
 import javax.persistence.EntityManager;                  // gestiona la sesión activa con la BD
-import javax.persistence.TypedQuery;                     // consulta JPQL con tipo de retorno definido
+import javax.persistence.Query;                          // consulta JPA nativa o JPQL; reemplaza TypedQuery en este servlet
 import javax.servlet.ServletException;                   // excepción propia de los servlets
 import javax.servlet.annotation.WebServlet;              // anotación que mapea la URL al servlet
 import javax.servlet.http.HttpServlet;                   // clase base de todos los servlets HTTP
@@ -14,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;            // representa la petici
 import javax.servlet.http.HttpServletResponse;           // representa la respuesta HTTP saliente
 import logica.Pedido;                                    // entidad que representa un pedido
 import logica.Telefonocliente;                           // entidad que representa un teléfono del cliente
-import logica.Usuario;                                   // entidad del usuario (no usada directamente pero importada por convención)
 import persistencias.JpaProvider;                        // Singleton que provee la EntityManagerFactory
 import persistencias.PedidoJpaController;                // controlador para CRUD en la tabla pedido
 
@@ -22,6 +22,9 @@ import persistencias.PedidoJpaController;                // controlador para CRU
  * SvPedidos — Servlet de gestión de pedidos para el panel admin.
  * GET: lista todos los pedidos con datos del cliente (requiere VER_PEDIDOS).
  * POST accion=cambiarEstado: actualiza el estado de un pedido (requiere GESTIONAR_PEDIDOS).
+ *
+ * TODAS las consultas a BD usan createNativeQuery con SQL puro y parámetros posicionales (?).
+ * EclipseLink no soporta parámetros nombrados (:x) en native queries → siempre usamos ?.
  */
 @WebServlet(name = "SvPedidos", urlPatterns = {"/SvPedidos"}) // cuando llegue una petición a /SvPedidos, Tomcat ejecuta esta clase
 public class SvPedidos extends HttpServlet {             // extiende HttpServlet para manejar peticiones HTTP
@@ -42,10 +45,13 @@ public class SvPedidos extends HttpServlet {             // extiende HttpServlet
 
         EntityManager emGet = null;                      // EntityManager para consultar teléfonos de cada cliente
         try {
-            PedidoJpaController ctrl = new PedidoJpaController(); // controlador para consultar todos los pedidos
-            List<Pedido> pedidos = ctrl.findPedidoEntities(); // SELECT * FROM pedido ORDER BY id_pedido ASC
-            // EntityManager separado para consultar teléfonos de cada cliente sin conflicto de sesión
-            emGet = JpaProvider.getEntityManagerFactory().createEntityManager(); // abre sesión para consultas auxiliares
+            // PedidoJpaController.findPedidoEntities() ya usa createNativeQuery internamente:
+            // ejecuta: SELECT * FROM pedido  → mapea cada fila a un objeto Pedido via Pedido.class
+            PedidoJpaController ctrl = new PedidoJpaController(); // controlador que internamente usa SQL nativo
+            List<Pedido> pedidos = ctrl.findPedidoEntities();     // retorna List<Pedido> con todos los pedidos
+
+            // EntityManager separado para consultar teléfonos sin conflicto de sesión con el controller
+            emGet = JpaProvider.getEntityManagerFactory().createEntityManager(); // abre sesión para consultas de teléfonos
 
             // Construir el array JSON de pedidos con los datos del cliente incluidos
             StringBuilder sb = new StringBuilder("[");   // inicia el array JSON
@@ -53,30 +59,38 @@ public class SvPedidos extends HttpServlet {             // extiende HttpServlet
                 Pedido p = pedidos.get(i);               // pedido actual
                 if (i > 0) sb.append(",");               // separador entre objetos del array
                 sb.append("{");
-                sb.append("\"id\":").append(p.getIdPedido()).append(","); // ID del pedido
+                sb.append("\"id\":").append(p.getIdPedido()).append(",");  // ID del pedido
                 sb.append("\"estado\":\"").append(esc(p.getEstado() != null ? p.getEstado().name() : "")).append("\","); // ej: "PENDIENTE"
                 sb.append("\"fecha\":\"").append(p.getFechaPedido() != null ? p.getFechaPedido().toString() : "").append("\","); // fecha de la compra
                 sb.append("\"total\":").append(p.getTotal() != null ? p.getTotal() : 0).append(","); // monto total del pedido
                 sb.append("\"cliente\":\"").append(
                     p.getCliente() != null ? esc(p.getCliente().getNombreCompleto()) : "" // nombre del cliente o vacío
                 ).append("\",");
+
                 if (p.getCliente() != null) {            // si el pedido tiene un cliente asociado
                     int idC = p.getCliente().getIdCliente(); // ID del cliente para consultar sus datos
                     String dir = p.getCliente().getDireccion(); // dirección de entrega del cliente
-                    sb.append("\"direccionCliente\":\"").append(esc(dir != null ? dir : "")).append("\","); // dirección para el envío
-                    // Consultar los teléfonos activos del cliente para mostrarlos en el panel admin
-                    List<Telefonocliente> tels = emGet.createQuery(
-                        "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true ORDER BY t.idTelefono",
-                        Telefonocliente.class).setParameter("id", idC).getResultList(); // SELECT teléfonos activos del cliente
-                    sb.append("\"telefonosCliente\":[");  // inicia el array de teléfonos
-                    for (int j = 0; j < tels.size(); j++) { // iterar sobre los teléfonos del cliente
+                    sb.append("\"direccionCliente\":\"").append(esc(dir != null ? dir : "")).append("\",");
+
+                    // Consulta nativa para obtener los teléfonos activos del cliente.
+                    // Reemplaza el JPQL: "SELECT t FROM Telefonocliente t WHERE t.cliente.idCliente = :id AND t.activo = true"
+                    // Traduce a SQL directo sobre la tabla telefono_cliente.
+                    // ? posicional obligatorio en EclipseLink para native queries.
+                    // activo = 1 porque MySQL almacena boolean como TINYINT(1): 1=true, 0=false.
+                    Query qTel = emGet.createNativeQuery(
+                        "SELECT * FROM telefono_cliente WHERE id_cliente = ? AND activo = 1 ORDER BY id_telefono",
+                        Telefonocliente.class);          // Telefonocliente.class: EclipseLink mapea cada fila al objeto automáticamente
+                    qTel.setParameter(1, idC);           // ? pos.1 = id del cliente cuyos teléfonos se quieren
+                    List<Telefonocliente> tels = qTel.getResultList(); // ejecuta SELECT y retorna lista de entidades Telefonocliente
+
+                    sb.append("\"telefonosCliente\":["); // inicia el array de teléfonos
+                    for (int j = 0; j < tels.size(); j++) { // iterar sobre cada teléfono
                         if (j > 0) sb.append(",");
                         sb.append("\"").append(esc(tels.get(j).getTelefono())).append("\""); // número de teléfono
                     }
                     sb.append("]");                      // cierra el array de teléfonos
                 } else {
-                    // Pedido sin cliente asociado (caso inusual, posible si el cliente fue eliminado)
-                    sb.append("\"direccionCliente\":\"\",\"telefonosCliente\":[]" );
+                    sb.append("\"direccionCliente\":\"\",\"telefonosCliente\":[]");
                 }
                 sb.append("}");                          // cierra el objeto de este pedido
             }
@@ -99,9 +113,10 @@ public class SvPedidos extends HttpServlet {             // extiende HttpServlet
         response.setCharacterEncoding("UTF-8");          // codificación de la respuesta
         PrintWriter out = response.getWriter();
 
+        EntityManager em = null;                         // declarado fuera del try para cerrarlo en finally
         try {
             // Verificar que el usuario tiene permiso para gestionar pedidos
-            if (!AuthHelper.tienePermiso(request, "GESTIONAR_PEDIDOS")) { // permiso para cambiar estados
+            if (!AuthHelper.tienePermiso(request, "GESTIONAR_PEDIDOS")) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 out.print("{\"error\":\"Sin permiso: GESTIONAR_PEDIDOS\"}");
                 return;
@@ -113,34 +128,39 @@ public class SvPedidos extends HttpServlet {             // extiende HttpServlet
                 String idStr     = request.getParameter("idPedido"); // ID del pedido a actualizar
                 String estadoStr = request.getParameter("estado");   // nuevo estado (debe coincidir con EstadoPedido enum)
 
-                if (idStr == null || estadoStr == null) { // validar que ambos parámetros estén presentes
+                if (idStr == null || estadoStr == null) {
                     out.print("{\"error\":\"Parámetros faltantes\"}");
                     return;
                 }
 
                 int idPedido = Integer.parseInt(idStr.trim()); // parsear el ID del pedido
-                // Convertir el texto recibido al valor del enum EstadoPedido
-                // Lanza IllegalArgumentException si el texto no coincide con ningún valor del enum
+                // Convierte el texto recibido al valor del enum EstadoPedido para validar que sea un estado válido
                 EstadoPedido nuevoEstado = EstadoPedido.valueOf(estadoStr.trim().toUpperCase()); // ej: "enviado" → EstadoPedido.ENVIADO
 
-                EntityManager em = JpaProvider.getEntityManagerFactory().createEntityManager(); // abre sesión para el UPDATE
-                try {
-                    em.getTransaction().begin();         // inicia transacción para el UPDATE
-                    Pedido pedido = em.find(Pedido.class, idPedido); // SELECT * FROM pedido WHERE id_pedido = ?
-                    if (pedido == null) {                // si el pedido no existe en BD
-                        em.getTransaction().rollback();  // no hay nada que guardar, revertir
-                        out.print("{\"error\":\"Pedido no encontrado\"}");
-                        return;
-                    }
-                    // Actualizar el estado y registrar la fecha de la modificación
-                    pedido.setEstado(nuevoEstado);       // asignar el nuevo estado al pedido
-                    pedido.setUpdatedAt(LocalDateTime.now()); // actualizar la marca de tiempo de última modificación
-                    em.merge(pedido);                    // UPDATE pedido SET estado=?, updated_at=? WHERE id_pedido=?
-                    em.getTransaction().commit();        // confirmar el cambio en MySQL
-                    out.print("{\"ok\":true,\"idPedido\":" + idPedido + ",\"estado\":\"" + nuevoEstado.name() + "\"}"); // notificar el nuevo estado al frontend
-                } finally {
-                    if (em.isOpen()) em.close();         // SIEMPRE cierra el EntityManager
+                em = JpaProvider.getEntityManagerFactory().createEntityManager(); // abre sesión para el UPDATE
+                em.getTransaction().begin(); // inicia transacción manual
+
+                // Consulta nativa UPDATE: reemplaza el flujo anterior de em.find() + em.merge().
+                // Antes: Pedido p = em.find(...) → p.setEstado() → em.merge(p)  (3 operaciones: SELECT + objeto + UPDATE)
+                // Ahora: un único UPDATE directo sobre la fila, sin cargar el objeto Pedido en memoria.
+                // ? pos.1 = nuevo estado como String del enum ("ENVIADO", "ENTREGADO", etc.)
+                // ? pos.2 = timestamp de la modificación (updated_at); Timestamp.valueOf convierte LocalDateTime → java.sql.Timestamp
+                // ? pos.3 = WHERE id_pedido = este valor (identifica la fila a actualizar)
+                Query q = em.createNativeQuery(
+                    "UPDATE pedido SET estado = ?, updated_at = ? WHERE id_pedido = ?");
+                q.setParameter(1, nuevoEstado.name());                        // ? pos.1 → estado = "ENVIADO" (nombre del enum)
+                q.setParameter(2, Timestamp.valueOf(LocalDateTime.now()));    // ? pos.2 → updated_at = ahora
+                q.setParameter(3, idPedido);                                  // ? pos.3 → WHERE id_pedido = X
+
+                int updated = q.executeUpdate(); // ejecuta el UPDATE; retorna 1 si actualizó, 0 si el id no existe
+                em.getTransaction().commit();    // confirma el cambio en la base de datos
+
+                if (updated == 0) {              // 0 filas actualizadas = el id_pedido no existe en la tabla
+                    out.print("{\"error\":\"Pedido no encontrado\"}");
+                    return;
                 }
+
+                out.print("{\"ok\":true,\"idPedido\":" + idPedido + ",\"estado\":\"" + nuevoEstado.name() + "\"}"); // notifica el nuevo estado al frontend
             } else {
                 out.print("{\"error\":\"Acción desconocida\"}"); // acción no reconocida
             }
@@ -148,8 +168,11 @@ public class SvPedidos extends HttpServlet {             // extiende HttpServlet
         } catch (IllegalArgumentException e) {           // captura específica: el texto del estado no existe en el enum
             out.print("{\"error\":\"Estado inválido: " + esc(e.getMessage()) + "\"}");
         } catch (Exception e) {                          // captura general: error de BD u otro inesperado
+            if (em != null && em.getTransaction().isActive()) em.getTransaction().rollback(); // revierte si la transacción quedó abierta
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             out.print("{\"error\":\"" + esc(e.getMessage()) + "\"}");
+        } finally {
+            if (em != null && em.isOpen()) em.close();   // SIEMPRE cierra el EntityManager
         }
     }
 

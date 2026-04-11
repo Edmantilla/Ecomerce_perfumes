@@ -292,72 +292,154 @@
 
     // ─── Checkout Button ──────────────────────────────────────────────────────
     /**
-     * Envía el contenido del carrito al servidor vía POST a SvCompra.
-     * Serializa cada ítem como item_name_N, item_price_N, item_qty_N, item_brand_N.
-     * Si el usuario no tiene sesión activa, muestra modal de login requerido.
-     * Si la compra es exitosa, vacía el carrito y muestra el modal de pago.
-     * Si hay error (ej. stock insuficiente), muestra modal de error.
+     * handleCheckout — Se ejecuta cuando el usuario hace clic en "Finalizar Compra".
+     * Flujo completo:
+     *   1. Valida que el carrito no esté vacío.
+     *   2. Deshabilita el botón para evitar doble envío.
+     *   3. Detecta el contexto de la aplicación (ruta base de Tomcat).
+     *   4. Serializa cada ítem del carrito como parámetros de formulario.
+     *   5. Envía POST a SvCompra con los datos del carrito.
+     *   6. Maneja la respuesta: sesión expirada, error de negocio o compra exitosa.
      */
     function handleCheckout() {
+
+        // Lee el array del carrito desde localStorage.
+        // getCart() retorna [] si está vacío o si el JSON está corrupto.
         const cart = getCart();
+
+        // Si el carrito no tiene ningún ítem, muestra un modal de error y detiene la ejecución.
+        // cart.length === 0 significa que el array está vacío (no hay productos agregados).
         if (cart.length === 0) {
             showCartError('Tu carrito está vacío. Agrega productos antes de continuar.');
-            return;
+            return; // sale de la función aquí; no envía nada al servidor
         }
 
+        // Busca el botón "Finalizar Compra" en el DOM por su id.
         const btn = document.getElementById('cartCheckout');
+
+        // Si el botón existe, lo deshabilita y cambia su texto a "Procesando...".
+        // Esto evita que el usuario haga clic varias veces mientras espera la respuesta del servidor,
+        // lo que crearía pedidos duplicados en la base de datos.
         if (btn) { btn.disabled = true; btn.textContent = 'Procesando...'; }
 
+        // IIFE (función que se define y se ejecuta inmediatamente) para calcular el contexto de la app.
+        // window.location.pathname en Tomcat es algo como "/Proyecto/vistas/Chanel.jsp".
+        // .split('/') lo convierte en ["", "Proyecto", "vistas", "Chanel.jsp"].
+        // p[1] toma el segundo elemento: "Proyecto" (el nombre del WAR desplegado).
+        // El resultado es "/Proyecto", que es la ruta base para construir las URLs de los servlets.
+        // Esto evita hardcodear el nombre del proyecto en las URLs.
         const ctx = (function () {
-            const p = window.location.pathname.split('/');
-            return '/' + p[1];
+            const p = window.location.pathname.split('/'); // divide la ruta por "/"
+            return '/' + p[1];                             // retorna "/Proyecto" (o el nombre del WAR)
         })();
 
+        // URLSearchParams construye la cadena de parámetros tipo formulario (application/x-www-form-urlencoded).
+        // El servidor (SvCompra.doPost) los lee con request.getParameter("nombre").
         var params = new URLSearchParams();
+
+        // Agrega el número total de ítems del carrito.
+        // SvCompra lo usa para saber cuántos item_name_N / item_price_N / item_qty_N debe leer.
+        // Ejemplo: si hay 2 productos → itemCount=2
         params.append('itemCount', cart.length);
+
+        // Recorre cada ítem del carrito con su índice i (0, 1, 2, ...).
+        // Para cada ítem agrega 4 parámetros numerados con el sufijo _i.
         cart.forEach(function(item, i) {
+
+            // Nombre del producto. El || '' garantiza que si item.name es undefined, se envía cadena vacía.
+            // Ejemplo: item_name_0=Chanel+N5
             params.append('item_name_' + i,  item.name  || '');
+
+            // Marca del producto. SvCompra la usa para buscar o crear la marca en BD.
+            // Ejemplo: item_brand_0=Chanel
             params.append('item_brand_' + i, item.brand || '');
+
+            // Precio unitario del producto al momento de agregarlo al carrito.
+            // Se guarda el precio del momento para que no cambie si el admin lo edita después.
+            // Ejemplo: item_price_0=250000
             params.append('item_price_' + i, item.price || 0);
+
+            // Cantidad de unidades de este producto.
+            // El || 1 garantiza mínimo 1 unidad si qty fuera undefined o 0.
+            // Ejemplo: item_qty_0=2
             params.append('item_qty_' + i,   item.qty   || 1);
         });
+        // Resultado final de params para un carrito de 2 ítems:
+        // "itemCount=2&item_name_0=Chanel+N5&item_brand_0=Chanel&item_price_0=250000&item_qty_0=2
+        //  &item_name_1=Dior+Sauvage&item_brand_1=Dior&item_price_1=180000&item_qty_1=1"
 
-        fetch(ctx + '/SvCompra', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params.toString()
+        // Envía la petición HTTP POST al servlet SvCompra.
+        fetch(ctx + '/SvCompra', {          // URL completa: "/Proyecto/SvCompra"
+            method: 'POST',                 // método HTTP POST (los datos van en el body, no en la URL)
+            credentials: 'same-origin',     // incluye automáticamente la cookie JSESSIONID para que el servidor
+                                            // pueda identificar al usuario a través de request.getSession()
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, // indica al servidor que el body
+                                            // es un formulario (no JSON), para que request.getParameter() funcione
+            body: params.toString()         // convierte URLSearchParams a string: "itemCount=2&item_name_0=..."
         })
+
+        // PRIMER .then(): convierte la respuesta HTTP a texto y luego intenta parsearla como JSON.
+        // Se usa r.text() en lugar de r.json() directamente para poder manejar respuestas
+        // que no sean JSON válido (ej. errores HTML de Tomcat o páginas de error del servidor).
         .then(function(r) {
-            return r.text().then(function(text) {
+            return r.text().then(function(text) { // lee el cuerpo de la respuesta como texto plano
                 try {
+                    // Intenta convertir el texto a objeto JavaScript.
+                    // Si SvCompra respondió correctamente, text = '{"ok":true,"idPedido":42,"total":680000}'
+                    // Empaqueta el resultado con el código HTTP (status) para usarlo en el siguiente .then()
                     return { status: r.status, data: JSON.parse(text) };
                 } catch(e) {
+                    // Si el texto no es JSON válido (ej. Tomcat devolvió una página HTML de error 500),
+                    // JSON.parse lanza SyntaxError y se captura aquí.
+                    // Se devuelve un objeto de error genérico para que el siguiente .then() lo maneje.
                     return { status: r.status, data: { error: 'Ocurrió un problema al procesar tu compra. Intenta de nuevo.' } };
                 }
             });
         })
+
+        // SEGUNDO .then(): evalúa el resultado del servidor y actúa según el caso.
+        // res = { status: 200|401|500, data: { ok:true, idPedido:42 } | { error:"..." } }
         .then(function(res) {
-            var data = res.data;
+            var data = res.data; // el objeto JSON parseado de la respuesta del servidor
+
+            // CASO 1: el usuario no tiene sesión activa (HTTP 401) o el mensaje menciona "sesión".
+            // Ocurre cuando la sesión expiró mientras el usuario tenía el carrito abierto,
+            // o cuando accede sin haber iniciado sesión.
             if (res.status === 401 || (data.error && data.error.includes('sesión'))) {
-                if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
-                closeCart();
-                showLoginRequiredModal(ctx);
-                return;
+                if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; } // reactiva el botón
+                closeCart();                    // cierra el panel lateral del carrito
+                showLoginRequiredModal(ctx);    // muestra modal con botones "Iniciar Sesión" / "Crear Cuenta"
+                return;                         // sale; no procesa más
             }
+
+            // CASO 2: el servidor devolvió un error de negocio (stock insuficiente, carrito vacío, etc.).
+            // data.error contiene el mensaje que SvCompra escribió en el JSON de respuesta.
+            // Ejemplo: { "error": "Stock insuficiente para Chanel N5" }
             if (data.error) {
-                showCartError(data.error);
-                if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
-                return;
+                showCartError(data.error);                                           // muestra el error en modal
+                if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; } // reactiva el botón
+                return;                         // sale; el carrito queda intacto para que el usuario lo corrija
             }
-            saveCart([]);
-            updateBadge();
-            closeCart();
+
+            // CASO 3: compra exitosa. data = { ok:true, idPedido:42, total:680000 }
+
+            saveCart([]);       // vacía el carrito en localStorage (guarda array vacío)
+            updateBadge();      // actualiza el contador del ícono del carrito a 0 en el navbar
+            closeCart();        // cierra el panel lateral del carrito
+
+            // Muestra el modal de confirmación de pedido con el ID y total del pedido recién creado.
+            // Desde este modal el usuario puede ver su número de pedido y proceder al pago.
             showOrderConfirmation(data.idPedido, data.total);
+            // data.idPedido = 42 (el id_pedido generado por MySQL en la tabla pedido)
+            // data.total    = 680000 (la suma calculada por SvCompra)
         })
+
+        // .catch(): captura errores de red (sin internet, servidor caído, timeout).
+        // No captura errores HTTP (400, 401, 500); esos los maneja el .then() de arriba.
+        // Solo se ejecuta si fetch() falló completamente antes de recibir respuesta.
         .catch(function() {
             showCartError('No se pudo procesar tu compra. Verifica tu conexión e intenta de nuevo.');
-            if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Finalizar Compra'; } // reactiva el botón
         });
     }
 
